@@ -229,7 +229,10 @@ public class CpkContentGenerator extends RestContentGenerator {
           }
         }
 
-        dsDeclarations.deleteCharAt(dsDeclarations.lastIndexOf(","));
+        int index = dsDeclarations.lastIndexOf(",");
+        if (index > 0) { 
+          dsDeclarations.deleteCharAt(index);
+        }
         dsDeclarations.append("}");
         out.write(dsDeclarations.toString().getBytes());
     }
