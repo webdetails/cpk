@@ -36,7 +36,7 @@
   <!-- Build the project.revision property -->
   <property name="distribution.version" value="${project.stage}-${project.version}"/>
   <echo>distribution.version = ${distribution.version}</echo>
-  <target name="dist" depends="clean,resolve,jar,dist-plugin"/>
+  <target name="dist" depends="clean,resolve,jar,test,dist-plugin"/>
   <target name="dist-compile" depends="jar,dist-plugin"/>
   <property name="plugin.artifact.id" value="${plugin.name}"/>
   <property name="plugin.zipfile" value="${plugin.artifact.id}-${distribution.version}.zip"/>
