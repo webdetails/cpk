@@ -213,9 +213,21 @@ public class CpkContentGenerator extends RestContentGenerator {
             }
 
             logger.info(String.format("CPK Kettle Endpoint found: %s)", endpoint));
-
+            
+                        
             String pluginId = coreService.getPluginName();
             String endpointName = endpoint.getName();
+            
+            //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric    
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < pluginId.length(); i++) {
+              char c = pluginId.charAt(i);
+              if ((Character.isDigit(c) && i > 0) || Character.isAlphabetic(c))
+                sb.append(c);      
+            }    
+            String safePluginId = sb.toString();                                    
+
+            
 
             DataSourceMetadata metadata = new CpkDataSourceMetadata(pluginId, endpointName);
             DataSourceDefinition definition = new DataSourceDefinition();
@@ -223,7 +235,7 @@ public class CpkContentGenerator extends RestContentGenerator {
             DataSource dataSource = new DataSource().setMetadata(metadata).setDefinition(definition);
             dataSources.add(dataSource);
 
-            dsDeclarations.append(String.format("\"%s_%s_CPKENDPOINT\": ", pluginId, endpointName));
+            dsDeclarations.append(String.format("\"%s_%s_CPKENDPOINT\": ", safePluginId, endpointName));
             dsDeclarations.append(mapper.writeValueAsString(dataSource));
             dsDeclarations.append(",");
           }
