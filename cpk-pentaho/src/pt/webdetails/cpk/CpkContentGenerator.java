@@ -222,7 +222,8 @@ public class CpkContentGenerator extends RestContentGenerator {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < pluginId.length(); i++) {
               char c = pluginId.charAt(i);
-              if ((Character.isDigit(c) && i > 0) || Character.isAlphabetic(c))
+              if ((Character.isJavaIdentifierStart(c) && i ==  0) || 
+                      (Character.isJavaIdentifierPart(c) && i > 0))
                 sb.append(c);      
             }    
             String safePluginId = sb.toString();                                    
