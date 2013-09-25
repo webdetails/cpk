@@ -61,7 +61,7 @@ public class KettleElementType extends AbstractElementType {
         JOB, TRANSFORMATION
     };
     protected Log logger = LogFactory.getLog(this.getClass());
-    private static final String PARAM_PREFIX = "param",MIMETYPE = "MIMETYPE";
+    private static final String PARAM_PREFIX = "param", MIMETYPE = "MIMETYPE";
     private ConcurrentHashMap<String, TransMeta> transMetaStorage = new ConcurrentHashMap<String, TransMeta>();//Stores the metadata of the ktr files. [Key=path]&[Value=transMeta]
     private ConcurrentHashMap<String, JobMeta> jobMetaStorage = new ConcurrentHashMap<String, JobMeta>();//Stores the metadata of the kjb files. [Key=path]&[Value=jobMeta]
     private String stepName = "OUTPUT";
@@ -74,105 +74,106 @@ public class KettleElementType extends AbstractElementType {
             CPK_PLUGIN_SYSTEM_DIR = "cpk.plugin.system.dir",
             CPK_SESSION_USERNAME = "cpk.session.username",
             CPK_SESSION_ROLES = "cpk.session.roles";
-    
+
     static class NamedParamsImpl implements NamedParams {
-      
-      private Map<String, String> params = new LinkedHashMap<String, String>();
-      
-      @Override
-      public void setParameterValue(String name, String _value) throws UnknownParamException {
-        params.put(name, _value);
-      }
-      
-      @Override
-      public String[] listParameters() {
-          String[] result = null;
-          Collection<String> values = params.keySet();
-          int size = values.size();
-          if (size > 0) {
-            result = new String[size];
-            values.toArray(result);
-          } else {
-            result = new String[]{};
-          }
-          
-          return result;
-      }
-      
-      @Override
-      public String getParameterValue(String name) throws UnknownParamException {
-          return params.get(name);
-      }
-      
-      @Override
-      public String getParameterDescription(String name) throws UnknownParamException {
-        // TODO Auto-generated method stub
-        return null;
-      }
-      
-      @Override
-      public String getParameterDefault(String name) throws UnknownParamException {
-        return params.get(name);
-      }
-      
-      @Override
-      public void eraseParameters() {
-        params.clear();
-      }
-      
-      @Override
-      public void copyParametersFrom(NamedParams params) {
-        for (String param : params.listParameters()) {
-          try {
-            this.params.put(param, params.getParameterValue(param));
-          } catch (UnknownParamException e) {
-          }
+
+        private Map<String, String> params = new LinkedHashMap<String, String>();
+
+        @Override
+        public void setParameterValue(String name, String _value) throws UnknownParamException {
+            params.put(name, _value);
         }
-      }
-      
-      @Override
-      public void clearParameters() {
-        params.clear();
-      }
-      
-      @Override
-      public void addParameterDefinition(String name, String defaultValue, String description) throws DuplicateParamException {
-          // params.put(name, defaultValue);
-      }
-      
-      @Override
-      public void activateParameters() {
-        // TODO Auto-generated method stub
-      }
-      
+
+        @Override
+        public String[] listParameters() {
+            String[] result = null;
+            Collection<String> values = params.keySet();
+            int size = values.size();
+            if (size > 0) {
+                result = new String[size];
+                values.toArray(result);
+            } else {
+                result = new String[]{};
+            }
+
+            return result;
+        }
+
+        @Override
+        public String getParameterValue(String name) throws UnknownParamException {
+            return params.get(name);
+        }
+
+        @Override
+        public String getParameterDescription(String name) throws UnknownParamException {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override
+        public String getParameterDefault(String name) throws UnknownParamException {
+            return params.get(name);
+        }
+
+        @Override
+        public void eraseParameters() {
+            params.clear();
+        }
+
+        @Override
+        public void copyParametersFrom(NamedParams params) {
+            for (String param : params.listParameters()) {
+                try {
+                    this.params.put(param, params.getParameterValue(param));
+                } catch (UnknownParamException e) {
+                }
+            }
+        }
+
+        @Override
+        public void clearParameters() {
+            params.clear();
+        }
+
+        @Override
+        public void addParameterDefinition(String name, String defaultValue, String description) throws DuplicateParamException {
+            // params.put(name, defaultValue);
+        }
+
+        @Override
+        public void activateParameters() {
+            // TODO Auto-generated method stub
+        }
     }
-    
     private NamedParams defaultParameters = new NamedParamsImpl();
     private VariableSpace defaultVariables = new Variables();
-    
+
     public KettleElementType(IPluginUtils plug) throws UnknownParamException {
         super(plug);
         init(plug);
         transMetaStorage = new ConcurrentHashMap<String, TransMeta>();//Stores the metadata of the ktr files. [Key=path]&[Value=transMeta]
         jobMetaStorage = new ConcurrentHashMap<String, JobMeta>();//Stores the metadata of the kjb files. [Key=path]&[Value=jobMeta]
     }
-    
+
     private void init(IPluginUtils pluginUtils) throws UnknownParamException {
         File pluginDirFile = pluginUtils.getPluginDirectory();
-        
+
         cpkPluginDir = pluginDirFile.getAbsolutePath();
-        cpkPluginSystemDir = pluginDirFile.getAbsolutePath()+File.separator+"system";
+        cpkPluginSystemDir = pluginDirFile.getAbsolutePath() + File.separator + "system";
         cpkPluginId = pluginDirFile.getName();
-        try{cpkSolutionDir = CpkEngine.getInstance().getEnvironment().getRepositoryAccess().getSolutionPath("");}catch(Exception e){}
+        try {
+            cpkSolutionDir = CpkEngine.getInstance().getEnvironment().getRepositoryAccess().getSolutionPath("");
+        } catch (Exception e) {
+        }
         cpkSolutionSystemDir = pluginDirFile.getParentFile().getAbsolutePath();
-        
+
         // initialize default parameters for kettle transformation
         defaultParameters.setParameterValue(CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir); // eg: project-X/solution/system
         defaultParameters.setParameterValue(CPK_SOLUTION_DIR, cpkSolutionDir); // eg: project-X/solution
         defaultParameters.setParameterValue(CPK_PLUGIN_DIR, cpkPluginDir); // eg: project-X/solution/system/cpk
         defaultParameters.setParameterValue(CPK_PLUGIN_ID, cpkPluginId); // eg: "cpk"
         defaultParameters.setParameterValue(CPK_PLUGIN_SYSTEM_DIR, cpkPluginSystemDir); //eg: project-X/solution/system/cpk/system
-        
+
         // initialize default variables for kettle transformation
         defaultVariables.setVariable(CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir); // eg: project-X/solution/system
         defaultVariables.setVariable(CPK_SOLUTION_DIR, cpkSolutionDir); // eg: project-X/solution
@@ -287,7 +288,7 @@ public class KettleElementType extends AbstractElementType {
 
 
     }
-    
+
     /**
      * Executes a transformation
      *
@@ -301,7 +302,7 @@ public class KettleElementType extends AbstractElementType {
     private Result executeTransformation(final String kettlePath, HashMap<String, String> customParams, final IKettleOutput kettleOutput) throws KettleXMLException, UnknownParamException, KettleException {
         Result result = null;
         TransMeta transformationMeta = null;
-        
+
         if (transMetaStorage.containsKey(kettlePath)) {
             logger.debug("Existent metadata found for " + kettlePath);
             transformationMeta = transMetaStorage.get(kettlePath);
@@ -314,35 +315,32 @@ public class KettleElementType extends AbstractElementType {
         }
 
         Trans transformation = new Trans(transformationMeta);
-        NamedParams customParameters = new NamedParamsImpl();
-        customParameters.copyParametersFrom(defaultParameters);
-        VariableSpace customVariables = new Variables();
-        customVariables.copyVariablesFrom(defaultVariables);
+        transformation.initializeVariablesFrom(null);
+        transformation.getTransMeta().setInternalKettleVariables(transformation);
+
         IUserSession userSession = CpkEngine.getInstance().getEnvironment().getSessionUtils().getCurrentSession();
         if (userSession.getUserName() != null) {
-            customParameters.setParameterValue(CPK_SESSION_USERNAME, userSession.getUserName());
-            customVariables.setVariable(CPK_SESSION_USERNAME, userSession.getUserName());
+            transformation.setParameterValue(CPK_SESSION_USERNAME, userSession.getUserName());
+            transformation.setVariable(CPK_SESSION_USERNAME, userSession.getUserName());
         } else {
-          
         }
 
         String[] authorities = userSession.getAuthorities();
         if (authorities != null && authorities.length > 0) {
-            customParameters.setParameterValue(CPK_SESSION_ROLES, StringUtils.join(authorities, ","));
-            customVariables.setVariable(CPK_SESSION_ROLES, StringUtils.join(authorities, ","));
+            transformation.setParameterValue(CPK_SESSION_ROLES, StringUtils.join(authorities, ","));
+            transformation.setVariable(CPK_SESSION_ROLES, StringUtils.join(authorities, ","));
         }
-        
+
         /*
          * Loading parameters, if there are any.
          */
         for (String arg : customParams.keySet()) {
-            customParameters.setParameterValue(arg, customParams.get(arg));
+            transformation.setParameterValue(arg, customParams.get(arg));
         }
-        
-        transformation.copyParametersFrom(customParameters);
-        transformation.copyVariablesFrom(customVariables);
-        transformation.activateParameters();
 
+
+
+        transformation.activateParameters();
         transformation.prepareExecution(null); //Get the step threads after this line
         StepInterface step = transformation.findRunThread(kettleOutput.getOutputStepName());
 
@@ -363,13 +361,13 @@ public class KettleElementType extends AbstractElementType {
 
 
         } else {
-            if(step == null){
-                logger.error("The stepname \""+kettleOutput.getOutputStepName()+"\" does not exist!");
+            if (step == null) {
+                logger.error("The stepname \"" + kettleOutput.getOutputStepName() + "\" does not exist!");
             }
             result = null;
         }
 
-        
+
 
         setMimeType(transformation.getVariable(MIMETYPE), transformation.getParameterValue(MIMETYPE));
 
@@ -388,7 +386,7 @@ public class KettleElementType extends AbstractElementType {
      */
     private Result executeJob(String kettlePath, HashMap<String, String> customParams, IKettleOutput kettleOutput) throws UnknownParamException, KettleException, KettleXMLException {
 
-        
+
         JobMeta jobMeta;
 
         if (jobMetaStorage.containsKey(kettlePath)) {
@@ -402,6 +400,8 @@ public class KettleElementType extends AbstractElementType {
 
         }
         Job job = new Job(null, jobMeta);
+        job.initializeVariablesFrom(null);
+        job.getJobMeta().setInternalKettleVariables(job);
         
         IUserSession userSession = CpkEngine.getInstance().getEnvironment().getSessionUtils().getCurrentSession();
 
@@ -415,7 +415,7 @@ public class KettleElementType extends AbstractElementType {
             job.getJobMeta().setParameterValue(CPK_SESSION_ROLES, StringUtils.join(authorities, ","));
             job.getJobMeta().setVariable(CPK_SESSION_ROLES, StringUtils.join(authorities, ","));
         }
-        
+
         job.getJobMeta().setParameterValue(CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir); // eg: project-X/solution/system
         job.getJobMeta().setParameterValue(CPK_SOLUTION_DIR, cpkSolutionDir); // eg: project-X/solution
         job.getJobMeta().setParameterValue(CPK_PLUGIN_DIR, cpkPluginDir); // eg: project-X/solution/system/cpk
@@ -435,9 +435,8 @@ public class KettleElementType extends AbstractElementType {
                 job.getJobMeta().setParameterValue(arg, customParams.get(arg));
             }
         }
-        
-        job.copyParametersFrom(jobMeta);
-        job.copyVariablesFrom(job.getJobMeta());
+
+        job.copyParametersFrom(job.getJobMeta());
         job.activateParameters();
 
         job.start();

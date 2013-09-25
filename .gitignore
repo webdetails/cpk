@@ -1,7 +1,12 @@
 /nbproject/private/
 /cpk-core/lib/
+/cpk-core/bin/
+/cpk-core/dist/
 /cpk-core/runtime-lib/
 /cpk-core/test-lib/
 /cpk-pentaho/lib/
+/cpk-pentaho/bin/
+/cpk-pentaho/dist/
 /cpk-pentaho/runtime-lib/
 /cpk-pentaho/test-lib/
+/build/
