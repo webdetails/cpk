@@ -432,11 +432,14 @@ public class KettleElementType extends AbstractElementType {
          */
         if (customParams.size() > 0) {
             for (String arg : customParams.keySet()) {
+                job.getJobMeta().setVariable(arg, customParams.get(arg));
                 job.getJobMeta().setParameterValue(arg, customParams.get(arg));
+
             }
         }
 
         job.copyParametersFrom(job.getJobMeta());
+        job.copyVariablesFrom(job.getJobMeta());
         job.activateParameters();
 
         job.start();
