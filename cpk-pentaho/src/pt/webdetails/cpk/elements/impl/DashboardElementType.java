@@ -62,20 +62,20 @@ public class DashboardElementType extends AbstractElementType {
 
         String root = wrapper.getScheme() + "://" + wrapper.getServerName() + ":" + wrapper.getServerPort();
 
-        ICommonParameterProvider requestParams = pluginUtils.getRequestParameters(parameterProviders);
-        PluginUtils.copyParametersFromProvider(params, requestParams);
-
         Map<String, Object> params = new HashMap<String, Object>();
+        ICommonParameterProvider requestParams = pluginUtils.getRequestParameters(parameterProviders);
+
+        params.put("solution", "system");
+        params.put("path", path);
         if (requestParams.hasParameter("mode") && requestParams.getStringParameter("mode", "Render").equals("preview")) {
             params.put("file", element.getId() + "_tmp.cdfde");
         } else {
             params.put("file", element.getId() + ".wcdf");
         }
-        params.put("solution", "system");
-        params.put("path", path);
         params.put("absolute", "true");
         params.put("inferScheme", "false");
         params.put("root", root);
+        PluginUtils.copyParametersFromProvider(params, requestParams);
 
         if (requestParams.hasParameter("mode") && requestParams.getStringParameter("mode", "Render").equals("edit")) {
             redirectToCdeEditor(parameterProviders, params);
