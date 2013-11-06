@@ -12,7 +12,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Node;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 /**
  *
@@ -119,7 +118,7 @@ public abstract class AbstractElementType implements IElementType {
     }
 
     @Override
-    public abstract void processRequest(Map<String, ICommonParameterProvider> parameterProviders, IElement element);
+    public abstract void processRequest(Map<String, Map<String, Object>> bloatedMap, IElement element);
     
     protected abstract ElementInfo createElementInfo();
 }

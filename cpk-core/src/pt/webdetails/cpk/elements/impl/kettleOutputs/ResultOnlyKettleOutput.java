@@ -13,8 +13,8 @@ import pt.webdetails.cpf.utils.IPluginUtils;
  */
 public class ResultOnlyKettleOutput extends KettleOutput {
 
-    public ResultOnlyKettleOutput(Map<String, ICommonParameterProvider> parameterProviders,IPluginUtils plug) {
-        super(parameterProviders,plug);
+    public ResultOnlyKettleOutput(Map<String, Map<String, Object>> bloatedMap,IPluginUtils plug) {
+        super(bloatedMap,plug);
     }
 
     @Override

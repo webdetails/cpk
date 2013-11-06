@@ -4,18 +4,18 @@
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
 import java.util.Map;
+
 import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 
 /**
- *
  * @author Pedro Alves<pedro.alves@webdetails.pt>
  */
 public class InferedKettleOutput extends KettleOutput {
 
-    
-    public InferedKettleOutput(Map<String, ICommonParameterProvider> parameterProviders,IPluginUtils plug) {
-        super(parameterProviders,plug);
-    }
+
+  public InferedKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
+    super( bloatedMap, plug );
+  }
 
 }

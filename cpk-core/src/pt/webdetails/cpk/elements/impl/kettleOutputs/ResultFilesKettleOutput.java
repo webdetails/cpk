@@ -16,8 +16,8 @@ import pt.webdetails.cpf.utils.IPluginUtils;
  */
 public class ResultFilesKettleOutput extends KettleOutput {
 
-    public ResultFilesKettleOutput(Map<String, ICommonParameterProvider> parameterProviders,IPluginUtils plug) {
-        super(parameterProviders,plug);
+    public ResultFilesKettleOutput(Map<String, Map<String, Object>> bloatedMap,IPluginUtils plug) {
+        super(bloatedMap,plug);
     }
 
     @Override

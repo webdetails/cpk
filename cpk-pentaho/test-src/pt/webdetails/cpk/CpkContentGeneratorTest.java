@@ -37,14 +37,13 @@ import org.pentaho.platform.engine.core.system.objfac.StandaloneSpringPentahoObj
 import org.pentaho.platform.engine.security.SecurityHelper;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.http.CommonParameterProvider;
-import pt.webdetails.cpf.repository.IRepositoryAccess;
 import org.springframework.security.Authentication;
 import org.springframework.security.GrantedAuthority;
 import org.springframework.security.GrantedAuthorityImpl;
 import org.springframework.security.providers.UsernamePasswordAuthenticationToken;
 import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.testUtils.CpkContentGeneratorForTesting;
-import pt.webdetails.cpk.testUtils.PentahoRepositoryAccessForTesting;
+import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 
 /**
  *
@@ -53,18 +52,14 @@ import pt.webdetails.cpk.testUtils.PentahoRepositoryAccessForTesting;
 public class CpkContentGeneratorTest {
 
     private static IPluginUtils pluginUtils;
-    //private static CpkContentGenerator cpkContentGenerator;
     private static CpkContentGeneratorForTesting cpkContentGenerator;
-    //private static Map<String, ICommonParameterProvider> map;
-    private static IRepositoryAccess repAccess;
     private static OutputStream out;
     private static OutputStream outResponse;
     private static String userDir = System.getProperty("user.dir");
-    //private static PentahoSession session = new PentahoSession();
     private static StandaloneSession session = new StandaloneSession("joe");
 
     @BeforeClass
-    public static void setUp() throws IOException, InitializationException, ObjectFactoryException {
+    public static void setUp() throws IOException, pt.webdetails.cpk.InitializationException, ObjectFactoryException {
 
 
         StandaloneApplicationContext appContext = new StandaloneApplicationContext(userDir + "/" + "test-resources/repository", "");
@@ -86,11 +81,7 @@ public class CpkContentGeneratorTest {
         PentahoSystem.init(appContext);
 
         pluginUtils = new PluginUtils();
-        //CorePlugin plugin = new Plugin(pluginUtils.getPluginDirectory().getPath());
-        repAccess = new PentahoRepositoryAccessForTesting();
-        //repAccess.setPlugin(plugin);
-        ICpkEnvironment environment = new CpkPentahoEnvironment(pluginUtils, repAccess);
-        //cpkContentGenerator = new CpkContentGeneratorForTesting(environment);
+        ICpkEnvironment environment = new CpkPentahoEnvironment(pluginUtils);
         cpkContentGenerator = new CpkContentGeneratorForTesting();
 
 
@@ -244,7 +235,7 @@ public class CpkContentGeneratorTest {
         ICommonParameterProvider p = new CommonParameterProvider();
         ICommonParameterProvider p1 = new CommonParameterProvider();
         p.put("path", "/sampleTrans");//kjb or ktr
-        p.put("httpresponse", buildAResponse(outResponse));
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
         p1.put("paramarg1", "value1");
         p1.put("paramarg2", "value2");
         p1.put("paramarg3", "value3");
@@ -259,7 +250,7 @@ public class CpkContentGeneratorTest {
         ICommonParameterProvider p = new CommonParameterProvider();
         ICommonParameterProvider p1 = new CommonParameterProvider();
         p.put("path", "/evaluate-result-rows");//kjb or ktr
-        p.put("httpresponse", buildAResponse(outResponse));
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
         p1.put("paramarg1", "value1");
         p1.put("paramarg2", "value2");
         p1.put("paramarg3", "value3");
@@ -273,7 +264,7 @@ public class CpkContentGeneratorTest {
         ICommonParameterProvider p = new CommonParameterProvider();
         ICommonParameterProvider p1 = new CommonParameterProvider();
         p.put("path", "/create-result-rows");//kjb or ktr
-        p.put("httpresponse", buildAResponse(outResponse));
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
         p1.put("stepName", "copy rows to result");
         p1.put("paramarg1", "value1");
         p1.put("paramarg2", "value2");
@@ -288,7 +279,7 @@ public class CpkContentGeneratorTest {
         ICommonParameterProvider p = new CommonParameterProvider();
         ICommonParameterProvider p1 = new CommonParameterProvider();
         p.put("path", "/generate-rows");//kjb or ktr
-        p.put("httpresponse", buildAResponse(outResponse));
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
         p1.put("stepName", "output");
         map.put("path", p);
         map.put("request", p1);
@@ -316,172 +307,4 @@ public class CpkContentGeneratorTest {
 
     }
 
-    private HttpServletResponse buildAResponse(final OutputStream output) {
-        return new HttpServletResponse() {
-            @Override
-            public ServletOutputStream getOutputStream() throws IOException {
-                return new ServletOutputStream() {
-                    @Override
-                    public void write(int b) throws IOException {
-                        output.write(b);
-                    }
-                };
-            }
-
-            @Override
-            public void setHeader(String string, String string1) {
-                //this method will be called in the tests
-            }
-
-            @Override
-            public void setIntHeader(String string, int i) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void addIntHeader(String string, int i) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setStatus(int i) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setStatus(int i, String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public String getCharacterEncoding() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public String getContentType() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void addCookie(Cookie cookie) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public boolean containsHeader(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public String encodeURL(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public String encodeRedirectURL(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public String encodeUrl(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public String encodeRedirectUrl(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void sendError(int i, String string) throws IOException {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void sendError(int i) throws IOException {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void sendRedirect(String string) throws IOException {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setDateHeader(String string, long l) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void addDateHeader(String string, long l) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public PrintWriter getWriter() throws IOException {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setCharacterEncoding(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setContentLength(int i) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setContentType(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setBufferSize(int i) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public int getBufferSize() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void flushBuffer() throws IOException {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void resetBuffer() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public boolean isCommitted() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void reset() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void setLocale(Locale locale) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public Locale getLocale() {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-
-            @Override
-            public void addHeader(String string, String string1) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-        };
-    }
 }

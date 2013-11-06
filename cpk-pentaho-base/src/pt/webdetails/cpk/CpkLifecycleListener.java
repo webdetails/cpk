@@ -7,18 +7,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPluginLifecycleListener;
 import org.pentaho.platform.api.engine.PluginLifecycleException;
+import pt.webdetails.cpf.PentahoPluginEnvironment;
+import pt.webdetails.cpf.PluginEnvironment;
+import pt.webdetails.cpf.SimpleLifeCycleListener;
 
 /**
- *
  * @author pedro
  */
-public class CpkLifecycleListener implements IPluginLifecycleListener { 
+public class CpkLifecycleListener extends SimpleLifeCycleListener implements IPluginLifecycleListener {
 
     static Log logger = LogFactory.getLog(CpkLifecycleListener.class);
 
     @Override
     public void init() throws PluginLifecycleException {
-
+         super.init();
         logger.info("Initializing CPK plugin");
 
     }
@@ -35,4 +37,8 @@ public class CpkLifecycleListener implements IPluginLifecycleListener {
         logger.info("CPK plugin unloaded");
 
     }
+
+  @Override public PluginEnvironment getEnvironment() {
+    return PentahoPluginEnvironment.getInstance();  //To change body of implemented methods use File | Settings | File Templates.
+  }
 }

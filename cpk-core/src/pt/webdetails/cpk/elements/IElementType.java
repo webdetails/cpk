@@ -20,7 +20,7 @@ public interface IElementType {
     
     public IElement registerElement(String elementLocation, Node node);
     
-    public void processRequest(Map<String, ICommonParameterProvider> parameterProviders, IElement element);
+    public void processRequest(Map<String, Map<String, Object>> bloatedMap, IElement element);
         
     public boolean isShowInSitemap();
     

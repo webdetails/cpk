@@ -3,20 +3,9 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 package pt.webdetails.cpk;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Map;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.dom4j.DocumentException;
-import pt.webdetails.cpf.RestRequestHandler;
-import pt.webdetails.cpf.Router;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
+
 import pt.webdetails.cpf.repository.IRepositoryAccess;
-import pt.webdetails.cpf.utils.IPluginUtils;
-import pt.webdetails.cpk.elements.IElement;
 
 /**
  *

@@ -13,8 +13,8 @@ import pt.webdetails.cpf.utils.IPluginUtils;
  */
 public class JsonKettleOutput extends KettleOutput {
 
-    public JsonKettleOutput(Map<String, ICommonParameterProvider> parameterProviders,IPluginUtils plug) {
-        super(parameterProviders,plug);
+    public JsonKettleOutput(Map<String, Map<String, Object>> bloatedMap,IPluginUtils plug) {
+        super(bloatedMap,plug);
     }
 
     @Override

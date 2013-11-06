@@ -6,7 +6,6 @@ package pt.webdetails.cpk.elements;
 import java.util.Map;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 
 /**
  *
@@ -26,7 +25,7 @@ public interface IElement {
     @JsonProperty("type")
     public String getElementType();
  
-    public void processRequest(Map<String, ICommonParameterProvider> parameterProviders);
+    public void processRequest(Map<String, Map<String, Object>> bloatedMap);
     
     @JsonProperty("adminOnly")
     public boolean isAdminOnly();

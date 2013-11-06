@@ -30,7 +30,6 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.parameters.DuplicateParamException;
 import org.pentaho.di.core.parameters.NamedParams;
-import org.pentaho.di.core.parameters.NamedParamsDefault;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -43,12 +42,12 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
+
 
 /**
  *
@@ -162,7 +161,9 @@ public class KettleElementType extends AbstractElementType {
         cpkPluginSystemDir = pluginDirFile.getAbsolutePath() + File.separator + "system";
         cpkPluginId = pluginDirFile.getName();
         try {
-            cpkSolutionDir = CpkEngine.getInstance().getEnvironment().getRepositoryAccess().getSolutionPath("");
+          //cpkSolutionDir = CpkEngine.getInstance().getEnvironment().getRepositoryAccess().getSolutionPath("");
+          //XXX  find a way to properly do this since repositoryAccess died
+          cpkSolutionDir = System.getProperty( "user.dir" ) + "/test-resources/repository/system/cpkSol";
         } catch (Exception e) {
         }
         cpkSolutionSystemDir = pluginDirFile.getParentFile().getAbsolutePath();
@@ -188,7 +189,7 @@ public class KettleElementType extends AbstractElementType {
     }
 
     @Override
-    public void processRequest(Map<String, ICommonParameterProvider> parameterProviders, IElement element) {
+    public void processRequest(Map<String, Map<String, Object>> bloatedMap, IElement element) {
 
 
         String kettlePath = element.getLocation();
@@ -198,14 +199,14 @@ public class KettleElementType extends AbstractElementType {
         logger.debug("Processing request for: " + kettlePath);
 
         //This gets all the params inserted in the URL
-        Iterator customParamsIter = pluginUtils.getRequestParameters(parameterProviders).getParameterNames();
+        Iterator customParamsIter = bloatedMap.get( "request" ).keySet().iterator();
         HashMap<String, String> customParams = new HashMap<String, String>();
         String key, value;
 
         while (customParamsIter.hasNext()) {
             key = customParamsIter.next().toString();
             if (key.startsWith(PARAM_PREFIX)) {
-                value = parameterProviders.get("request").getParameter(key).toString();
+                value = bloatedMap.get("request").get(key).toString();
                 customParams.put(key.substring(5), value);
                 logger.debug("Argument '" + key.substring(5) + "' with value '" + value + "' stored on the map.");
             }
@@ -245,21 +246,23 @@ public class KettleElementType extends AbstractElementType {
         //These conditions will treat the different types of kettle operations
 
         IKettleOutput kettleOutput = null;
-        String clazz = pluginUtils.getRequestParameters(parameterProviders).getStringParameter("kettleOutput", "Infered") + "KettleOutput";
+      String haveOutput = (String)bloatedMap.get( "request" ).get( "kettleOutput" );
+        String clazz = (haveOutput != null ? haveOutput : "Infered") + "KettleOutput";
 
         try {
             // Get defined kettleOutput class name
 
-            Constructor constructor = Class.forName("pt.webdetails.cpk.elements.impl.kettleOutputs." + clazz).getConstructor(Map.class, IPluginUtils.class);
-            kettleOutput = (IKettleOutput) constructor.newInstance(parameterProviders, pluginUtils);
+            Constructor constructor = Class.forName("pt.webdetails.pt.webdetails.cpk.elements.impl.kettleOutputs." + clazz).getConstructor(Map.class, IPluginUtils.class);
+            kettleOutput = (IKettleOutput) constructor.newInstance(bloatedMap, pluginUtils);
 
         } catch (Exception ex) {
             logger.error("Error initializing Kettle output type " + clazz + ", reverting to KettleOutput: " + Util.getExceptionDescription(ex));
-            kettleOutput = new KettleOutput(parameterProviders, pluginUtils);
+            kettleOutput = new KettleOutput(bloatedMap, pluginUtils);
         }
 
         // Are we specifying a stepname?
-        kettleOutput.setOutputStepName(pluginUtils.getRequestParameters(parameterProviders).getStringParameter("stepName", stepName));
+      String hasStepName = (String)bloatedMap.get( "request" ).get( "stepName" );
+      kettleOutput.setOutputStepName(  hasStepName != null ? hasStepName : stepName );
 
         Result result = null;
 
@@ -402,7 +405,7 @@ public class KettleElementType extends AbstractElementType {
         Job job = new Job(null, jobMeta);
         job.initializeVariablesFrom(null);
         job.getJobMeta().setInternalKettleVariables(job);
-        
+
         IUserSession userSession = CpkEngine.getInstance().getEnvironment().getSessionUtils().getCurrentSession();
 
         if (userSession.getUserName() != null) {

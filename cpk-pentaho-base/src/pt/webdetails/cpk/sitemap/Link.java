@@ -5,17 +5,18 @@ package pt.webdetails.cpk.sitemap;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import pt.webdetails.cpk.elements.IElement;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -27,7 +28,6 @@ import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpf.utils.IPluginUtils;
 
 /**
- *
  * @author Luís Paulo Silva
  */
 public class Link {

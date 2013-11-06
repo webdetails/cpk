@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import pt.webdetails.cpk.elements.IElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,7 +20,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import pt.webdetails.cpf.utils.IPluginUtils;
 
 /**
- *
  * @author Luís Paulo Silva
  */
 public class LinkGenerator {
