@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+This is a Spring file that defines how Pentaho system objects are created and managed.  
+An implementation of IPentahoObjectFactory, such as WebSpringPentahoObjectFactory, is 
+responsible for serving objects to callers based on this file.
+
+Possible values for scope attribute:
+*singleton* - each request for this object returns the same instance
+*prototype* - each request for this object returns a new instance
+*session* - each request for this object within a session returns the same instance
+
+default-lazy-init is set to true since some of these object make calls into 
+PentahoSystem which is initialized after Spring
+ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:pen="http://www.pentaho.com/schema/pentaho-system"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd 
+       http://www.pentaho.com/schema/pentaho-system http://www.pentaho.com/schema/pentaho-system.xsd" default-lazy-init="true" >
+
+  <bean id="ISolutionEngine" class="org.pentaho.platform.engine.services.solution.SolutionEngine" scope="prototype"/>
+  <bean id="IAuditEntry" class="org.pentaho.platform.engine.services.audit.AuditFileEntry" scope="singleton"/>
+  <bean id="IUITemplater" class="org.pentaho.platform.web.http.WebTemplateHelper" scope="singleton"/>
+  <!-- Concrete implementation of IMetadataDomainRepository -->
+  <bean id="IMetadataDomainRepositoryImpl"
+        class="org.pentaho.platform.plugin.services.metadata.SecurityAwarePentahoMetadataDomainRepository" scope="singleton">
+    <constructor-arg>
+      <ref bean="unifiedRepository"/>
+    </constructor-arg>
+	</bean>
+  <!-- Wrap the concrete IMetadataDomainRepository implementation with one that caches domains per session -->
+  <bean id="IMetadataDomainRepository"
+        class="org.pentaho.platform.plugin.services.metadata.SessionCachingMetadataDomainRepository" scope="singleton">
+    <constructor-arg>
+      <ref bean="IMetadataDomainRepositoryImpl"/>
+    </constructor-arg>
+  </bean>
+  <!--  Use this schema factory to disable PMD security -->
+  <!--  <bean id="IMetadataDomainRepository" class="org.pentaho.platform.plugin.services.metadata.CachingPentahoMetadataDomainRepository" scope="singleton"/>-->
+  <bean id="IUserSettingService" class="org.pentaho.platform.repository.usersettings.UserSettingService">
+      <constructor-arg ref="unifiedRepository"/>
+  </bean>
+  <bean id="IEmailService" class="org.pentaho.platform.plugin.services.email.EmailService" scope="session"/>
+  <bean id="file" class="org.pentaho.platform.plugin.outputs.FileOutputHandler" scope="session"/>
+  <bean id="contentrepo" class="org.pentaho.platform.repository2.unified.fileio.RepositoryContentOutputHandler"
+        scope="session"/>
+  <bean id="vfs-ftp" class="org.pentaho.platform.plugin.outputs.ApacheVFSOutputHandler" scope="session"/>
+  <bean id="IAclPublisher" class="org.pentaho.platform.engine.security.acls.AclPublisher" scope="singleton"/>
+  <bean id="IAclVoter" class="org.pentaho.platform.engine.security.acls.voter.PentahoBasicAclVoter" scope="singleton"/>
+  <bean id="IVersionHelper" class="org.pentaho.platform.util.VersionHelper" scope="singleton"/>
+  <bean id="ICacheManager" class="org.pentaho.platform.plugin.services.cache.CacheManager" scope="singleton"/>
+  <bean id="IScheduler2" class="org.pentaho.platform.scheduler2.quartz.QuartzScheduler" scope="singleton"/>
+  <bean id="IBlockoutManager" class="org.pentaho.platform.scheduler2.blockout.PentahoBlockoutManager" scope="singleton"/>
+  <bean id="IConditionalExecution" class="org.pentaho.platform.plugin.condition.javascript.ConditionalExecution"
+        scope="prototype"/>
+  <bean id="IMessageFormatter" class="org.pentaho.platform.engine.services.MessageFormatter" scope="singleton"/>
+  <!--
+    IDBDatasourceService - options are:
+    org.pentaho.platform.engine.services.connection.datasource.dbcp.JndiDatasourceService
+    org.pentaho.platform.engine.services.connection.datasource.dbcp.NonPooledOrJndiDatasourceService
+    org.pentaho.platform.engine.services.connection.datasource.dbcp.PooledDatasourceService
+    org.pentaho.platform.engine.services.connection.datasource.dbcp.NonPooledDatasourceService
+    org.pentaho.platform.engine.services.connection.datasource.dbcp.PooledOrJndiDatasourceService  (Default option)
+  -->
+  <bean id="IDBDatasourceService"
+        class="org.pentaho.platform.engine.services.connection.datasource.dbcp.PooledOrJndiDatasourceService"
+        scope="singleton"/>
+  <bean id="IPasswordService" class="org.pentaho.platform.util.Base64PasswordService" scope="singleton"/>
+  <bean id="IPluginProvider" class="org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider"
+        scope="singleton"/>
+
+  <bean id="IPluginManager" class="org.pentaho.platform.plugin.services.pluginmgr.DefaultPluginManager"
+        scope="singleton"/>
+  <bean id="IPluginResourceLoader" class="org.pentaho.platform.plugin.services.pluginmgr.PluginResourceLoader"
+        scope="singleton"/>
+  <bean id="IPluginPerspectiveManager"
+        class="org.pentaho.platform.plugin.services.pluginmgr.perspective.DefaultPluginPerspectiveManager"
+        scope="singleton"/>
+  <bean id="IServiceManager" class="org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager"
+        scope="singleton">
+    <property name="serviceTypeManagers">
+      <list>
+        <ref bean="gwtServiceManager"/>
+        <ref bean="axisServiceManager"/>
+      </list>
+    </property>
+  </bean>
+  <bean id="ITempFileDeleter" class="org.pentaho.platform.web.http.session.SessionTempFileDeleter" scope="prototype"/>
+  <bean id="gwtServiceManager" class="org.pentaho.platform.plugin.services.pluginmgr.servicemgr.GwtRpcServiceManager"
+        scope="singleton"/>
+  <bean id="axisServiceManager" class="org.pentaho.platform.plugin.services.pluginmgr.servicemgr.AxisWebServiceManager"
+        scope="singleton"/>
+
+  <bean id="IChartBeansGenerator" class="org.pentaho.platform.plugin.action.chartbeans.DefaultChartBeansGenerator"
+        scope="singleton"/>
+
+  <!-- Data connections.  Connections objects should be accessed through PentahoConnectionFactory,
+not directly from the PentahoObjectFactory. -->
+  <bean id="connection-SQL" class="org.pentaho.platform.plugin.services.connections.sql.SQLConnection"
+        scope="prototype">
+    <property name="fallBackToNonscrollableOnError" value="true"/>
+  </bean>
+  <bean id="connection-MDX" class="org.pentaho.platform.plugin.services.connections.mondrian.MDXConnection"
+        scope="prototype">
+    <property name="useExtendedColumnNames" value="true"/>
+  </bean>
+  <bean id="connection-MDXOlap4j" class="org.pentaho.platform.plugin.services.connections.mondrian.MDXOlap4jConnection" scope="prototype" />
+  <bean id="connection-XML" class="org.pentaho.platform.plugin.services.connections.xquery.XQConnection"
+        scope="prototype"/>
+  <bean id="connection-HQL" class="org.pentaho.platform.plugin.services.connections.hql.HQLConnection"
+        scope="prototype"/>
+
+  <!-- actual bean defined in repository.spring.xml; aliased here -->
+  <alias name="unifiedRepository" alias="IUnifiedRepository"/>
+
+  <!-- actual bean defined in repository.spring.xml; aliased here -->
+  <alias name="backingRepositoryLifecycleManager" alias="IBackingRepositoryLifecycleManager"/>
+
+  <!-- actual bean defined in repository.spring.xml; aliased here -->
+  <alias name="authorizationPolicy" alias="IAuthorizationPolicy"/>
+
+  <!-- actual bean defined in repository.spring.xml; aliased here -->
+  <alias name="roleAuthorizationPolicyRoleBindingDaoTxn" alias="IRoleAuthorizationPolicyRoleBindingDao"/>
+
+  <!-- actual bean defined in applicationContext-pentaho-security-*.xml; aliased here -->
+  <pen:bean id="IUserRoleListService" class="org.pentaho.platform.api.engine.IUserRoleListService">
+    <pen:attributes>
+      <pen:attr key="providerName" value="${security.provider}"/>
+    </pen:attributes>
+    <pen:publish as-type="INTERFACES">
+      <pen:attributes>
+        <pen:attr key="priority" value="50"/>
+      </pen:attributes>
+    </pen:publish>
+  </pen:bean>
+
+  <!-- 
+    This bean is the actual implementation of the unified repository. The biserver does not use this bean directory
+    instead a proxy bean is defined that provides transaction, method level security and exception logging support using spring aop. If you wish 
+    to bypass transaction and method level security for test purposes you can reference this bean directly.
+  -->
+  <bean id="unifiedRepositoryTarget" class="org.pentaho.platform.repository2.unified.DefaultUnifiedRepository">
+    <constructor-arg ref="repositoryFileDao"/>
+    <constructor-arg ref="repositoryFileAclDao"/>
+  </bean>
+
+
+  <!-- 
+    This bean defines how jcr transactions are propagated when methods in IUnifiedRepository are called.
+  -->
+  <bean id="unifiedRepositoryTransactionInterceptor"
+        class="org.springframework.transaction.interceptor.TransactionInterceptor">
+    <property name="transactionManager" ref="jcrTransactionManager"/>
+    <property name="transactionAttributeSource">
+      <value>
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFile=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFileAtVersion=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFileById=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForRead=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForReadInBatch=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataAtVersionForRead=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForExecute=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForExecuteInBatch=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataAtVersionForExecute=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.createFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.createFolder=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.updateFolder=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getChildren=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.updateFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAcl=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.hasAccess=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getEffectiveAces=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.updateAcl=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.lockFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.unlockFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.canUnlockFile=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.restoreFileAtVersion=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getVersionSummary=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getVersionSummaryInBatch=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getVersionSummaries=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.deleteFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.deleteFileAtVersion=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.undeleteFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDeletedFiles=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDeletedFiles=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.moveFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.copyFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getTree=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getReferrers=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setFileMetadata=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFileMetadata=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAvailableLocalesForFileById=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAvailableLocalesForFileByPath=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAvailableLocalesForFile=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getLocalePropertiesForFileById=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getLocalePropertiesForFileByPath=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getLocalePropertiesForFile=PROPAGATION_REQUIRED,readOnly
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setLocalePropertiesForFileById=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setLocalePropertiesForFileByPath=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setLocalePropertiesForFile=PROPAGATION_REQUIRED
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.deleteLocalePropertiesForFile=PROPAGATION_REQUIRED
+      </value>
+    </property>
+  </bean>
+
+  <!-- 
+    This bean is used by spring aop to add method level security to the real unified repository implementation.
+  -->
+  <bean id="unifiedRepositoryMethodInterceptor"
+        class="org.springframework.security.intercept.method.aopalliance.MethodSecurityInterceptor">
+    <property name="validateConfigAttributes">
+      <value>true</value>
+    </property>
+    <property name="authenticationManager">
+      <ref bean="authenticationManager"/>
+    </property>
+    <property name="accessDecisionManager">
+      <ref bean="businessAccessDecisionManager"/>
+    </property>
+    <property name="objectDefinitionSource">
+      <value>
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFileAtVersion=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFileById=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForRead=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForReadInBatch=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataAtVersionForRead=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForExecute=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataForExecuteInBatch=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDataAtVersionForExecute=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.createFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.createFolder=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.updateFolder=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getChildren=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.updateFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAcl=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.hasAccess=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getEffectiveAces=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.updateAcl=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.lockFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.unlockFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.canUnlockFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.restoreFileAtVersion=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getVersionSummary=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getVersionSummaryInBatch=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getVersionSummaries=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.deleteFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.deleteFileAtVersion=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.undeleteFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDeletedFiles=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getDeletedFiles=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.moveFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.copyFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getTree=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getReferrers=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setFileMetadata=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getFileMetadata=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAvailableLocalesForFileById=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAvailableLocalesForFileByPath=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getAvailableLocalesForFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getLocalePropertiesForFileById=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getLocalePropertiesForFileByPath=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.getLocalePropertiesForFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.read
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setLocalePropertiesForFileById=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setLocalePropertiesForFileByPath=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.setLocalePropertiesForFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+        org.pentaho.platform.api.repository2.unified.IUnifiedRepository.deleteLocalePropertiesForFile=VOTE_AUTHZ_POLICY_org.pentaho.repository.create
+
+      </value>
+    </property>
+  </bean>
+
+  <!-- 
+    This bean serves as a proxy for the real IUnifiedRepository. It uses spring aop to add transaction management
+    and method level security on top of the real IUnifiedRepository implementation.
+  -->
+  <bean id="unifiedRepositoryProxy" class="org.springframework.aop.framework.ProxyFactoryBean">
+    <property name="target" ref="unifiedRepositoryTarget"/>
+    <property name="interceptorNames">
+      <list>
+        <idref local="unifiedRepositoryTransactionInterceptor"/>
+        <idref local="unifiedRepositoryMethodInterceptor"/>
+      </list>
+    </property>
+  </bean>
+
+  <!-- 
+    This bean is used by spring aop to add exception logging to the real unified repository implementation.
+  -->
+  <bean id="unifiedRepository" class="org.pentaho.platform.repository2.unified.ExceptionLoggingDecorator">
+    <constructor-arg ref="unifiedRepositoryProxy"/>
+    <constructor-arg>
+      <util:map>
+        <entry key="org.springframework.security.AccessDeniedException">
+          <bean class="org.pentaho.platform.repository2.unified.exception.AccessDeniedExceptionConverter" />
+        </entry>
+        <entry key="org.pentaho.platform.repository2.unified.exception.RepositoryFileDaoFileExistsException">
+          <bean class="org.pentaho.platform.repository2.unified.exception.FileExistsExceptionConverter" />
+        </entry>
+        <entry key="org.pentaho.platform.repository2.unified.exception.RepositoryFileDaoReferentialIntegrityException">
+          <bean class="org.pentaho.platform.repository2.unified.exception.ReferentialIntegrityExceptionConverter" />
+        </entry>
+        <entry key="org.pentaho.platform.repository2.unified.exception.RepositoryFileDaoMalformedNameException">
+          <bean class="org.pentaho.platform.repository2.unified.exception.MalformedNameExceptionConverter" />
+        </entry>
+      </util:map>
+    </constructor-arg>
+  </bean>
+
+
+
+  
+
+  <bean id="tenantedUserNameUtils" class="org.pentaho.platform.security.userroledao.DefaultTenantedPrincipleNameResolver">
+  </bean>
+  <bean id="systemSettingsService" class="org.pentaho.platform.engine.core.system.PathBasedSystemSettings" />
+
+  <pen:bean id="UserDetailsService" class="org.pentaho.platform.plugin.services.security.userrole.PentahoCachingUserDetailsService">
+    <pen:attributes>
+      <!--><pen:attr key="providerName" value="${security.provider}"/><-->
+      <pen:attr key="providerName" value="admin"/>
+    </pen:attributes>
+  </pen:bean>
+
+
+  <bean id="ehCacheUserCache" class="org.springframework.security.providers.dao.cache.EhCacheBasedUserCache">
+    <property name="cache">
+      <bean class="org.springframework.cache.ehcache.EhCacheFactoryBean">
+        <property name="cacheManager">
+          <bean class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+            <property name="shared" value="true"/>
+          </bean>
+        </property>
+        <property name="cacheName" value="userCache"/>
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="cachingUserDetailsService" class="org.pentaho.platform.plugin.services.security.userrole.PentahoCachingUserDetailsService">
+    <constructor-arg>
+      <ref bean="UserDetailsService"/>
+    </constructor-arg>
+    <constructor-arg ref="tenantedUserNameUtils"/>
+    <property name="userCache" ref="ehCacheUserCache"/>
+
+    <pen:publish as-type="INTERFACES">
+      <pen:attributes>
+        <pen:attr key="priority" value="50"/>
+      </pen:attributes>
+    </pen:publish>
+
+  </bean>
+
+  <!-- actual bean defined in applicationContext-spring-security.xml; aliased here -->
+  <alias name="authenticationManager" alias="AuthenticationManager"/>
+
+    <bean id="IMondrianCatalogService" class="org.pentaho.platform.plugin.action.mondrian.catalog.MondrianCatalogHelper"
+        scope="singleton"/>
+
+  <bean id="IDatabaseDialectService" class="org.pentaho.database.service.DatabaseDialectService" scope="singleton"/>
+
+  <bean id="IDatasourceMgmtService" class="org.pentaho.platform.repository.JcrBackedDatasourceMgmtService"
+        scope="singleton">
+    <constructor-arg ref="unifiedRepository"/>
+    <constructor-arg ref="IDatabaseDialectService"/>
+  </bean>
+
+  <!--  This mondrian user/role mapper assumes that roles from the platform also exist in mondrian -->
+
+  <!--
+  Disabled by default in 3.5.2. In trunk, this should be enabled.
+    -->
+  <bean id="Mondrian-UserRoleMapper"
+        name="Mondrian-One-To-One-UserRoleMapper"
+        class="org.pentaho.platform.plugin.action.mondrian.mapper.MondrianOneToOneUserRoleListMapper"
+        scope="singleton" />
+
+
+  <!--
+
+ This sample mapper assumes that a translator is needed (in the form of a Map) to map a platform role to a mondrian role
+
+ Note- Key = platform role, value = mondrian role
+
+ <bean id="Mondrian-UserRoleMapper"
+       name="Mondrian-SampleLookupMap-UserRoleMapper"
+       class="org.pentaho.platform.plugin.action.mondrian.mapper.MondrianLookupMapUserRoleListMapper"
+       scope="singleton">
+   <property name="lookupMap">
+     <map>
+       <entry key="ceo" value="M_CEO" />
+       <entry key="cto" value="M_CTO" />
+       <entry key="dev" value="M_DEV" />
+     </map>
+   </property>
+ </bean>
+  -->
+
+  <!--
+  This sample mapper assumes that every user has their mondrian roles in their session under then named session variable
+  <bean id="Mondrian-UserRoleMapper"
+        name="Mondrian-SampleUserSession-UserRoleMapper"
+        class="org.pentaho.platform.plugin.action.mondrian.mapper.MondrianUserSessionUserRoleListMapper"
+        scope="singleton">
+    <property name="sessionProperty" value="MondrianUserRoles" />
+  </bean>
+  -->
+  <bean id="ReportCache" class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="singleton"/>
+  <bean id="PentahoNameGenerator" class="org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator"
+        scope="prototype"/>
+  <bean id="MondrianConnectionProvider"
+        class="org.pentaho.reporting.platform.plugin.connection.PentahoMondrianConnectionProvider" scope="singleton"/>
+
+  <bean id="metadataqueryexec-SQL"
+        class="org.pentaho.platform.plugin.services.connections.metadata.sql.SqlMetadataQueryExec" scope="prototype"/>
+  <bean id="sqlGenerator" class="org.pentaho.metadata.query.impl.sql.SqlGenerator" scope="prototype"/>
+  <bean id="IThemeManager" class="org.pentaho.platform.web.html.themes.DefaultThemeManager" scope="singleton"/>
+
+  <bean id="ICacheExpirationRegistry" class="org.pentaho.platform.plugin.services.cache.CacheExpirationRegistry"
+        scope="singleton"/>
+
+</beans>
+
