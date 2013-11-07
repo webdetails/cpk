@@ -162,8 +162,8 @@ public class KettleElementType extends AbstractElementType {
         cpkPluginId = pluginDirFile.getName();
         try {
           //cpkSolutionDir = CpkEngine.getInstance().getEnvironment().getRepositoryAccess().getSolutionPath("");
-          //XXX  find a way to properly do this since repositoryAccess died
-          cpkSolutionDir = System.getProperty( "user.dir" ) + "/test-resources/repository/system/cpkSol";
+          //XXX - solutionDir = pluginDir ?
+          cpkSolutionDir = cpkPluginDir;
         } catch (Exception e) {
         }
         cpkSolutionSystemDir = pluginDirFile.getParentFile().getAbsolutePath();
