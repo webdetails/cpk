@@ -4,68 +4,67 @@
 package pt.webdetails.cpk.elements;
 
 /**
- *
  * ElementInfo has the relevant information to be passed to the content string.
  *
  * @author Pedro Alves<pedro.alves@webdetails.pt>
  */
 public class ElementInfo {
 
-    private boolean hasCache = false;
-    private int cacheDuration;
-    private String mimeType;
-    private String attachmentName;
+  private boolean hasCache = false;
+  private int cacheDuration;
+  private String mimeType;
+  private String attachmentName;
 
-    public ElementInfo() {
-    }
+  public ElementInfo() {
+  }
 
-    public ElementInfo(String mimeType) {
-        this.mimeType = mimeType;
-    }
+  public ElementInfo( String mimeType ) {
+    this.mimeType = mimeType;
+  }
 
-    public ElementInfo(String mimeType, int cacheDuration) {
-        
-        this.cacheDuration = cacheDuration;
-        this.mimeType = mimeType;
-        
-        // if cacheDuration > 0, hasCache is true
-        setHasCache(cacheDuration>0);
-        
-    }
+  public ElementInfo( String mimeType, int cacheDuration ) {
 
-    public boolean isHasCache() {
-        return hasCache;
-    }
+    this.cacheDuration = cacheDuration;
+    this.mimeType = mimeType;
 
-    public void setHasCache(boolean hasCache) {
-        this.hasCache = hasCache;
-    }
+    // if cacheDuration > 0, hasCache is true
+    setHasCache( cacheDuration > 0 );
 
-    public int getCacheDuration() {
-        return cacheDuration;
-    }
+  }
 
-    public void setCacheDuration(int cacheDuration) {
-        this.cacheDuration = cacheDuration;
-    }
+  public boolean isHasCache() {
+    return hasCache;
+  }
 
-    public String getMimeType() {
-        return mimeType;
-    }
+  public void setHasCache( boolean hasCache ) {
+    this.hasCache = hasCache;
+  }
 
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
+  public int getCacheDuration() {
+    return cacheDuration;
+  }
 
-    public boolean hasAttachment() {
-        return getAttachmentName() != null && !getAttachmentName().equals("");
-    }
+  public void setCacheDuration( int cacheDuration ) {
+    this.cacheDuration = cacheDuration;
+  }
 
-    public String getAttachmentName() {
-        return attachmentName;
-    }
+  public String getMimeType() {
+    return mimeType;
+  }
 
-    public void setAttachmentName(String attachmentName) {
-        this.attachmentName = attachmentName;
-    }
+  public void setMimeType( String mimeType ) {
+    this.mimeType = mimeType;
+  }
+
+  public boolean hasAttachment() {
+    return getAttachmentName() != null && !getAttachmentName().equals( "" );
+  }
+
+  public String getAttachmentName() {
+    return attachmentName;
+  }
+
+  public void setAttachmentName( String attachmentName ) {
+    this.attachmentName = attachmentName;
+  }
 }

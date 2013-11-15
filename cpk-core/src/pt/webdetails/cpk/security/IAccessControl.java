@@ -5,18 +5,18 @@
 package pt.webdetails.cpk.security;
 
 import java.util.Map;
+
 import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpk.elements.IElement;
 
 
-
 public interface IAccessControl {
-    public boolean isAllowed(IElement element);
+  public boolean isAllowed( IElement element );
 
-    public boolean isAdmin();
-    
+  public boolean isAdmin();
 
-    //Bloody stupid name
-    public void throwAccessDenied(Map<String,ICommonParameterProvider> parameterProviders);
-    
+
+  //Bloody stupid name
+  public void throwAccessDenied( Map<String, ICommonParameterProvider> parameterProviders );
+
 }

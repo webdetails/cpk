@@ -8,7 +8,6 @@ import pt.webdetails.cpk.elements.AbstractElementType;
 import pt.webdetails.cpk.elements.IElement;
 
 /**
- *
  * @author Pedro Alves<pedro.alves@webdetails.pt>
  */
 public class DashboardElement extends AbstractElement {

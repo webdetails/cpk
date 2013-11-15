@@ -4,6 +4,7 @@
 package pt.webdetails.cpk;
 
 import java.util.List;
+
 import pt.webdetails.cpf.plugin.CorePlugin;
 import pt.webdetails.cpf.plugins.Plugin;
 import pt.webdetails.cpf.plugins.PluginsAnalyzer;
@@ -15,56 +16,55 @@ import pt.webdetails.cpk.security.AccessControl;
 import pt.webdetails.cpk.security.IAccessControl;
 
 /**
- *
  * @author joao
  */
 public class CpkPentahoEnvironment implements ICpkEnvironment {
 
-    private IPluginUtils pluginUtils;
-    private IRepositoryAccess repoAccess;
-    
-    public CpkPentahoEnvironment(IPluginUtils pluginUtils, IRepositoryAccess repoAccess) {
-        this.pluginUtils = pluginUtils;
-        this.repoAccess = repoAccess;
-    }
+  private IPluginUtils pluginUtils;
+  private IRepositoryAccess repoAccess;
 
-    @Override
-    public IPluginUtils getPluginUtils() {
-        return pluginUtils;
-    }
+  public CpkPentahoEnvironment( IPluginUtils pluginUtils, IRepositoryAccess repoAccess ) {
+    this.pluginUtils = pluginUtils;
+    this.repoAccess = repoAccess;
+  }
 
-    @Override
-    public IRepositoryAccess getRepositoryAccess() {
-        return repoAccess;
-    }
+  @Override
+  public IPluginUtils getPluginUtils() {
+    return pluginUtils;
+  }
 
-    @Override
-    public IAccessControl getAccessControl() {
-        return new AccessControl(pluginUtils);
-    }
+  @Override
+  public IRepositoryAccess getRepositoryAccess() {
+    return repoAccess;
+  }
 
-    @Override
-    public String getPluginName() {
-        return pluginUtils.getPluginName();
-    }
+  @Override
+  public IAccessControl getAccessControl() {
+    return new AccessControl( pluginUtils );
+  }
 
-    @Override
-    public ISessionUtils getSessionUtils() {
-        return new PentahoSessionUtils();
-    }
+  @Override
+  public String getPluginName() {
+    return pluginUtils.getPluginName();
+  }
 
-    @Override
-    public void reload() {
-        PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
-        pluginsAnalyzer.refresh();
-        List<Plugin> plugins = pluginsAnalyzer.getInstalledPlugins();
-        String pluginName = pluginUtils.getPluginName();
-        for (Plugin plgn : plugins) {
-            if (plgn.getName().equalsIgnoreCase(pluginName) || plgn.getId().equalsIgnoreCase(pluginName)) {
-                plgn.setName(pluginName);
-                repoAccess.setPlugin(plgn);
-                break;
-            }
-        }
+  @Override
+  public ISessionUtils getSessionUtils() {
+    return new PentahoSessionUtils();
+  }
+
+  @Override
+  public void reload() {
+    PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
+    pluginsAnalyzer.refresh();
+    List<Plugin> plugins = pluginsAnalyzer.getInstalledPlugins();
+    String pluginName = pluginUtils.getPluginName();
+    for ( Plugin plgn : plugins ) {
+      if ( plgn.getName().equalsIgnoreCase( pluginName ) || plgn.getId().equalsIgnoreCase( pluginName ) ) {
+        plgn.setName( pluginName );
+        repoAccess.setPlugin( plgn );
+        break;
+      }
     }
+  }
 }

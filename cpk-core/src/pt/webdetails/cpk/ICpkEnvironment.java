@@ -10,16 +10,16 @@ import pt.webdetails.cpk.security.IAccessControl;
 
 
 public interface ICpkEnvironment {
-      
-  public  IPluginUtils getPluginUtils();
-  
+
+  public IPluginUtils getPluginUtils();
+
   public IRepositoryAccess getRepositoryAccess();
-  
+
   public IAccessControl getAccessControl();
-  
+
   public String getPluginName();
-    
+
   public ISessionUtils getSessionUtils();
-  
+
   public void reload();
 }

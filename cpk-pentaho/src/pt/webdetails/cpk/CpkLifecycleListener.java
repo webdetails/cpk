@@ -9,30 +9,29 @@ import org.pentaho.platform.api.engine.IPluginLifecycleListener;
 import org.pentaho.platform.api.engine.PluginLifecycleException;
 
 /**
- *
  * @author pedro
  */
-public class CpkLifecycleListener implements IPluginLifecycleListener { 
+public class CpkLifecycleListener implements IPluginLifecycleListener {
 
-    static Log logger = LogFactory.getLog(CpkLifecycleListener.class);
+  static Log logger = LogFactory.getLog( CpkLifecycleListener.class );
 
-    @Override
-    public void init() throws PluginLifecycleException {
+  @Override
+  public void init() throws PluginLifecycleException {
 
-        logger.info("Initializing CPK plugin");
+    logger.info( "Initializing CPK plugin" );
 
-    }
+  }
 
-    //@Override
-    public void loaded() throws PluginLifecycleException {
+  //@Override
+  public void loaded() throws PluginLifecycleException {
 
-        logger.info("CPK plugin loaded");
+    logger.info( "CPK plugin loaded" );
 
-    }
+  }
 
-    //@Override
-    public void unLoaded() throws PluginLifecycleException {
-        logger.info("CPK plugin unloaded");
+  //@Override
+  public void unLoaded() throws PluginLifecycleException {
+    logger.info( "CPK plugin unloaded" );
 
-    }
+  }
 }

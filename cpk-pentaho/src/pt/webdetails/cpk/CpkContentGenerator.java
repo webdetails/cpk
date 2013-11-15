@@ -42,211 +42,212 @@ import pt.webdetails.cpk.sitemap.LinkGenerator;
 
 public class CpkContentGenerator extends RestContentGenerator {
 
-    private static final long serialVersionUID = 1L;
-    public static final String PLUGIN_NAME = "cpk";
-    protected CpkCoreService coreService;
-    protected ICpkEnvironment cpkEnv;
+  private static final long serialVersionUID = 1L;
+  public static final String PLUGIN_NAME = "cpk";
+  protected CpkCoreService coreService;
+  protected ICpkEnvironment cpkEnv;
 
-    public CpkContentGenerator() {
-        this.pluginUtils = new PluginUtils();
-        this.cpkEnv = new CpkPentahoEnvironment(pluginUtils, new PentahoRepositoryAccess());
-        this.coreService = new CpkCoreService(cpkEnv); 
+  public CpkContentGenerator() {
+    this.pluginUtils = new PluginUtils();
+    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, new PentahoRepositoryAccess() );
+    this.coreService = new CpkCoreService( cpkEnv );
+  }
+
+  @Override
+  public void createContent() throws Exception {
+    wrapParams();
+    try {
+      coreService.createContent( map );
+    } catch ( NoElementException e ) {
+      super.createContent();
+    }
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void reload( OutputStream out ) throws DocumentException, IOException {
+    coreService.reload( out, map );
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void refresh( OutputStream out ) throws DocumentException, IOException {
+    coreService.refresh( out, map );
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void version( OutputStream out ) {
+
+    PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
+    pluginsAnalyzer.refresh();
+
+    String version = null;
+
+    IPluginFilter thisPlugin = new IPluginFilter() {
+      @Override
+      public boolean include( Plugin plugin ) {
+        return plugin.getId().equalsIgnoreCase( pluginUtils.getPluginName() );
+      }
+    };
+
+    List<Plugin> plugins = pluginsAnalyzer.getPlugins( thisPlugin );
+
+
+    version = plugins.get( 0 ).getVersion().toString();
+    writeMessage( out, version );
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void status( OutputStream out ) throws DocumentException, IOException {
+    if ( map.get( "request" ).hasParameter( "json" ) ) {
+      coreService.statusJson( out, map );
+    } else {
+      coreService.status( out, map );
+    }
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void getPluginMetadata( OutputStream out ) {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = null;
+    IPluginFilter pluginFilter = new IPluginFilter() {
+
+      @Override
+      public boolean include( Plugin plugin ) {
+        return plugin.getId().equals( pluginUtils.getPluginName() );
+      }
+    };
+
+    PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
+    pluginsAnalyzer.refresh();
+
+    List<Plugin> plugins = pluginsAnalyzer.getPlugins( pluginFilter );
+
+    Plugin plugin = null;
+
+    if ( !plugins.isEmpty() ) {
+      plugin = plugins.get( 0 );
+
+      try {
+        json = mapper.writeValueAsString( plugin );
+      } catch ( IOException ex ) {
+        Logger.getLogger( CpkContentGenerator.class.getName() ).log( Level.SEVERE, null, ex );
+      }
     }
 
-    @Override
-    public void createContent() throws Exception {
-        wrapParams();
-        try {
-            coreService.createContent(map);
-        } catch (NoElementException e) {
-            super.createContent();
+    if ( json == null ) {
+      json = "{\"error\":\"There was a problem getting the plugin metadata into JSON. The result was 'null'\"}";
+    }
+
+    writeMessage( out, json );
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void getSitemapJson( OutputStream out ) throws IOException {
+
+    TreeMap<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
+    JsonNode sitemap = null;
+    if ( elementsMap != null ) {
+      LinkGenerator linkGen = new LinkGenerator( elementsMap, pluginUtils );
+      sitemap = linkGen.getLinksJson();
+    }
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.writeValue( out, sitemap );
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC )
+  public void elementsList( OutputStream out ) {
+    coreService.getElementsList( out, map );
+  }
+
+  @Override
+  public String getPluginName() {
+
+    return pluginUtils.getPluginName();
+  }
+
+  private void writeMessage( OutputStream out, String message ) {
+    try {
+      out.write( message.getBytes( ENCODING ) );
+    } catch ( IOException ex ) {
+      Logger.getLogger( CpkContentGenerator.class.getName() ).log( Level.SEVERE, null, ex );
+    }
+  }
+
+  @Override
+  public RestRequestHandler getRequestHandler() {
+    return Router.getBaseRouter();
+  }
+
+  private void wrapParams() {
+    if ( parameterProviders != null ) {
+      Iterator it = parameterProviders.entrySet().iterator();
+      map = new HashMap<String, ICommonParameterProvider>();
+      while ( it.hasNext() ) {
+        @SuppressWarnings( "unchecked" )
+        Map.Entry<String, IParameterProvider> e = (Map.Entry<String, IParameterProvider>) it.next();
+        map.put( e.getKey(), WrapperUtils.wrapParamProvider( e.getValue() ) );
+      }
+    }
+  }
+
+  // New Jackson API (version 2.x)
+  static final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+  static {
+    mapper.setSerializationInclusion( com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL );
+    mapper.setSerializationInclusion( com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY );
+  }
+
+  @Exposed( accessLevel = AccessLevel.PUBLIC, outputType = MimeType.JSON )
+  public void listDataAccessTypes( final OutputStream out ) throws Exception {
+    //boolean refreshCache = Boolean.parseBoolean(getRequestParameters().getStringParameter("refreshCache", "false"));
+
+    Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
+    StringBuilder dsDeclarations = new StringBuilder( "{" );
+    IElement[] endpoints = coreService.getElements();
+
+    if ( endpoints != null ) {
+      for ( IElement endpoint : endpoints ) {
+
+        // filter endpoints that aren't of kettle type
+        if ( !( endpoint instanceof KettleElementType || endpoint.getElementType().equalsIgnoreCase( "kettle" ) ) ) {
+          continue;
         }
-    }
 
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void reload(OutputStream out) throws DocumentException, IOException {
-        coreService.reload(out, map);
-    }
-    
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void refresh(OutputStream out) throws DocumentException, IOException {
-        coreService.refresh(out, map);
-    }
-
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void version(OutputStream out) {
-
-        PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
-        pluginsAnalyzer.refresh();
-
-        String version = null;
-
-        IPluginFilter thisPlugin = new IPluginFilter() {
-            @Override
-            public boolean include(Plugin plugin) {
-                return plugin.getId().equalsIgnoreCase(pluginUtils.getPluginName());
-            }
-        };
-
-        List<Plugin> plugins = pluginsAnalyzer.getPlugins(thisPlugin);
+        logger.info( String.format( "CPK Kettle Endpoint found: %s)", endpoint ) );
 
 
-        version = plugins.get(0).getVersion().toString();
-        writeMessage(out, version);
-    }
+        String pluginId = coreService.getPluginName();
+        String endpointName = endpoint.getName();
 
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void status(OutputStream out) throws DocumentException, IOException {
-        if(map.get("request").hasParameter("json")){
-            coreService.statusJson(out,map);
-        }else{
-            coreService.status(out, map);
-        }
-    }
-    
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void getPluginMetadata(OutputStream out){
-        ObjectMapper mapper = new ObjectMapper();
-        String json = null;
-        IPluginFilter pluginFilter = new IPluginFilter() {
-
-            @Override
-            public boolean include(Plugin plugin) {
-                return plugin.getId().equals(pluginUtils.getPluginName());
-            }
-        };
-        
-        PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
-        pluginsAnalyzer.refresh();
-        
-        List<Plugin> plugins = pluginsAnalyzer.getPlugins(pluginFilter);
-        
-        Plugin plugin = null;
-        
-        if(!plugins.isEmpty()){
-            plugin = plugins.get(0);
-            
-            try {
-                json = mapper.writeValueAsString(plugin);
-            } catch (IOException ex) {
-                Logger.getLogger(CpkContentGenerator.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        
-        if(json == null){
-            json = "{\"error\":\"There was a problem getting the plugin metadata into JSON. The result was 'null'\"}";
-        }
-        
-        writeMessage(out, json);
-    }
-
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void getSitemapJson(OutputStream out) throws IOException {
-
-        TreeMap<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
-        JsonNode sitemap = null;
-        if (elementsMap != null) {
-            LinkGenerator linkGen = new LinkGenerator(elementsMap, pluginUtils);
-            sitemap = linkGen.getLinksJson();
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(out, sitemap);
-    }
-
-    @Exposed(accessLevel = AccessLevel.PUBLIC)
-    public void elementsList(OutputStream out) {
-        coreService.getElementsList(out,map);
-    }
-
-    @Override
-    public String getPluginName() {
-
-        return pluginUtils.getPluginName();
-    }
-
-    private void writeMessage(OutputStream out, String message) {
-        try {
-            out.write(message.getBytes(ENCODING));
-        } catch (IOException ex) {
-            Logger.getLogger(CpkContentGenerator.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @Override
-    public RestRequestHandler getRequestHandler() {
-        return Router.getBaseRouter();
-    }
-
-    private void wrapParams() {
-        if (parameterProviders != null) {
-            Iterator it = parameterProviders.entrySet().iterator();
-            map = new HashMap<String, ICommonParameterProvider>();
-            while (it.hasNext()) {
-                @SuppressWarnings("unchecked")
-                Map.Entry<String, IParameterProvider> e = (Map.Entry<String, IParameterProvider>) it.next();
-                map.put(e.getKey(), WrapperUtils.wrapParamProvider(e.getValue()));
-            }
-        }
-    }
-
-    // New Jackson API (version 2.x)
-    static final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-    static {
-        mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
-        mapper.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY);
-    }
-
-    @Exposed(accessLevel = AccessLevel.PUBLIC, outputType = MimeType.JSON)
-    public void listDataAccessTypes(final OutputStream out) throws Exception {
-        //boolean refreshCache = Boolean.parseBoolean(getRequestParameters().getStringParameter("refreshCache", "false"));
-
-        Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
-        StringBuilder dsDeclarations = new StringBuilder("{");
-        IElement[] endpoints = coreService.getElements();
-        
-        if (endpoints != null) {
-          for (IElement endpoint : endpoints) {
-
-            // filter endpoints that aren't of kettle type
-            if (!(endpoint instanceof KettleElementType || endpoint.getElementType().equalsIgnoreCase("kettle"))) {
-              continue;
-            }
-
-            logger.info(String.format("CPK Kettle Endpoint found: %s)", endpoint));
-            
-                        
-            String pluginId = coreService.getPluginName();
-            String endpointName = endpoint.getName();
-            
-            //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric    
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < pluginId.length(); i++) {
-              char c = pluginId.charAt(i);
-              if ((Character.isJavaIdentifierStart(c) && i ==  0) || 
-                      (Character.isJavaIdentifierPart(c) && i > 0))
-                sb.append(c);      
-            }    
-            String safePluginId = sb.toString();                                    
-
-            
-
-            DataSourceMetadata metadata = new CpkDataSourceMetadata(pluginId, endpointName);
-            DataSourceDefinition definition = new DataSourceDefinition();
-
-            DataSource dataSource = new DataSource().setMetadata(metadata).setDefinition(definition);
-            dataSources.add(dataSource);
-
-            dsDeclarations.append(String.format("\"%s_%s_CPKENDPOINT\": ", safePluginId, endpointName));
-            dsDeclarations.append(mapper.writeValueAsString(dataSource));
-            dsDeclarations.append(",");
+        //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
+        StringBuilder sb = new StringBuilder();
+        for ( int i = 0; i < pluginId.length(); i++ ) {
+          char c = pluginId.charAt( i );
+          if ( ( Character.isJavaIdentifierStart( c ) && i == 0 ) ||
+            ( Character.isJavaIdentifierPart( c ) && i > 0 ) ) {
+            sb.append( c );
           }
         }
+        String safePluginId = sb.toString();
 
-        int index = dsDeclarations.lastIndexOf(",");
-        if (index > 0) { 
-          dsDeclarations.deleteCharAt(index);
-        }
-        dsDeclarations.append("}");
-        out.write(dsDeclarations.toString().getBytes());
+
+        DataSourceMetadata metadata = new CpkDataSourceMetadata( pluginId, endpointName );
+        DataSourceDefinition definition = new DataSourceDefinition();
+
+        DataSource dataSource = new DataSource().setMetadata( metadata ).setDefinition( definition );
+        dataSources.add( dataSource );
+
+        dsDeclarations.append( String.format( "\"%s_%s_CPKENDPOINT\": ", safePluginId, endpointName ) );
+        dsDeclarations.append( mapper.writeValueAsString( dataSource ) );
+        dsDeclarations.append( "," );
+      }
     }
+
+    int index = dsDeclarations.lastIndexOf( "," );
+    if ( index > 0 ) {
+      dsDeclarations.deleteCharAt( index );
+    }
+    dsDeclarations.append( "}" );
+    out.write( dsDeclarations.toString().getBytes() );
+  }
 }

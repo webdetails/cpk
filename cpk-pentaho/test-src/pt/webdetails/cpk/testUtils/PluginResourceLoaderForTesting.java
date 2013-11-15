@@ -6,25 +6,25 @@
 package pt.webdetails.cpk.testUtils;
 
 import java.io.File;
+
 import org.pentaho.platform.plugin.services.pluginmgr.PluginClassLoader;
 import org.pentaho.platform.plugin.services.pluginmgr.PluginResourceLoader;
 
 /**
- *
  * @author joao
  */
 public class PluginResourceLoaderForTesting extends PluginResourceLoader {
 
-    
-    
-    public PluginResourceLoaderForTesting(){
-        super();
-    }
-    
-    @Override
-    protected PluginClassLoader getOverrideClassloader() {
-        File path = new File(System.getProperty("user.dir")+"/test-resources/repository/system/cpkSol/");//must add the "/" at the end because it is a dir
-        return new PluginClassLoader(path, null);
-    }
+
+  public PluginResourceLoaderForTesting() {
+    super();
+  }
+
+  @Override
+  protected PluginClassLoader getOverrideClassloader() {
+    File path = new File( System.getProperty( "user.dir" )
+      + "/test-resources/repository/system/cpkSol/" );//must add the "/" at the end because it is a dir
+    return new PluginClassLoader( path, null );
+  }
 
 }

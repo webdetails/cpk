@@ -9,26 +9,25 @@ import org.pentaho.di.core.row.RowMetaInterface;
 import pt.webdetails.cpk.elements.impl.KettleElementType;
 
 /**
- *
  * @author Pedro Alves<pedro.alves@webdetails.pt>
  */
 public interface IKettleOutput {
 
-    public void processResult();
+  public void processResult();
 
-    public boolean needsRowListener();
+  public boolean needsRowListener();
 
-    public void storeRow(Object[] row, RowMetaInterface rowMeta);
+  public void storeRow( Object[] row, RowMetaInterface rowMeta );
 
-    public void setResult(Result r);
+  public void setResult( Result r );
 
-    public Result getResult();
+  public Result getResult();
 
-    public KettleElementType.KettleType getKettleType();
+  public KettleElementType.KettleType getKettleType();
 
-    public void setKettleType(KettleElementType.KettleType kettleType);
-    
-    public void setOutputStepName(String stepName);
-    
-    public String getOutputStepName();
+  public void setKettleType( KettleElementType.KettleType kettleType );
+
+  public void setOutputStepName( String stepName );
+
+  public String getOutputStepName();
 }

@@ -9,10 +9,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DataSourceDefinition {
 
-  @JsonProperty("connection")
+  @JsonProperty( "connection" )
   protected Map<String, String> connectionParameters = new LinkedHashMap<String, String>();
 
-  @JsonProperty("dataaccess")
+  @JsonProperty( "dataaccess" )
   protected Map<String, String> dataAccessParameters = new LinkedHashMap<String, String>();
 
   public DataSourceDefinition() {
@@ -22,29 +22,29 @@ public class DataSourceDefinition {
    * @see java.lang.Object#equals(java.lang.Object)
    */
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
+  public boolean equals( Object obj ) {
+    if ( this == obj ) {
       return true;
     }
-    if (obj == null) {
+    if ( obj == null ) {
       return false;
     }
-    if (!(obj instanceof DataSourceDefinition)) {
+    if ( !( obj instanceof DataSourceDefinition ) ) {
       return false;
     }
     DataSourceDefinition other = (DataSourceDefinition) obj;
-    if (connectionParameters == null) {
-      if (other.connectionParameters != null) {
+    if ( connectionParameters == null ) {
+      if ( other.connectionParameters != null ) {
         return false;
       }
-    } else if (!connectionParameters.equals(other.connectionParameters)) {
+    } else if ( !connectionParameters.equals( other.connectionParameters ) ) {
       return false;
     }
-    if (dataAccessParameters == null) {
-      if (other.dataAccessParameters != null) {
+    if ( dataAccessParameters == null ) {
+      if ( other.dataAccessParameters != null ) {
         return false;
       }
-    } else if (!dataAccessParameters.equals(other.dataAccessParameters)) {
+    } else if ( !dataAccessParameters.equals( other.dataAccessParameters ) ) {
       return false;
     }
     return true;
@@ -57,8 +57,8 @@ public class DataSourceDefinition {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((connectionParameters == null) ? 0 : connectionParameters.hashCode());
-    result = prime * result + ((dataAccessParameters == null) ? 0 : dataAccessParameters.hashCode());
+    result = prime * result + ( ( connectionParameters == null ) ? 0 : connectionParameters.hashCode() );
+    result = prime * result + ( ( dataAccessParameters == null ) ? 0 : dataAccessParameters.hashCode() );
     return result;
   }
 
@@ -69,30 +69,31 @@ public class DataSourceDefinition {
   public String toString() {
     final int maxLen = 10;
     StringBuilder builder = new StringBuilder();
-    builder.append("DataSourceDefinition [");
-    if (connectionParameters != null) {
-      builder.append("connectionParameters=");
-      builder.append(toString(connectionParameters.entrySet(), maxLen));
-      builder.append(", ");
+    builder.append( "DataSourceDefinition [" );
+    if ( connectionParameters != null ) {
+      builder.append( "connectionParameters=" );
+      builder.append( toString( connectionParameters.entrySet(), maxLen ) );
+      builder.append( ", " );
     }
-    if (dataAccessParameters != null) {
-      builder.append("dataAccessParameters=");
-      builder.append(toString(dataAccessParameters.entrySet(), maxLen));
+    if ( dataAccessParameters != null ) {
+      builder.append( "dataAccessParameters=" );
+      builder.append( toString( dataAccessParameters.entrySet(), maxLen ) );
     }
-    builder.append("]");
+    builder.append( "]" );
     return builder.toString();
   }
 
-  private String toString(Collection<?> collection, int maxLen) {
+  private String toString( Collection<?> collection, int maxLen ) {
     StringBuilder builder = new StringBuilder();
-    builder.append("[");
+    builder.append( "[" );
     int i = 0;
-    for (Iterator<?> iterator = collection.iterator(); iterator.hasNext() && i < maxLen; i++) {
-      if (i > 0)
-        builder.append(", ");
-      builder.append(iterator.next());
+    for ( Iterator<?> iterator = collection.iterator(); iterator.hasNext() && i < maxLen; i++ ) {
+      if ( i > 0 ) {
+        builder.append( ", " );
+      }
+      builder.append( iterator.next() );
     }
-    builder.append("]");
+    builder.append( "]" );
     return builder.toString();
   }
 

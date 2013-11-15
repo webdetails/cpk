@@ -4,24 +4,23 @@
 package pt.webdetails.cpk;
 
 /**
- *
  * @author joao
  */
 public class NoElementException extends Exception {
 
-    public NoElementException() {
-        super();
-    }
+  public NoElementException() {
+    super();
+  }
 
-    public NoElementException(String message) {
-        super(message);
-    }
+  public NoElementException( String message ) {
+    super( message );
+  }
 
-    public NoElementException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public NoElementException( String message, Throwable cause ) {
+    super( message, cause );
+  }
 
-    public NoElementException(Throwable cause) {
-        super(cause);
-    }
+  public NoElementException( Throwable cause ) {
+    super( cause );
+  }
 }

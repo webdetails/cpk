@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -27,181 +28,182 @@ import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.Util;
 
 /**
- *
  * @author Pedro Alves<pedro.alves@webdetails.pt>
  */
 public class PluginUtilsForTesting implements IPluginUtils {
 
-    
-    protected Log logger = LogFactory.getLog(this.getClass());
-    private String pluginName;
-    private File pluginDirectory;
 
-    @Override
-    public File getPluginDirectory() {
-        return pluginDirectory;
+  protected Log logger = LogFactory.getLog( this.getClass() );
+  private String pluginName;
+  private File pluginDirectory;
+
+  @Override
+  public File getPluginDirectory() {
+    return pluginDirectory;
+  }
+
+  @Override
+  public void setPluginDirectory( File pluginDirectory ) {
+    this.pluginDirectory = pluginDirectory;
+  }
+
+  @Override
+  public String getPluginName() {
+    return pluginName;
+  }
+
+  @Override
+  public void setPluginName( String pluginName ) {
+    this.pluginName = pluginName;
+  }
+
+  public PluginUtilsForTesting() {
+    try {
+      // init
+      initialize();
+    } catch ( Exception e ) {
+      logger.error( "Can't initialize PluginUtils: " + Util.getExceptionDescription( e ) );
     }
 
-    @Override
-    public void setPluginDirectory(File pluginDirectory) {
-        this.pluginDirectory = pluginDirectory;
-    }
+  }
 
-    @Override
-    public String getPluginName() {
-        return pluginName;
-    }
+  @Override
+  public void initialize() throws IOException, DocumentException {
 
-    @Override
-    public void setPluginName(String pluginName) {
-        this.pluginName = pluginName;
-    }
-
-    public PluginUtilsForTesting() {
-        try {
-            // init
-            initialize();
-        } catch (Exception e) {
-            logger.error("Can't initialize PluginUtils: " + Util.getExceptionDescription(e));
-        }
-
-    }
-
-    @Override
-    public void initialize() throws IOException, DocumentException {
-
-        // We need to get the plugin name
+    // We need to get the plugin name
        
 
      
         /*
          * Verify if the index 0 is actually the file we want!
          */
-        String url ="file://"+System.getProperty("user.dir")+"/test-resources/cpkSol/plugin.xml";
-        
-        URL pluginUrl = new URL(url);
-        //URL pluginUrl = new File("plugin.xml").toURI().toURL();
+    String url = "file://" + System.getProperty( "user.dir" ) + "/test-resources/cpkSol/plugin.xml";
 
-        // Parent file holds the name
-        File pluginDir = new File(pluginUrl.getFile()).getParentFile();
-        setPluginName(pluginDir.getName());
-        setPluginDirectory(pluginDir);
+    URL pluginUrl = new URL( url );
+    //URL pluginUrl = new File("plugin.xml").toURI().toURL();
 
-        logger.debug("Found resource? " + "?");
+    // Parent file holds the name
+    File pluginDir = new File( pluginUrl.getFile() ).getParentFile();
+    setPluginName( pluginDir.getName() );
+    setPluginDirectory( pluginDir );
 
-    }
+    logger.debug( "Found resource? " + "?" );
 
-    /**
-     * Calls out for resources in the plugin, on the specified path
-     *
-     * @param elementPath Relative to the plugin directory
-     * @param recursive Do we want to enable recursivity?
-     * @param pattern regular expression to filter the files
-     * @return Files found
-     */
-    @Override
-    public Collection<File> getPluginResources(String elementPath, Boolean recursive, String pattern) {
+  }
 
-        IOFileFilter fileFilter = TrueFileFilter.TRUE;
+  /**
+   * Calls out for resources in the plugin, on the specified path
+   *
+   * @param elementPath Relative to the plugin directory
+   * @param recursive   Do we want to enable recursivity?
+   * @param pattern     regular expression to filter the files
+   * @return Files found
+   */
+  @Override
+  public Collection<File> getPluginResources( String elementPath, Boolean recursive, String pattern ) {
 
-        if (pattern != null && !pattern.equals("")) {
-            fileFilter = new RegexFileFilter(pattern);
+    IOFileFilter fileFilter = TrueFileFilter.TRUE;
 
-
-        }
-
-        IOFileFilter dirFilter = recursive.equals(Boolean.TRUE) ? TrueFileFilter.TRUE : null;
-
-        // Get directory name. We need to make sure we're not allowing this to fetch other resources
-        String basePath = FilenameUtils.normalize(getPluginDirectory().getAbsolutePath());
-        String elementFullPath = FilenameUtils.normalize(basePath + File.separator + elementPath);
-
-        if (!elementFullPath.startsWith(basePath)) {
-            logger.warn("PluginUtils.getPluginResources is trying to access a parent path - denied : " + elementFullPath);
-            return null;
-        }
-
-        File dir = new File(elementFullPath);
-        if (!dir.exists() || !dir.isDirectory()) {
-            return null;
-        }
-
-        return FileUtils.listFiles(dir, fileFilter, dirFilter);
+    if ( pattern != null && !pattern.equals( "" ) ) {
+      fileFilter = new RegexFileFilter( pattern );
 
 
     }
 
-    /**
-     * From a full path, returns the relative path
-     *
-     * @param fullPath
-     * @param includePluginDir
-     * @return The relative path
-     */
-    @Override
-    public String getPluginRelativeDirectory(String fullPath, boolean includePluginDir) throws FileNotFoundException {
+    IOFileFilter dirFilter = recursive.equals( Boolean.TRUE ) ? TrueFileFilter.TRUE : null;
 
+    // Get directory name. We need to make sure we're not allowing this to fetch other resources
+    String basePath = FilenameUtils.normalize( getPluginDirectory().getAbsolutePath() );
+    String elementFullPath = FilenameUtils.normalize( basePath + File.separator + elementPath );
 
-        // Get directory name. We need to make sure we're not allowing this to fetch other resources
-        File pluginDir = getPluginDirectory();
-        if (includePluginDir) {
-            pluginDir = pluginDir.getParentFile();
-        }
-
-        String basePath = FilenameUtils.normalize(pluginDir.getAbsolutePath());
-        String elementFullPath = FilenameUtils.getFullPath(FilenameUtils.normalize(fullPath));
-
-        if (elementFullPath.indexOf(basePath) < 0) {
-            throw new FileNotFoundException("Can't extract relative path from file " + fullPath);
-        }
-
-        return elementFullPath.substring(basePath.length());
-
-
+    if ( !elementFullPath.startsWith( basePath ) ) {
+      logger.warn( "PluginUtils.getPluginResources is trying to access a parent path - denied : " + elementFullPath );
+      return null;
     }
 
-    /**
-     * Calls out for resources in the plugin, on the specified path
-     *
-     * @param elementPath Relative to the plugin directory
-     * @param recursive Do we want to enable recursivity?
-     * @return Files found
-     */
-    @Override
-    public Collection<File> getPluginResources(String elementPath, Boolean recursive) {
-        return getPluginResources(elementPath, recursive, null);
+    File dir = new File( elementFullPath );
+    if ( !dir.exists() || !dir.isDirectory() ) {
+      return null;
     }
 
-    /**
-     * Calls out for resources in the plugin, on the specified path. Not
-     * recursive
-     *
-     * @param elementPath Relative to the plugin directory
-     * @param pattern regular expression to filter the files
-     * @return Files found
-     */
-    @Override
-    public Collection<File> getPluginResources(String elementPath, String pattern) {
-        return getPluginResources(elementPath, false, pattern);
+    return FileUtils.listFiles( dir, fileFilter, dirFilter );
+
+
+  }
+
+  /**
+   * From a full path, returns the relative path
+   *
+   * @param fullPath
+   * @param includePluginDir
+   * @return The relative path
+   */
+  @Override
+  public String getPluginRelativeDirectory( String fullPath, boolean includePluginDir ) throws FileNotFoundException {
+
+
+    // Get directory name. We need to make sure we're not allowing this to fetch other resources
+    File pluginDir = getPluginDirectory();
+    if ( includePluginDir ) {
+      pluginDir = pluginDir.getParentFile();
     }
 
-    @Override
-    public void setResponseHeaders(Map<String, ICommonParameterProvider> parameterProviders, final String mimeType) {
-        setResponseHeaders(parameterProviders, mimeType, 0, null, 0);
+    String basePath = FilenameUtils.normalize( pluginDir.getAbsolutePath() );
+    String elementFullPath = FilenameUtils.getFullPath( FilenameUtils.normalize( fullPath ) );
+
+    if ( elementFullPath.indexOf( basePath ) < 0 ) {
+      throw new FileNotFoundException( "Can't extract relative path from file " + fullPath );
     }
 
-    public void setResponseHeaders(Map<String, ICommonParameterProvider> parameterProviders, final String mimeType, final String attachmentName) {
-        setResponseHeaders(parameterProviders, mimeType, 0, attachmentName, 0);
-    }
+    return elementFullPath.substring( basePath.length() );
 
-    @Override
-    public void setResponseHeaders(Map<String, ICommonParameterProvider> parameterProviders, final String mimeType, final String attachmentName, long attachmentSize) {
-        setResponseHeaders(parameterProviders, mimeType, 0, attachmentName, attachmentSize);
 
-    }
+  }
 
-    public void setResponseHeaders(Map<String, ICommonParameterProvider> parameterProviders, final String mimeType, final int cacheDuration, final String attachmentName, long attachmentSize) {
-        // Make sure we have the correct mime type
+  /**
+   * Calls out for resources in the plugin, on the specified path
+   *
+   * @param elementPath Relative to the plugin directory
+   * @param recursive   Do we want to enable recursivity?
+   * @return Files found
+   */
+  @Override
+  public Collection<File> getPluginResources( String elementPath, Boolean recursive ) {
+    return getPluginResources( elementPath, recursive, null );
+  }
+
+  /**
+   * Calls out for resources in the plugin, on the specified path. Not recursive
+   *
+   * @param elementPath Relative to the plugin directory
+   * @param pattern     regular expression to filter the files
+   * @return Files found
+   */
+  @Override
+  public Collection<File> getPluginResources( String elementPath, String pattern ) {
+    return getPluginResources( elementPath, false, pattern );
+  }
+
+  @Override
+  public void setResponseHeaders( Map<String, ICommonParameterProvider> parameterProviders, final String mimeType ) {
+    setResponseHeaders( parameterProviders, mimeType, 0, null, 0 );
+  }
+
+  public void setResponseHeaders( Map<String, ICommonParameterProvider> parameterProviders, final String mimeType,
+                                  final String attachmentName ) {
+    setResponseHeaders( parameterProviders, mimeType, 0, attachmentName, 0 );
+  }
+
+  @Override
+  public void setResponseHeaders( Map<String, ICommonParameterProvider> parameterProviders, final String mimeType,
+                                  final String attachmentName, long attachmentSize ) {
+    setResponseHeaders( parameterProviders, mimeType, 0, attachmentName, attachmentSize );
+
+  }
+
+  public void setResponseHeaders( Map<String, ICommonParameterProvider> parameterProviders, final String mimeType,
+                                  final int cacheDuration, final String attachmentName, long attachmentSize ) {
+    // Make sure we have the correct mime type
 
         /* 
          * This code is part of the content generator. Since we want to simplify,
@@ -214,91 +216,92 @@ public class PluginUtilsForTesting implements IPluginUtils {
          */
 
 
-        final HttpServletResponse response = getResponse(parameterProviders);
+    final HttpServletResponse response = getResponse( parameterProviders );
 
-        if (response == null) {
-            logger.warn("Parameter 'httpresponse' not found!");
-            return;
-        }
-
-        if (mimeType != null) {
-            response.setHeader("Content-Type", mimeType);
-        }
-
-        if (attachmentName != null) {
-            response.setHeader("content-disposition", "attachment; filename=" + attachmentName);
-        } // Cache?
-
-        if (attachmentSize > 0) {
-            response.setHeader("Content-Length", String.valueOf(attachmentSize));
-        }
-
-        if (cacheDuration > 0) {
-            response.setHeader("Cache-Control", "max-age=" + cacheDuration);
-        } else {
-            response.setHeader("Cache-Control", "max-age=0, no-store");
-        }
+    if ( response == null ) {
+      logger.warn( "Parameter 'httpresponse' not found!" );
+      return;
     }
 
-    /**
-     * Copies the parameters from the ICommonParameterProvider to a Map
-     *
-     * @param params
-     * @param provider
-     */
-    
-    public void copyParametersFromProvider(Map<String, Object> params, ICommonParameterProvider provider) {
-        @SuppressWarnings("unchecked")
-        Iterator<String> paramNames = provider.getParameterNames();
-        while (paramNames.hasNext()) {
-            String paramName = paramNames.next();
-            params.put(paramName, provider.getParameter(paramName));
-        }
+    if ( mimeType != null ) {
+      response.setHeader( "Content-Type", mimeType );
     }
 
-    @Override
-    public void redirect(Map<String, ICommonParameterProvider> parameterProviders, String url) {
+    if ( attachmentName != null ) {
+      response.setHeader( "content-disposition", "attachment; filename=" + attachmentName );
+    } // Cache?
 
-        final HttpServletResponse response = getResponse(parameterProviders);
-
-        if (response == null) {
-            logger.error("response not found");
-            return;
-        }
-        try {
-            response.sendRedirect(url);
-        } catch (IOException e) {
-            logger.error("could not redirect", e);
-        }
+    if ( attachmentSize > 0 ) {
+      response.setHeader( "Content-Length", String.valueOf( attachmentSize ) );
     }
 
-
-    public HttpServletRequest getRequest(Map<String, ICommonParameterProvider> parameterProviders) {
-        return (HttpServletRequest) parameterProviders.get("path").getParameter("httprequest");
+    if ( cacheDuration > 0 ) {
+      response.setHeader( "Cache-Control", "max-age=" + cacheDuration );
+    } else {
+      response.setHeader( "Cache-Control", "max-age=0, no-store" );
     }
+  }
 
-    public HttpServletResponse getResponse(Map<String, ICommonParameterProvider> parameterProviders) {
-        return (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
-    }
+  /**
+   * Copies the parameters from the ICommonParameterProvider to a Map
+   *
+   * @param params
+   * @param provider
+   */
 
-    @Override
-    public ICommonParameterProvider getRequestParameters(Map<String, ICommonParameterProvider> parameterProviders) {
-        return parameterProviders.get("request");
+  public void copyParametersFromProvider( Map<String, Object> params, ICommonParameterProvider provider ) {
+    @SuppressWarnings( "unchecked" )
+    Iterator<String> paramNames = provider.getParameterNames();
+    while ( paramNames.hasNext() ) {
+      String paramName = paramNames.next();
+      params.put( paramName, provider.getParameter( paramName ) );
     }
+  }
 
-    @Override
-    public ICommonParameterProvider getPathParameters(Map<String, ICommonParameterProvider> parameterProviders) {
-        return parameterProviders.get("path");
-    }
+  @Override
+  public void redirect( Map<String, ICommonParameterProvider> parameterProviders, String url ) {
 
-    public OutputStream getResponseOutputStream(Map<String, ICommonParameterProvider> parameterProviders) throws IOException {
+    final HttpServletResponse response = getResponse( parameterProviders );
 
-        return getResponse(parameterProviders).getOutputStream();
+    if ( response == null ) {
+      logger.error( "response not found" );
+      return;
     }
-    
-    @Override
-    public OutputStream getOutputStream(Map<String, ICommonParameterProvider> parameterProviders){
-        
-        return (OutputStream) parameterProviders.get("path").getParameter("outputstream");
+    try {
+      response.sendRedirect( url );
+    } catch ( IOException e ) {
+      logger.error( "could not redirect", e );
     }
+  }
+
+
+  public HttpServletRequest getRequest( Map<String, ICommonParameterProvider> parameterProviders ) {
+    return (HttpServletRequest) parameterProviders.get( "path" ).getParameter( "httprequest" );
+  }
+
+  public HttpServletResponse getResponse( Map<String, ICommonParameterProvider> parameterProviders ) {
+    return (HttpServletResponse) parameterProviders.get( "path" ).getParameter( "httpresponse" );
+  }
+
+  @Override
+  public ICommonParameterProvider getRequestParameters( Map<String, ICommonParameterProvider> parameterProviders ) {
+    return parameterProviders.get( "request" );
+  }
+
+  @Override
+  public ICommonParameterProvider getPathParameters( Map<String, ICommonParameterProvider> parameterProviders ) {
+    return parameterProviders.get( "path" );
+  }
+
+  public OutputStream getResponseOutputStream( Map<String, ICommonParameterProvider> parameterProviders )
+    throws IOException {
+
+    return getResponse( parameterProviders ).getOutputStream();
+  }
+
+  @Override
+  public OutputStream getOutputStream( Map<String, ICommonParameterProvider> parameterProviders ) {
+
+    return (OutputStream) parameterProviders.get( "path" ).getParameter( "outputstream" );
+  }
 }

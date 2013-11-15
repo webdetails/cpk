@@ -30,7 +30,7 @@ public class DataSource {
   /**
    * @param definition the definition to set
    */
-  public DataSource setDefinition(DataSourceDefinition definition) {
+  public DataSource setDefinition( DataSourceDefinition definition ) {
     this.definition = definition;
     return this;
   }
@@ -38,7 +38,7 @@ public class DataSource {
   /**
    * @param metadata the metadata to set
    */
-  public DataSource setMetadata(DataSourceMetadata metadata) {
+  public DataSource setMetadata( DataSourceMetadata metadata ) {
     this.metadata = metadata;
     return this;
   }
