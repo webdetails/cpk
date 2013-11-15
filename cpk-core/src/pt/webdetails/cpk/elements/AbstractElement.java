@@ -5,7 +5,6 @@ package pt.webdetails.cpk.elements;
 
 import java.util.Map;
 
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpk.CpkEngine;
 
 /**
@@ -116,9 +115,9 @@ public class AbstractElement implements IElement {
   /**
    * Processes the request
    */
-  public void processRequest( Map<String, ICommonParameterProvider> parameterProviders ) {
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
     // Get the elementType and process it
-    CpkEngine.getInstance().getElementType( this.getElementType() ).processRequest( parameterProviders, this );
+    CpkEngine.getInstance().getElementType( this.getElementType() ).processRequest( bloatedMap, this );
   }
 
   @Override

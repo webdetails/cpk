@@ -15,7 +15,6 @@ import java.util.Map.Entry;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-
 import org.dom4j.DocumentException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,481 +37,274 @@ import org.pentaho.platform.engine.core.system.objfac.StandaloneSpringPentahoObj
 import org.pentaho.platform.engine.security.SecurityHelper;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.http.CommonParameterProvider;
-import pt.webdetails.cpf.repository.IRepositoryAccess;
 import org.springframework.security.Authentication;
 import org.springframework.security.GrantedAuthority;
 import org.springframework.security.GrantedAuthorityImpl;
 import org.springframework.security.providers.UsernamePasswordAuthenticationToken;
 import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.testUtils.CpkContentGeneratorForTesting;
-import pt.webdetails.cpk.testUtils.PentahoRepositoryAccessForTesting;
+import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 
 /**
+ *
  * @author joao
  */
 public class CpkContentGeneratorTest {
 
-  private static IPluginUtils pluginUtils;
-  //private static CpkContentGenerator cpkContentGenerator;
-  private static CpkContentGeneratorForTesting cpkContentGenerator;
-  //private static Map<String, ICommonParameterProvider> map;
-  private static IRepositoryAccess repAccess;
-  private static OutputStream out;
-  private static OutputStream outResponse;
-  private static String userDir = System.getProperty( "user.dir" );
-  //private static PentahoSession session = new PentahoSession();
-  private static StandaloneSession session = new StandaloneSession( "joe" );
+    private static IPluginUtils pluginUtils;
+    private static CpkContentGeneratorForTesting cpkContentGenerator;
+    private static OutputStream out;
+    private static OutputStream outResponse;
+    private static String userDir = System.getProperty("user.dir");
+    private static StandaloneSession session = new StandaloneSession("joe");
 
-  @BeforeClass
-  public static void setUp() throws IOException, InitializationException, ObjectFactoryException {
+    @BeforeClass
+    public static void setUp() throws IOException, pt.webdetails.cpk.InitializationException, ObjectFactoryException {
 
 
-    StandaloneApplicationContext appContext =
-      new StandaloneApplicationContext( userDir + "/" + "test-resources/repository", "" );
+        StandaloneApplicationContext appContext = new StandaloneApplicationContext(userDir + "/" + "test-resources/repository", "");
 
-    StandaloneSpringPentahoObjectFactory factory = new StandaloneSpringPentahoObjectFactory();
-    factory.init( "test-resources/repository/system/pentahoObjects.spring.xml", null );
-
-
-    GrantedAuthority[] roles = new GrantedAuthority[ 2 ];
-    roles[ 0 ] = new GrantedAuthorityImpl( "Authenticated" ); //$NON-NLS-1$
-    roles[ 1 ] = new GrantedAuthorityImpl( "Admin" ); //$NON-NLS-1$
-    Authentication auth = new UsernamePasswordAuthenticationToken( "joe", "password", roles ); //$NON-NLS-1$
-    session.setAttribute( SecurityHelper.SESSION_PRINCIPAL, auth );
+        StandaloneSpringPentahoObjectFactory factory = new StandaloneSpringPentahoObjectFactory();
+        factory.init("test-resources/repository/system/pentahoObjects.spring.xml", null);
 
 
-    PentahoSessionHolder.setSession( session );
-    PentahoSystem.setObjectFactory( factory );
-    PentahoSystem.setSystemSettingsService( factory.get( ISystemSettings.class, "systemSettingsService", session ) );
-    PentahoSystem.init( appContext );
-
-    pluginUtils = new PluginUtils();
-    //CorePlugin plugin = new Plugin(pluginUtils.getPluginDirectory().getPath());
-    repAccess = new PentahoRepositoryAccessForTesting();
-    //repAccess.setPlugin(plugin);
-    ICpkEnvironment environment = new CpkPentahoEnvironment( pluginUtils, repAccess );
-    //cpkContentGenerator = new CpkContentGeneratorForTesting(environment);
-    cpkContentGenerator = new CpkContentGeneratorForTesting();
+        GrantedAuthority[] roles = new GrantedAuthority[2];
+        roles[0] = new GrantedAuthorityImpl("Authenticated"); //$NON-NLS-1$
+        roles[1] = new GrantedAuthorityImpl("Admin"); //$NON-NLS-1$
+        Authentication auth = new UsernamePasswordAuthenticationToken("joe", "password", roles); //$NON-NLS-1$
+        session.setAttribute(SecurityHelper.SESSION_PRINCIPAL, auth);
 
 
-  }
+        PentahoSessionHolder.setSession(session);
+        PentahoSystem.setObjectFactory(factory);
+        PentahoSystem.setSystemSettingsService(factory.get(ISystemSettings.class, "systemSettingsService", session));
+        PentahoSystem.init(appContext);
 
-  @Test
-  public void testCreateContent() throws Exception {
-    KettleEnvironment.init();
-    outResponse = new ByteArrayOutputStream();
+        pluginUtils = new PluginUtils();
+        ICpkEnvironment environment = new CpkPentahoEnvironment(pluginUtils);
+        cpkContentGenerator = new CpkContentGeneratorForTesting();
 
 
-    cpkContentGenerator.setParameterProviders( unwrapParams( sampleTrans() ) );
-    cpkContentGenerator.wrapParameters();
-    cpkContentGenerator.createContent();
-    String sampleTrans_result = outResponse.toString();
-    outResponse.close();
-    outResponse = new ByteArrayOutputStream();
-
-    cpkContentGenerator.setParameterProviders( unwrapParams( evaluateResultRows() ) );
-    cpkContentGenerator.wrapParameters();
-    cpkContentGenerator.createContent();
-    String evaluateResultRows_result = outResponse.toString();
-    outResponse.close();
-    outResponse = new ByteArrayOutputStream();
-
-    cpkContentGenerator.setParameterProviders( unwrapParams( createResultRows() ) );
-    cpkContentGenerator.wrapParameters();
-    cpkContentGenerator.createContent();
-    String createResultRows_result = outResponse.toString();
-    outResponse.close();
-    outResponse = new ByteArrayOutputStream();
-
-    cpkContentGenerator.setParameterProviders( unwrapParams( generateRows() ) );
-    cpkContentGenerator.wrapParameters();
-    cpkContentGenerator.createContent();
-    String generateRows_result = outResponse.toString();
-    outResponse.close();
-
-    boolean sampletrans, evaluateResultRows, createResultRows, generateRows;
-    sampletrans = evaluateResultRows = createResultRows = generateRows = true;
-
-    JSONObject sampletransJson = new JSONObject( sampleTrans_result );
-    JSONObject evaluateResultRowsJson = new JSONObject( evaluateResultRows_result );
-    JSONObject createResultRowsJson = new JSONObject( createResultRows_result );
-    JSONObject generateRowsJson = new JSONObject( generateRows_result );
-
-    if ( sampletransJson.getJSONObject( "queryInfo" ).length() < 1 ) {
-      sampletrans = false;
-    }
-    if ( generateRowsJson.getJSONObject( "queryInfo" ).length() < 1 ) {
-      generateRows = false;
-    }
-    if ( createResultRowsJson.getJSONObject( "queryInfo" ).length() < 1 ) {
-      createResultRows = false;
-    }
-    if ( !evaluateResultRowsJson.getBoolean( "result" ) ) {
-      evaluateResultRows = false;
     }
 
-    Assert.assertTrue( sampletrans );
-    Assert.assertTrue( evaluateResultRows );
-    Assert.assertTrue( createResultRows );
-    Assert.assertTrue( generateRows );
+    @Test
+    public void testCreateContent() throws Exception {
+        KettleEnvironment.init();
+        outResponse = new ByteArrayOutputStream();
 
-  }
 
-  @Test
-  public void testGetElementsList() throws IOException, JSONException {
+        cpkContentGenerator.setParameterProviders(unwrapParams(sampleTrans()));
+        cpkContentGenerator.wrapParameters();
+        cpkContentGenerator.createContent();
+        String sampleTrans_result = outResponse.toString();
+        outResponse.close();
+        outResponse = new ByteArrayOutputStream();
 
-    boolean successful = true;
-    out = new ByteArrayOutputStream();
-    cpkContentGenerator.elementsList( out );
-    String str = out.toString();
+        cpkContentGenerator.setParameterProviders(unwrapParams(evaluateResultRows()));
+        cpkContentGenerator.wrapParameters();
+        cpkContentGenerator.createContent();
+        String evaluateResultRows_result = outResponse.toString();
+        outResponse.close();
+        outResponse = new ByteArrayOutputStream();
 
-    JSONArray elementsListJson = new JSONArray( str );
+        cpkContentGenerator.setParameterProviders(unwrapParams(createResultRows()));
+        cpkContentGenerator.wrapParameters();
+        cpkContentGenerator.createContent();
+        String createResultRows_result = outResponse.toString();
+        outResponse.close();
+        outResponse = new ByteArrayOutputStream();
 
-    for ( int i = 0; i < elementsListJson.length(); i++ ) {
-      JSONObject obj = elementsListJson.getJSONObject( i );
-      String id = obj.getString( "id" );
-      if ( id.length() < 1 ) {
-        successful = false;
-      }
-    }
+        cpkContentGenerator.setParameterProviders(unwrapParams(generateRows()));
+        cpkContentGenerator.wrapParameters();
+        cpkContentGenerator.createContent();
+        String generateRows_result = outResponse.toString();
+        outResponse.close();
 
-    Assert.assertTrue( successful );
-    out.close();
-  }
+        boolean sampletrans, evaluateResultRows, createResultRows, generateRows;
+        sampletrans = evaluateResultRows = createResultRows = generateRows = true;
 
-  @Test
-  public void testReloadRefreshStatus() throws DocumentException, IOException {
+        JSONObject sampletransJson = new JSONObject(sampleTrans_result);
+        JSONObject evaluateResultRowsJson = new JSONObject(evaluateResultRows_result);
+        JSONObject createResultRowsJson = new JSONObject(createResultRows_result);
+        JSONObject generateRowsJson = new JSONObject(generateRows_result);
 
-    out = new ByteArrayOutputStream();
-    cpkContentGenerator.reload( out );
-    String str = out.toString();
-    out.close();
-    Assert.assertTrue( str.contains( "cpkSol Status" ) );
-    Assert.assertTrue( !str.contains( "null" ) );
-
-  }
-
-  @Test
-  public void testGetRequestHandler() {
-    RestRequestHandler r = cpkContentGenerator.getRequestHandler();
-    Assert.assertTrue( r != null );
-  }
-
-  @Test
-  public void testGetPluginName() {
-
-    String str = cpkContentGenerator.getPluginName();
-
-    Assert.assertTrue( str.equals( "cpkSol" ) );//compare with a plugin I know
-
-  }
-
-  @Test
-  public void testGetSitemapJson() throws IOException, JSONException {
-
-    boolean successful = true;
-    boolean sublinksExist = false;
-    out = new ByteArrayOutputStream();
-    cpkContentGenerator.getSitemapJson( out );
-    String str = out.toString();
-    out.close();
-
-    JSONArray json = new JSONArray( str );
-
-    for ( int i = 0; i < json.length(); i++ ) {
-      JSONObject obj = json.getJSONObject( i );
-      String id = obj.getString( "id" );
-      String link = obj.getString( "link" );
-      String name = obj.getString( "name" );
-      JSONArray sublinks = obj.getJSONArray( "sublinks" );
-      if ( id.contains( "wcdf" ) && link.contains( "cpkSol" ) ) {
-      } else { //probably a folder with sublinks
-        if ( sublinks.length() > 0 ) {
-          sublinksExist = true;
-        } else {
-          successful = false;
-          break;
+        if (sampletransJson.getJSONObject("queryInfo").length() < 1) {
+            sampletrans = false;
         }
-      }
-    }
-    Assert.assertTrue( successful && sublinksExist );
+        if (generateRowsJson.getJSONObject("queryInfo").length() < 1) {
+            generateRows = false;
+        }
+        if (createResultRowsJson.getJSONObject("queryInfo").length() < 1) {
+            createResultRows = false;
+        }
+        if (!evaluateResultRowsJson.getBoolean("result")) {
+            evaluateResultRows = false;
+        }
 
-
-  }
-
-  private Map<String, ICommonParameterProvider> sampleTrans() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/sampleTrans" );//kjb or ktr
-    p.put( "httpresponse", buildAResponse( outResponse ) );
-    p1.put( "paramarg1", "value1" );
-    p1.put( "paramarg2", "value2" );
-    p1.put( "paramarg3", "value3" );
-    p1.put( "kettleOutput", "Json" );//not Infered kettle, so must pass Json Output
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
-  }
-
-  private Map<String, ICommonParameterProvider> evaluateResultRows() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/evaluate-result-rows" );//kjb or ktr
-    p.put( "httpresponse", buildAResponse( outResponse ) );
-    p1.put( "paramarg1", "value1" );
-    p1.put( "paramarg2", "value2" );
-    p1.put( "paramarg3", "value3" );
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
-  }
-
-  private Map<String, ICommonParameterProvider> createResultRows() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/create-result-rows" );//kjb or ktr
-    p.put( "httpresponse", buildAResponse( outResponse ) );
-    p1.put( "stepName", "copy rows to result" );
-    p1.put( "paramarg1", "value1" );
-    p1.put( "paramarg2", "value2" );
-    p1.put( "paramarg3", "value3" );
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
-  }
-
-  private Map<String, ICommonParameterProvider> generateRows() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/generate-rows" );//kjb or ktr
-    p.put( "httpresponse", buildAResponse( outResponse ) );
-    p1.put( "stepName", "output" );
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
-  }
-
-  private static Map<String, IParameterProvider> unwrapParams( Map<String, ICommonParameterProvider> params ) {
-
-    Map<String, IParameterProvider> resultMap = new HashMap<String, IParameterProvider>();
-    SimpleParameterProvider result = new SimpleParameterProvider();
-    Iterator<Entry<String, ICommonParameterProvider>> it = params.entrySet().iterator();
-    while ( it.hasNext() ) {
-      Entry<String, ICommonParameterProvider> e = it.next();
-      Iterator<String> names = e.getValue().getParameterNames();
-      while ( names.hasNext() ) {
-        String name = names.next();
-        Object value = e.getValue().getParameter( name );
-        result.setParameter( name, value );
-      }
-      resultMap.put( e.getKey(), result );
-      result = new SimpleParameterProvider();
+        Assert.assertTrue(sampletrans);
+        Assert.assertTrue(evaluateResultRows);
+        Assert.assertTrue(createResultRows);
+        Assert.assertTrue(generateRows);
 
     }
-    return resultMap;
 
-  }
+    @Test
+    public void testGetElementsList() throws IOException, JSONException {
 
-  private HttpServletResponse buildAResponse( final OutputStream output ) {
-    return new HttpServletResponse() {
-      @Override
-      public ServletOutputStream getOutputStream() throws IOException {
-        return new ServletOutputStream() {
-          @Override
-          public void write( int b ) throws IOException {
-            output.write( b );
-          }
-        };
-      }
+        boolean successful = true;
+        out = new ByteArrayOutputStream();
+        cpkContentGenerator.elementsList(out);
+        String str = out.toString();
 
-      @Override
-      public void setHeader( String string, String string1 ) {
-        //this method will be called in the tests
-      }
+        JSONArray elementsListJson = new JSONArray(str);
 
-      @Override
-      public void setIntHeader( String string, int i ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        for (int i = 0; i < elementsListJson.length(); i++) {
+            JSONObject obj = elementsListJson.getJSONObject(i);
+            String id = obj.getString("id");
+            if (id.length() < 1) {
+                successful = false;
+            }
+        }
 
-      @Override
-      public void addIntHeader( String string, int i ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        Assert.assertTrue(successful);
+        out.close();
+    }
 
-      @Override
-      public void setStatus( int i ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    @Test
+    public void testReloadRefreshStatus() throws DocumentException, IOException {
 
-      @Override
-      public void setStatus( int i, String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        out = new ByteArrayOutputStream();
+        cpkContentGenerator.reload(out);
+        String str = out.toString();
+        out.close();
+        Assert.assertTrue(str.contains("cpkSol Status"));
+        Assert.assertTrue(!str.contains("null"));
 
-      @Override
-      public String getCharacterEncoding() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    }
 
-      @Override
-      public String getContentType() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    @Test
+    public void testGetRequestHandler() {
+        RestRequestHandler r = cpkContentGenerator.getRequestHandler();
+        Assert.assertTrue(r != null);
+    }
 
-      @Override
-      public void addCookie( Cookie cookie ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    @Test
+    public void testGetPluginName() {
 
-      @Override
-      public boolean containsHeader( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        String str = cpkContentGenerator.getPluginName();
 
-      @Override
-      public String encodeURL( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        Assert.assertTrue(str.equals("cpkSol"));//compare with a plugin I know
 
-      @Override
-      public String encodeRedirectURL( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    }
 
-      @Override
-      public String encodeUrl( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    @Test
+    public void testGetSitemapJson() throws IOException, JSONException {
 
-      @Override
-      public String encodeRedirectUrl( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        boolean successful = true;
+        boolean sublinksExist = false;
+        out = new ByteArrayOutputStream();
+        cpkContentGenerator.getSitemapJson(out);
+        String str = out.toString();
+        out.close();
 
-      @Override
-      public void sendError( int i, String string ) throws IOException {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        JSONArray json = new JSONArray(str);
 
-      @Override
-      public void sendError( int i ) throws IOException {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        for (int i = 0; i < json.length(); i++) {
+            JSONObject obj = json.getJSONObject(i);
+            String id = obj.getString("id");
+            String link = obj.getString("link");
+            String name = obj.getString("name");
+            JSONArray sublinks = obj.getJSONArray("sublinks");
+            if (id.contains("wcdf") && link.contains("cpkSol")) {
+            } else { //probably a folder with sublinks
+                if (sublinks.length() > 0) {
+                    sublinksExist = true;
+                } else {
+                    successful = false;
+                    break;
+                }
+            }
+        }
+        Assert.assertTrue(successful && sublinksExist);
 
-      @Override
-      public void sendRedirect( String string ) throws IOException {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
 
-      @Override
-      public void setDateHeader( String string, long l ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    }
 
-      @Override
-      public void addDateHeader( String string, long l ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    private Map<String, ICommonParameterProvider> sampleTrans() {
+        Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
+        ICommonParameterProvider p = new CommonParameterProvider();
+        ICommonParameterProvider p1 = new CommonParameterProvider();
+        p.put("path", "/sampleTrans");//kjb or ktr
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
+        p1.put("paramarg1", "value1");
+        p1.put("paramarg2", "value2");
+        p1.put("paramarg3", "value3");
+        p1.put("kettleOutput", "Json");//not Infered kettle, so must pass Json Output
+        map.put("path", p);
+        map.put("request", p1);
+        return map;
+    }
 
-      @Override
-      public PrintWriter getWriter() throws IOException {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    private Map<String, ICommonParameterProvider> evaluateResultRows() {
+        Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
+        ICommonParameterProvider p = new CommonParameterProvider();
+        ICommonParameterProvider p1 = new CommonParameterProvider();
+        p.put("path", "/evaluate-result-rows");//kjb or ktr
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
+        p1.put("paramarg1", "value1");
+        p1.put("paramarg2", "value2");
+        p1.put("paramarg3", "value3");
+        map.put("path", p);
+        map.put("request", p1);
+        return map;
+    }
 
-      @Override
-      public void setCharacterEncoding( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    private Map<String, ICommonParameterProvider> createResultRows() {
+        Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
+        ICommonParameterProvider p = new CommonParameterProvider();
+        ICommonParameterProvider p1 = new CommonParameterProvider();
+        p.put("path", "/create-result-rows");//kjb or ktr
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
+        p1.put("stepName", "copy rows to result");
+        p1.put("paramarg1", "value1");
+        p1.put("paramarg2", "value2");
+        p1.put("paramarg3", "value3");
+        map.put("path", p);
+        map.put("request", p1);
+        return map;
+    }
 
-      @Override
-      public void setContentLength( int i ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    private Map<String, ICommonParameterProvider> generateRows() {
+        Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
+        ICommonParameterProvider p = new CommonParameterProvider();
+        ICommonParameterProvider p1 = new CommonParameterProvider();
+        p.put("path", "/generate-rows");//kjb or ktr
+        p.put("httpresponse", new HttpServletResponseForTesting(outResponse));
+        p1.put("stepName", "output");
+        map.put("path", p);
+        map.put("request", p1);
+        return map;
+    }
 
-      @Override
-      public void setContentType( String string ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    private static Map<String, IParameterProvider> unwrapParams(Map<String, ICommonParameterProvider> params) {
 
-      @Override
-      public void setBufferSize( int i ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        Map<String, IParameterProvider> resultMap = new HashMap<String, IParameterProvider>();
+        SimpleParameterProvider result = new SimpleParameterProvider();
+        Iterator<Entry<String, ICommonParameterProvider>> it = params.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<String, ICommonParameterProvider> e = it.next();
+            Iterator<String> names = e.getValue().getParameterNames();
+            while (names.hasNext()) {
+                String name = names.next();
+                Object value = e.getValue().getParameter(name);
+                result.setParameter(name, value);
+            }
+            resultMap.put(e.getKey(), result);
+            result = new SimpleParameterProvider();
 
-      @Override
-      public int getBufferSize() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+        }
+        return resultMap;
 
-      @Override
-      public void flushBuffer() throws IOException {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
+    }
 
-      @Override
-      public void resetBuffer() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean isCommitted() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void reset() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void setLocale( Locale locale ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public Locale getLocale() {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void addHeader( String string, String string1 ) {
-        throw new UnsupportedOperationException(
-          "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-      }
-    };
-  }
 }

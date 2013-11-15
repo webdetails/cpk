@@ -27,9 +27,12 @@ import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
-import cpk.utils.ZipUtil;
+import pt.webdetails.cpk.utils.CpkUtils;
+import pt.webdetails.cpk.utils.ZipUtil;
 import pt.webdetails.cpk.elements.impl.KettleElementType;
 import pt.webdetails.cpk.elements.impl.KettleElementType.KettleType;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Pedro Alves<pedro.alves@webdetails.pt>
@@ -44,24 +47,26 @@ public class KettleOutput implements IKettleOutput {
   private OutputStream out;
   protected KettleType kettleType;
   private String outputStepName = "OUTPUT";
-  private Map<String, ICommonParameterProvider> parameterProviders;
   private IPluginUtils pluginUtils;
+  private Map<String, Map<String, Object>> bloatedMap;
+  private HttpServletResponse response;
 
-  public KettleOutput( Map<String, ICommonParameterProvider> parameterProviders, IPluginUtils plug ) {
+  public KettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
     pluginUtils = plug;
-    init( parameterProviders );
+    init( bloatedMap );
 
   }
 
-  protected void init( Map<String, ICommonParameterProvider> parameterProviders ) {
+  protected void init( Map<String, Map<String, Object>> bloatedMap ) {
 
-    this.parameterProviders = parameterProviders;
+    this.bloatedMap = bloatedMap;
+    this.response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
     rows = new ArrayList<Object[]>();
     rowMeta = null;
 
 
     try {
-      out = pluginUtils.getOutputStream( parameterProviders );
+      out = response.getOutputStream();
     } catch ( IOException ex ) {
       Logger.getLogger( "Something went wrong on the KettleOutput class initialization." );
     }
@@ -180,24 +185,23 @@ public class KettleOutput implements IKettleOutput {
 
       // Do we know the mime type?
       String mimeType = MimeTypes.getMimeType( file.getFile().getName().getExtension() );
-
-      if ( Boolean.parseBoolean(
-        pluginUtils.getRequestParameters( parameterProviders ).getStringParameter( "download", "false" ) ) ) {
+      String download = (String) bloatedMap.get( "request" ).get( "download" );
+      if ( Boolean.parseBoolean( download != null ? download : "false" ) ) {
         try {
           long attachmentSize = file.getFile().getContent().getInputStream().available();
-          pluginUtils
-            .setResponseHeaders( parameterProviders, mimeType, file.getFile().getName().getBaseName(), attachmentSize );
+          CpkUtils.setResponseHeaders( response, mimeType, file.getFile().getName().getBaseName(),
+            attachmentSize );
         } catch ( Exception e ) {
           logger.error( "Problem setting the attachment size: " + e );
         }
       } else {
         // set Mimetype only
-        pluginUtils.setResponseHeaders( parameterProviders, mimeType );
+        CpkUtils.setResponseHeaders( response, mimeType );
       }
 
 
       try {
-        IOUtils.copy( KettleVFS.getInputStream( file.getFile() ), pluginUtils.getOutputStream( parameterProviders ) );
+        IOUtils.copy( KettleVFS.getInputStream( file.getFile() ), response.getOutputStream() );
       } catch ( Exception ex ) {
         logger.warn( "Failed to copy file to outputstream: " + Util.getExceptionDescription( ex ) );
       }
@@ -208,7 +212,7 @@ public class KettleOutput implements IKettleOutput {
       ZipUtil zip = new ZipUtil();
       zip.buildZip( filesList );
 
-      pluginUtils.setResponseHeaders( parameterProviders, MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
+      CpkUtils.setResponseHeaders( response, MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
       try {
         IOUtils.copy( zip.getZipInputStream(), out );
         zip.closeInputStream();
@@ -232,7 +236,7 @@ public class KettleOutput implements IKettleOutput {
 
       Object result = getRows().get( 0 )[ 0 ];
       if ( result != null ) {
-        pluginUtils.getOutputStream( parameterProviders ).write( result.toString().getBytes( ENCODING ) );
+        response.getOutputStream().write( result.toString().getBytes( ENCODING ) );
       }
 
     } catch ( UnsupportedEncodingException ex ) {

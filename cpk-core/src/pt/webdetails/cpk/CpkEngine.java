@@ -3,7 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 package pt.webdetails.cpk;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -21,9 +21,6 @@ import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.repository.IRepositoryAccess;
-import pt.webdetails.cpf.repository.IRepositoryAccess.FileAccess;
-import pt.webdetails.cpf.repository.IRepositoryFile;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.IElementType;
 
@@ -125,11 +122,14 @@ public class CpkEngine {
     InputStream is = null;
 
     try {
-      IRepositoryFile repFile =
-        cpkEnv.getRepositoryAccess().getSettingsFile( "cpk.xml", IRepositoryAccess.FileAccess.READ );
-      is = new ByteArrayInputStream( repFile.getData() );
+      if ( cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).fileExists( "cpk.xml" ) ) {
+        is = cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).getFileInputStream( "cpk.xml" );
+      }
     } catch ( Exception e ) {
       is = getClass().getResourceAsStream( "/cpk.xml" );
+      if ( is == null ) {//XXX - when all else fails...
+        is = new FileInputStream( cpkEnv.getPluginUtils().getPluginDirectory().getAbsolutePath() + "/cpk.xml" );
+      }
     }
 
     cpkDoc = getDocument( is );
@@ -159,8 +159,8 @@ public class CpkEngine {
       }
       List<IElement> elements = new ArrayList<IElement>();
       // Now that we have the class, scan the elements
-      for ( Node elementNode : (List<Node>) cpkDoc
-        .selectNodes( "/cpk/elementTypes/elementType[@class='" + clazz + "']" ) ) {
+      for ( Node elementNode : (List<Node>) cpkDoc.selectNodes(
+        "/cpk/elementTypes/elementType[@class='" + clazz + "']" ) ) {
         elements.addAll( elementType.scanElements( elementNode ) );
       }
 

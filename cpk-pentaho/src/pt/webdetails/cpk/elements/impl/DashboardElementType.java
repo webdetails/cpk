@@ -6,15 +6,17 @@ package pt.webdetails.cpk.elements.impl;
 
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
-import pt.webdetails.cpf.InterPluginCall;
 import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.PluginUtils;
+import pt.webdetails.cpk.InterPluginBroker;
 import pt.webdetails.cpk.elements.AbstractElementType;
 import pt.webdetails.cpk.elements.ElementInfo;
 import pt.webdetails.cpk.elements.IElement;
@@ -43,33 +45,33 @@ public class DashboardElementType extends AbstractElementType {
   }
 
   @Override
-  public void processRequest( Map<String, ICommonParameterProvider> parameterProviders, IElement element ) {
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap, IElement element ) {
     try {
       // element = (DashboardElement) element;
-      callCDE( parameterProviders, element );
+      callCDE( bloatedMap, element );
     } catch ( Exception ex ) {
       logger.error( "Error while calling CDE: " + Util.getExceptionDescription( ex ) );
     }
   }
 
-  protected void callCDE( Map<String, ICommonParameterProvider> parameterProviders, IElement element )
+  protected void callCDE( Map<String, Map<String, Object>> bloatedMap, IElement element )
     throws UnsupportedEncodingException, IOException {
 
 
     String path = pluginUtils.getPluginRelativeDirectory( element.getLocation(), true );
 
-    ServletRequest wrapper = ( (PluginUtils) pluginUtils ).getRequest( parameterProviders );
-    OutputStream out = ( (PluginUtils) pluginUtils ).getResponseOutputStream( parameterProviders );
+    ServletRequest wrapper = (HttpServletRequest) bloatedMap.get( "path" ).get( "httprequest" );
+    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+    OutputStream out = response.getOutputStream();
 
     String root = wrapper.getScheme() + "://" + wrapper.getServerName() + ":" + wrapper.getServerPort();
 
     Map<String, Object> params = new HashMap<String, Object>();
-    ICommonParameterProvider requestParams = pluginUtils.getRequestParameters( parameterProviders );
+    Map<String, Object> requestParams = bloatedMap.get( "request" );
 
     params.put( "solution", "system" );
     params.put( "path", path );
-    if ( requestParams.hasParameter( "mode" ) && requestParams.getStringParameter( "mode", "Render" )
-      .equals( "preview" ) ) {
+    if ( requestParams.containsKey( "mode" ) && requestParams.get( "mode" ).equals( "preview" ) ) {
       params.put( "file", element.getId() + "_tmp.cdfde" );
     } else {
       params.put( "file", element.getId() + ".wcdf" );
@@ -77,21 +79,21 @@ public class DashboardElementType extends AbstractElementType {
     params.put( "absolute", "true" );
     params.put( "inferScheme", "false" );
     params.put( "root", root );
-    PluginUtils.copyParametersFromProvider( params, requestParams );
-
-    if ( requestParams.hasParameter( "mode" ) && requestParams.getStringParameter( "mode", "Render" )
-      .equals( "edit" ) ) {
-      redirectToCdeEditor( parameterProviders, params );
-      return;
+    //PluginUtils.copyParametersFromProvider( params, requestParams );
+    Iterator<String> it = requestParams.keySet().iterator();
+    while ( it.hasNext() ) {
+      String name = it.next();
+      params.put( name, requestParams.get( name ) );
     }
 
-    InterPluginCall pluginCall = new InterPluginCall( InterPluginCall.CDE, "Render", params );
-    pluginCall.setResponse( ( (PluginUtils) pluginUtils ).getResponse( parameterProviders ) );
-    pluginCall.setOutputStream( out );
-    pluginCall.run();
+    if ( requestParams.containsKey( "mode" ) && requestParams.get( "mode" ).equals( "edit" ) ) {
+      redirectToCdeEditor( response, params );
+      return;
+    }
+    InterPluginBroker.run( params, response, out );
   }
 
-  private void redirectToCdeEditor( Map<String, ICommonParameterProvider> parameterProviders,
+  private void redirectToCdeEditor( HttpServletResponse response,
                                     Map<String, Object> params ) throws IOException {
 
     StringBuilder urlBuilder = new StringBuilder();
@@ -109,7 +111,17 @@ public class DashboardElementType extends AbstractElementType {
     }
 
     urlBuilder.append( StringUtils.join( paramArray, "&" ) );
-    pluginUtils.redirect( parameterProviders, urlBuilder.toString() );
+
+    if (response == null) {
+      logger.error("response not found");
+      return;
+    }
+    try {
+      response.sendRedirect(urlBuilder.toString());
+    } catch (IOException e) {
+      logger.error("could not redirect", e);
+    }
+
   }
 
 

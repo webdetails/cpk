@@ -14,8 +14,8 @@ import pt.webdetails.cpf.utils.IPluginUtils;
 public class InferedKettleOutput extends KettleOutput {
 
 
-  public InferedKettleOutput( Map<String, ICommonParameterProvider> parameterProviders, IPluginUtils plug ) {
-    super( parameterProviders, plug );
+  public InferedKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
+    super( bloatedMap, plug );
   }
 
 }

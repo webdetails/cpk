@@ -13,6 +13,9 @@ import java.util.TreeMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+
+import javax.servlet.http.HttpServletResponse;
+
 import org.dom4j.DocumentException;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
@@ -21,6 +24,7 @@ import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.elements.AbstractElement;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.security.IAccessControl;
+import pt.webdetails.cpk.utils.CpkUtils;
 
 /**
  * @author joao
@@ -44,17 +48,18 @@ public class CpkCoreService {
     return cpkEngine;
   }
 
-  public void createContent( Map<String, ICommonParameterProvider> parameterProviders ) throws Exception {
+  public void createContent( Map<String, Map<String, Object>> bloatedMap )
+    throws Exception {
 
     //Make sure the instance is first set so we have pluginUtils
     CpkEngine engine = getCpkEngine();
     IAccessControl accessControl = cpkEnvironment.getAccessControl();
-
+    HttpServletResponse response = (HttpServletResponse)bloatedMap.get( "path" ).get( "httpresponse" );
     logger.debug( "Creating content" );
 
     // Get the path, remove leading slash
     IPluginUtils pluginUtils = cpkEnvironment.getPluginUtils();
-    String path = pluginUtils.getPathParameters( parameterProviders ).getStringParameter( "path", null );
+    String path = (String)bloatedMap.get( "path" ).get( "path" );
     IElement element = null;
 
     if ( path == null || path.equals( "/" ) ) {
@@ -63,16 +68,16 @@ public class CpkCoreService {
         // We need to put the http redirection on the right level
         url = pluginUtils.getPluginName() + "/" + url;
       }
-      pluginUtils.redirect( parameterProviders, url );
+      CpkUtils.redirect( response, url );
     }
     if ( path != null ) {
       element = engine.getElement( path.substring( 1 ).toLowerCase() );
     }
     if ( element != null ) {
       if ( accessControl.isAllowed( element ) ) {
-        element.processRequest( parameterProviders );
+        element.processRequest( bloatedMap );
       } else {
-        accessControl.throwAccessDenied( parameterProviders );
+        accessControl.throwAccessDenied( response );
       }
 
     } else {
@@ -83,20 +88,20 @@ public class CpkCoreService {
   }
 
   // alias to refresh
-  public void reload( OutputStream out, Map<String, ICommonParameterProvider> parameterProviders )
+  public void reload( OutputStream out, Map<String, Map<String, Object>> bloatedMap )
     throws DocumentException, IOException {
-    refresh( out, parameterProviders );
+    refresh( out, bloatedMap );
   }
 
-  public void refresh( OutputStream out, Map<String, ICommonParameterProvider> parameterProviders )
+  public void refresh( OutputStream out, Map<String, Map<String, Object>> bloatedMap )
     throws DocumentException, IOException {
     IAccessControl accessControl = cpkEnvironment.getAccessControl();
     if ( accessControl.isAdmin() ) {
       logger.info( "Refreshing CPK plugin " + getPluginName() );
       getCpkEngine().reload();
-      status( out, parameterProviders );
+      status( out, bloatedMap );
     } else {
-      accessControl.throwAccessDenied( parameterProviders );
+      accessControl.throwAccessDenied( (HttpServletResponse)bloatedMap.get( "path" ).get( "httpresponse" ) );
     }
   }
 
@@ -109,7 +114,7 @@ public class CpkCoreService {
    * @return Returns true if the file exists and there was no problem reading it, false otherwise
    */
   private boolean runSystemKettle( String filename, boolean adminOnly,
-                                   Map<String, ICommonParameterProvider> parameterProviders ) {
+                                   Map<String, Map<String, Object>> bloatedMap ) {
     boolean success = false;
     AbstractElement element = new AbstractElement();
     element.setAdminOnly( adminOnly );
@@ -131,7 +136,7 @@ public class CpkCoreService {
           return false;
         }
       }
-      element.processRequest( parameterProviders );
+      element.processRequest( bloatedMap );
       success = true;
 
     } catch ( Exception e ) {
@@ -140,29 +145,28 @@ public class CpkCoreService {
     return success;
   }
 
-  public void status( OutputStream out, Map<String, ICommonParameterProvider> parameterProviders )
+  public void status( OutputStream out ,Map<String, Map<String, Object>> bloatedMap )
     throws DocumentException, IOException {
     final String key = "status";
-
-    boolean success = runSystemKettle( key, false, parameterProviders );
+    HttpServletResponse response = (HttpServletResponse)bloatedMap.get( "path" ).get( "httpresponse" );
+    boolean success = runSystemKettle( key, false, bloatedMap );
 
     if ( !success ) {
       logger.info( "Showing status for CPK plugin " + getPluginName() );
       // Only set the headers if we have access to the response (via parameterProviders).
-      if ( parameterProviders != null ) {
-        cpkEnvironment.getPluginUtils().setResponseHeaders( parameterProviders, "text/plain" );
+      if ( response != null ) {
+        CpkUtils.setResponseHeaders( response, "text/plain" );
       }
       writeMessage( out, getCpkEngine().getStatus() );
     }
   }
 
-  public void statusJson( OutputStream out, Map<String, ICommonParameterProvider> parameterProviders )
-    throws DocumentException, IOException {
+  public void statusJson( OutputStream out, HttpServletResponse response ) throws DocumentException, IOException {
     logger.info( "Showing status for CPK plugin " + getPluginName() );
 
     // Only set the headers if we have access to the response (via parameterProviders).
-    if ( parameterProviders != null ) {
-      cpkEnvironment.getPluginUtils().setResponseHeaders( parameterProviders, "text/plain" );
+    if ( response != null ) {
+      CpkUtils.setResponseHeaders( response, "text/plain" );
     }
 
     writeMessage( out, getCpkEngine().getStatusJson() );
@@ -192,9 +196,9 @@ public class CpkCoreService {
     return elements;
   }
 
-  public void getElementsList( OutputStream out, Map<String, ICommonParameterProvider> parameterProviders ) {
+  public void getElementsList( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
     final String key = "elementsList";
-    boolean success = runSystemKettle( key, false, parameterProviders );
+    boolean success = runSystemKettle( key, false, bloatedMap );
     if ( !success ) {
       writeMessage( out, getCpkEngine().getElementsJson() );
     }
@@ -215,4 +219,6 @@ public class CpkCoreService {
   public RestRequestHandler getRequestHandler() {
     return Router.getBaseRouter();
   }
+
+
 }

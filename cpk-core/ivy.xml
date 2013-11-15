@@ -30,7 +30,7 @@
         <dependency org="pentaho-kettle" name="kettle-db" rev="${dependency.kettle.revision}" changing="true" transitive="false"/>
 
         <dependency org="pt.webdetails" name="cpf-core"
-            rev="TRUNK-SNAPSHOT" transitive="false" changing="true" conf='runtime->default'/>
+            rev="REFACTOR-SNAPSHOT" transitive="false" changing="true" conf='runtime->default'/>
 
         <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2"/>
         <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.8.2"/>              
@@ -39,15 +39,18 @@
         <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.2.2"/>
         <dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.2.2"/>
 
+        <dependency org="javax.servlet" name="servlet-api" rev="2.4" conf="default->default"/>
+
         <dependency org="jaxen" name="jaxen" rev="1.1"/>
         <dependency org="org.mozilla" name="rhino" rev="1.7R4" conf="runtime->default"/>
 
         <dependency org="junit" name="junit" conf="test->default" rev='4.10'/>
         <dependency org="org.apache.clerezza.ext" name="org.json.simple" conf="test->default" rev='0.3-incubating'/>
-        <dependency org="javax.servlet" name="servlet-api" rev="2.4" conf="test->default"/>
+        
         <dependency org="org.safehaus.jug" name="jug" conf="test->default" rev='2.0.0'>
          <artifact name="jug" type="jar" ext="jar" conf="" m:classifier="asl"/>
          </dependency>
+         <dependency org="spring" name="spring-mock" rev="1.0.2" conf="test->default"/>
 
     </dependencies>
 </ivy-module>

@@ -9,4 +9,9 @@
 /cpk-pentaho/dist/
 /cpk-pentaho/runtime-lib/
 /cpk-pentaho/test-lib/
+/cpk-pentaho5/lib/
+/cpk-pentaho5/bin/
+/cpk-pentaho5/dist/
+/cpk-pentaho5/runtime-lib/
+/cpk-pentaho5/test-lib/
 /build/

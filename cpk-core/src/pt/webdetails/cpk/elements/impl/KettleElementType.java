@@ -32,7 +32,6 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.parameters.DuplicateParamException;
 import org.pentaho.di.core.parameters.NamedParams;
-import org.pentaho.di.core.parameters.NamedParamsDefault;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -45,12 +44,12 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
+
 
 /**
  * @author Pedro Alves<pedro.alves@webdetails.pt>
@@ -74,7 +73,7 @@ public class KettleElementType extends AbstractElementType {
   private String cpkSolutionSystemDir = null, cpkSolutionDir = null, cpkPluginDir = null, cpkPluginId = null,
     cpkPluginSystemDir = null;
   private final String CPK_SOLUTION_SYSTEM_DIR = "cpk.solution.system.dir",
-    CPK_SOLUTION_DIR = "cpk.solution.dir",
+    //CPK_SOLUTION_DIR = "cpk.solution.dir",
     CPK_PLUGIN_DIR = "cpk.plugin.dir",
     CPK_PLUGIN_ID = "cpk.plugin.id",
     CPK_PLUGIN_SYSTEM_DIR = "cpk.plugin.system.dir",
@@ -171,16 +170,14 @@ public class KettleElementType extends AbstractElementType {
     cpkPluginDir = pluginDirFile.getAbsolutePath();
     cpkPluginSystemDir = pluginDirFile.getAbsolutePath() + File.separator + "system";
     cpkPluginId = pluginDirFile.getName();
-    try {
-      cpkSolutionDir = CpkEngine.getInstance().getEnvironment().getRepositoryAccess().getSolutionPath( "" );
-    } catch ( Exception e ) {
-    }
     cpkSolutionSystemDir = pluginDirFile.getParentFile().getAbsolutePath();
+    //cpkSolutionDir = pluginDirFile.getParentFile().getParentFile().getAbsolutePath();
+
 
     // initialize default parameters for kettle transformation
     defaultParameters
       .setParameterValue( CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir ); // eg: project-X/solution/system
-    defaultParameters.setParameterValue( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
+   // defaultParameters.setParameterValue( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
     defaultParameters.setParameterValue( CPK_PLUGIN_DIR, cpkPluginDir ); // eg: project-X/solution/system/cpk
     defaultParameters.setParameterValue( CPK_PLUGIN_ID, cpkPluginId ); // eg: "cpk"
     defaultParameters
@@ -188,7 +185,7 @@ public class KettleElementType extends AbstractElementType {
 
     // initialize default variables for kettle transformation
     defaultVariables.setVariable( CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir ); // eg: project-X/solution/system
-    defaultVariables.setVariable( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
+    //defaultVariables.setVariable( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
     defaultVariables.setVariable( CPK_PLUGIN_DIR, cpkPluginDir ); // eg: project-X/solution/system/cpk
     defaultVariables.setVariable( CPK_PLUGIN_ID, cpkPluginId ); // eg: "cpk"
     defaultVariables
@@ -201,7 +198,7 @@ public class KettleElementType extends AbstractElementType {
   }
 
   @Override
-  public void processRequest( Map<String, ICommonParameterProvider> parameterProviders, IElement element ) {
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap, IElement element ) {
 
 
     String kettlePath = element.getLocation();
@@ -211,14 +208,14 @@ public class KettleElementType extends AbstractElementType {
     logger.debug( "Processing request for: " + kettlePath );
 
     //This gets all the params inserted in the URL
-    Iterator customParamsIter = pluginUtils.getRequestParameters( parameterProviders ).getParameterNames();
+    Iterator customParamsIter = bloatedMap.get( "request" ).keySet().iterator();
     HashMap<String, String> customParams = new HashMap<String, String>();
     String key, value;
 
     while ( customParamsIter.hasNext() ) {
       key = customParamsIter.next().toString();
       if ( key.startsWith( PARAM_PREFIX ) ) {
-        value = parameterProviders.get( "request" ).getParameter( key ).toString();
+        value = bloatedMap.get( "request" ).get( key ).toString();
         customParams.put( key.substring( 5 ), value );
         logger.debug( "Argument '" + key.substring( 5 ) + "' with value '" + value + "' stored on the map." );
       }
@@ -258,26 +255,25 @@ public class KettleElementType extends AbstractElementType {
     //These conditions will treat the different types of kettle operations
 
     IKettleOutput kettleOutput = null;
-    String clazz =
-      pluginUtils.getRequestParameters( parameterProviders ).getStringParameter( "kettleOutput", "Infered" )
-        + "KettleOutput";
+    String haveOutput = (String) bloatedMap.get( "request" ).get( "kettleOutput" );
+    String clazz = ( haveOutput != null ? haveOutput : "Infered" ) + "KettleOutput";
 
     try {
       // Get defined kettleOutput class name
 
       Constructor constructor = Class.forName( "pt.webdetails.cpk.elements.impl.kettleOutputs." + clazz )
         .getConstructor( Map.class, IPluginUtils.class );
-      kettleOutput = (IKettleOutput) constructor.newInstance( parameterProviders, pluginUtils );
+      kettleOutput = (IKettleOutput) constructor.newInstance( bloatedMap, pluginUtils );
 
     } catch ( Exception ex ) {
       logger.error( "Error initializing Kettle output type " + clazz + ", reverting to KettleOutput: " + Util
         .getExceptionDescription( ex ) );
-      kettleOutput = new KettleOutput( parameterProviders, pluginUtils );
+      kettleOutput = new KettleOutput( bloatedMap, pluginUtils );
     }
 
     // Are we specifying a stepname?
-    kettleOutput.setOutputStepName(
-      pluginUtils.getRequestParameters( parameterProviders ).getStringParameter( "stepName", stepName ) );
+    String hasStepName = (String) bloatedMap.get( "request" ).get( "stepName" );
+    kettleOutput.setOutputStepName( hasStepName != null ? hasStepName : stepName );
 
     Result result = null;
 
@@ -285,6 +281,7 @@ public class KettleElementType extends AbstractElementType {
 
       if ( kettlePath.endsWith( ".ktr" ) ) {
         kettleOutput.setKettleType( KettleType.TRANSFORMATION );
+
         result = executeTransformation( kettlePath, customParams, kettleOutput );
       } else if ( kettlePath.endsWith( ".kjb" ) ) {
         kettleOutput.setKettleType( KettleType.JOB );
@@ -351,14 +348,22 @@ public class KettleElementType extends AbstractElementType {
       transformation.setVariable( CPK_SESSION_ROLES, StringUtils.join( authorities, "," ) );
     }
 
+
+
+    //transformation.setParameterValue( CPK_SOLUTION_DIR, defaultParameters.getParameterDefault( CPK_SOLUTION_DIR ) );
+    transformationMeta.setParameterValue( CPK_PLUGIN_DIR, defaultParameters.getParameterDefault( CPK_PLUGIN_DIR ) );
+    transformationMeta.setParameterValue( CPK_PLUGIN_ID, defaultParameters.getParameterDefault( CPK_PLUGIN_ID ) );
+    transformationMeta.setParameterValue( CPK_PLUGIN_SYSTEM_DIR, defaultParameters.getParameterDefault( CPK_PLUGIN_SYSTEM_DIR ) );
+    transformationMeta.setParameterValue( CPK_SOLUTION_SYSTEM_DIR, defaultParameters.getParameterDefault( CPK_SOLUTION_SYSTEM_DIR ) );
+
         /*
          * Loading parameters, if there are any.
          */
-    for ( String arg : customParams.keySet() ) {
-      transformation.setParameterValue( arg, customParams.get( arg ) );
-    }
+      for ( String arg : customParams.keySet() ) {
+        transformationMeta.setParameterValue( arg, customParams.get( arg ) );
+      }
 
-
+    transformation.copyParametersFrom( transformationMeta );
     transformation.activateParameters();
     transformation.prepareExecution( null ); //Get the step threads after this line
     StepInterface step = transformation.findRunThread( kettleOutput.getOutputStepName() );
@@ -437,17 +442,18 @@ public class KettleElementType extends AbstractElementType {
 
     job.getJobMeta()
       .setParameterValue( CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir ); // eg: project-X/solution/system
-    job.getJobMeta().setParameterValue( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
+    //job.getJobMeta().setParameterValue( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
     job.getJobMeta().setParameterValue( CPK_PLUGIN_DIR, cpkPluginDir ); // eg: project-X/solution/system/cpk
     job.getJobMeta().setParameterValue( CPK_PLUGIN_ID, cpkPluginId ); // eg: "cpk"
     job.getJobMeta()
       .setParameterValue( CPK_PLUGIN_SYSTEM_DIR, cpkPluginSystemDir ); //eg: project-X/solution/system/cpk/system
     job.getJobMeta().setVariable( CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir ); // eg: project-X/solution/system
-    job.getJobMeta().setVariable( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
+    //job.getJobMeta().setVariable( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
     job.getJobMeta().setVariable( CPK_PLUGIN_DIR, cpkPluginDir ); // eg: project-X/solution/system/cpk
     job.getJobMeta().setVariable( CPK_PLUGIN_ID, cpkPluginId ); // eg: "cpk"
     job.getJobMeta()
       .setVariable( CPK_PLUGIN_SYSTEM_DIR, cpkPluginSystemDir ); //eg: project-X/solution/system/cpk/system
+
 
         /*
          * Loading parameters, if there are any. We'll pass them also as variables

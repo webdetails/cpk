@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdf>
+        <title>New File</title>
+        <author></author>
+        <description>new file</description>
+        <icon/>
+		<style>WDTutorial</style>
+<rendererType>blueprint</rendererType></cdf>

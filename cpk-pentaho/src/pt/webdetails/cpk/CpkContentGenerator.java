@@ -30,7 +30,6 @@ import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.plugins.IPluginFilter;
 import pt.webdetails.cpf.plugins.Plugin;
 import pt.webdetails.cpf.plugins.PluginsAnalyzer;
-import pt.webdetails.cpf.repository.PentahoRepositoryAccess;
 import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
 import pt.webdetails.cpk.datasources.DataSource;
@@ -39,6 +38,9 @@ import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.impl.KettleElementType;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletResponse;
 
 public class CpkContentGenerator extends RestContentGenerator {
 
@@ -49,15 +51,15 @@ public class CpkContentGenerator extends RestContentGenerator {
 
   public CpkContentGenerator() {
     this.pluginUtils = new PluginUtils();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, new PentahoRepositoryAccess() );
-    this.coreService = new CpkCoreService( cpkEnv );
+    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils );
+    this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
   }
 
   @Override
   public void createContent() throws Exception {
     wrapParams();
     try {
-      coreService.createContent( map );
+      coreService.createContent( buildBloatedMap() );
     } catch ( NoElementException e ) {
       super.createContent();
     }
@@ -65,12 +67,12 @@ public class CpkContentGenerator extends RestContentGenerator {
 
   @Exposed( accessLevel = AccessLevel.PUBLIC )
   public void reload( OutputStream out ) throws DocumentException, IOException {
-    coreService.reload( out, map );
+    coreService.reload( out, buildBloatedMap() );
   }
 
   @Exposed( accessLevel = AccessLevel.PUBLIC )
   public void refresh( OutputStream out ) throws DocumentException, IOException {
-    coreService.refresh( out, map );
+    coreService.refresh( out, buildBloatedMap() );
   }
 
   @Exposed( accessLevel = AccessLevel.PUBLIC )
@@ -98,9 +100,9 @@ public class CpkContentGenerator extends RestContentGenerator {
   @Exposed( accessLevel = AccessLevel.PUBLIC )
   public void status( OutputStream out ) throws DocumentException, IOException {
     if ( map.get( "request" ).hasParameter( "json" ) ) {
-      coreService.statusJson( out, map );
+      coreService.statusJson( out, getHttpResponse() );
     } else {
-      coreService.status( out, map );
+      coreService.status( out, buildBloatedMap() );
     }
   }
 
@@ -143,7 +145,7 @@ public class CpkContentGenerator extends RestContentGenerator {
   @Exposed( accessLevel = AccessLevel.PUBLIC )
   public void getSitemapJson( OutputStream out ) throws IOException {
 
-    TreeMap<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
+    TreeMap<String, IElement> elementsMap = pt.webdetails.cpk.CpkEngine.getInstance().getElementsMap();
     JsonNode sitemap = null;
     if ( elementsMap != null ) {
       LinkGenerator linkGen = new LinkGenerator( elementsMap, pluginUtils );
@@ -155,7 +157,7 @@ public class CpkContentGenerator extends RestContentGenerator {
 
   @Exposed( accessLevel = AccessLevel.PUBLIC )
   public void elementsList( OutputStream out ) {
-    coreService.getElementsList( out, map );
+    coreService.getElementsList( out, buildBloatedMap() );
   }
 
   @Override
@@ -249,5 +251,39 @@ public class CpkContentGenerator extends RestContentGenerator {
     }
     dsDeclarations.append( "}" );
     out.write( dsDeclarations.toString().getBytes() );
+  }
+
+  private Map<String, Map<String, Object>> buildBloatedMap() {
+
+    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Object> pathMap;
+
+    pathMap = getPathMap();
+
+
+    mainMap.put( "request", getRequestMap() );
+    mainMap.put( "path", pathMap );
+
+    return mainMap;
+  }
+
+  private Map<String, Object> getPathMap() {
+    Map<String,Object> pathMap = map.get( "path" ).getParameters();
+
+    try {
+      pathMap.put( "httpresponse", getHttpResponse() );
+      pathMap.put( "httprequest",map.get( "path" ).getParameter( "httprequest" ) );
+    } catch ( NullPointerException e ) {
+      return pathMap;
+    }
+    return pathMap;
+  }
+
+  private Map<String, Object> getRequestMap() {
+    return map.get("request").getParameters();
+  }
+
+  private HttpServletResponse getHttpResponse() {
+    return (HttpServletResponse) map.get( "path" ).getParameters().get( "httpresponse" );
   }
 }

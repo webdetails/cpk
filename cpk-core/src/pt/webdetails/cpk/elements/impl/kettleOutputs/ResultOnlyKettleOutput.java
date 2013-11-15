@@ -4,26 +4,26 @@
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
 import java.util.Map;
-
 import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 
 /**
+ *
  * @author Pedro Alves<pedro.alves@webdetails.pt>
  */
 public class ResultOnlyKettleOutput extends KettleOutput {
 
-  public ResultOnlyKettleOutput( Map<String, ICommonParameterProvider> parameterProviders, IPluginUtils plug ) {
-    super( parameterProviders, plug );
-  }
+    public ResultOnlyKettleOutput(Map<String, Map<String, Object>> bloatedMap,IPluginUtils plug) {
+        super(bloatedMap,plug);
+    }
 
-  @Override
-  public boolean needsRowListener() {
-    return false;
-  }
+    @Override
+    public boolean needsRowListener() {
+        return false;
+    }
 
-  @Override
-  public void processResult() {
-    super.processResultOnly();
-  }
+    @Override
+    public void processResult() {
+        super.processResultOnly();
+    }
 }
