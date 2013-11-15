@@ -5,22 +5,14 @@ package pt.webdetails.cpk;
  * File Templates.
  */
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -42,23 +34,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.dom4j.DocumentException;
-import org.pentaho.platform.api.engine.IParameterProvider;
 
+import org.pentaho.platform.api.engine.IPentahoPublisher;
 import org.pentaho.platform.api.engine.IPluginManager;
-import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
-import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import pt.webdetails.cpf.RestRequestHandler;
-import pt.webdetails.cpf.WrapperUtils;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
+import org.pentaho.platform.engine.security.SecurityHelper;
+//import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.plugins.IPluginFilter;
 import pt.webdetails.cpf.plugins.Plugin;
 import pt.webdetails.cpf.plugins.PluginsAnalyzer;
@@ -75,7 +64,7 @@ import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
 
 
-@Path( "/sparkl/api" )
+@Path( "/{pluginId}/api" )
 public class CpkApi {
 
   private static final Log logger = LogFactory.getLog( CpkApi.class );
@@ -103,14 +92,14 @@ public class CpkApi {
   @GET
   @Path( "/ping" )
   public String ping() {
-    return "pong";
+    return "ping";
   }
 
   @GET
   @Path( "/{param}" )
   public void genericEndpointGet( @PathParam( "param" ) String param, @Context HttpServletRequest request,
                                   @Context HttpServletResponse response, @Context HttpHeaders headers )
-    throws Exception {        //XXX - this one makes every other endpoint that just calls callEndpoint useless
+    throws Exception {
     callEndpoint( param, request, response, headers );
   }
 
@@ -132,15 +121,6 @@ public class CpkApi {
     callEndpoint( param, request, response, headers );
   }
 
-  @POST
-  @Path( "/createContent/{param}" )
-  @Produces( MimeTypes.JSON )
-  public void createContentPost( @PathParam( "param" ) String param, @Context HttpServletRequest request,
-                                 @Context HttpServletResponse response,
-                                 @Context HttpHeaders headers ) throws Exception {
-    callEndpoint( param, request, response, headers );
-  }
-
   @GET
   @Path( "/reload" )
   public void reload( @Context HttpServletRequest request, @Context HttpServletResponse response,
@@ -151,16 +131,34 @@ public class CpkApi {
 
   @GET
   @Path( "/refresh" )
-  public void refresh( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                       @Context HttpHeaders headers )
+  @Produces( MimeTypes.PLAIN_TEXT )
+  public void refreshGet( @Context HttpServletRequest request, @Context HttpServletResponse response,
+                          @Context HttpHeaders headers )
     throws DocumentException, IOException {
+    refresh( request, response, headers );
+  }
+
+  @POST
+  @Path( "/refresh" )
+  @Produces( MimeTypes.PLAIN_TEXT )
+  public void refreshPost( @Context HttpServletRequest request, @Context HttpServletResponse response,
+                           @Context HttpHeaders headers )
+    throws DocumentException, IOException {
+    refresh( request, response, headers );
+  }
+
+  private void refresh( HttpServletRequest request, HttpServletResponse response, HttpHeaders headers )
+    throws IOException, DocumentException {
     coreService.refresh( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
+    response.getOutputStream().flush();
   }
 
   @GET
   @Path( "/version" )
-  public void version( OutputStream out ) {
-
+  @Produces(MimeTypes.PLAIN_TEXT)
+  public void version( @PathParam( "pluginId" ) String pluginId, @Context HttpServletResponse response )
+    throws IOException {
+    setPluginName( pluginId );
     PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
     pluginsAnalyzer.refresh();
 
@@ -177,7 +175,7 @@ public class CpkApi {
 
 
     version = plugins.get( 0 ).getVersion().toString();
-    writeMessage( out, version );
+    writeMessage( response.getOutputStream(), version );
   }
 
   @GET
@@ -185,8 +183,7 @@ public class CpkApi {
   public void status( @Context HttpServletRequest request, @Context HttpServletResponse response,
                       @Context HttpHeaders headers )
     throws DocumentException, IOException {
-    //XXX - figure this one out, false for now -
-    if ( false ) {
+    if (request.getParameter( "json" ) != null) { //XXX - confirm this one
       coreService.statusJson( response.getOutputStream(), response );
     } else {
       coreService.status( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
@@ -194,11 +191,10 @@ public class CpkApi {
   }
 
   @GET
-  @Path( "/getSitemapJson" )                 //XXX - add @Consumes to these?
-  public void getSitemapJson( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                              @Context HttpHeaders headers )
+  @Path( "/getSitemapJson" )
+  public void getSitemapJson( @Context HttpServletResponse response )
     throws IOException {
-
+    setPluginName( ((CpkPentahoEnvironment)cpkEnv).getPluginId() );
     TreeMap<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
     JsonNode sitemap = null;
     if ( elementsMap != null ) {
@@ -241,9 +237,11 @@ public class CpkApi {
 
   @GET
   @Path( "/listDataAccessTypes" )
-  public void listDataAccessTypes( @Context HttpServletRequest request, @Context HttpServletResponse response )
+  @Produces( MimeTypes.JSON )
+  public void listDataAccessTypes( @Context HttpServletResponse response )
     throws Exception {
     //boolean refreshCache = Boolean.parseBoolean(getRequestParameters().getStringParameter("refreshCache", "false"));
+    setPluginName( ((CpkPentahoEnvironment)cpkEnv).getPluginId() );
 
     Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
     StringBuilder dsDeclarations = new StringBuilder( "{" );
@@ -260,7 +258,7 @@ public class CpkApi {
         logger.info( String.format( "CPK Kettle Endpoint found: %s)", endpoint ) );
 
 
-        String pluginId = coreService.getPluginName();
+        String pluginId = pluginUtils.getPluginName();
         String endpointName = endpoint.getName();
 
         //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
@@ -292,37 +290,36 @@ public class CpkApi {
       dsDeclarations.deleteCharAt( index );
     }
     dsDeclarations.append( "}" );
-    response.getOutputStream().write( dsDeclarations.toString().getBytes() );
+    IOUtils.write( dsDeclarations.toString(), response.getOutputStream() );
+    response.getOutputStream().flush();
   }
 
   @GET
   @Path( "/reloadPlugins" )
-  public void reloadPluginsGet() {
+  public void reloadPluginsGet() throws Exception {
     reloadPlugins();
   }
 
   @POST
   @Path( "/reloadPlugins" )
-  public void reloadPluginsPost() {
+  public void reloadPluginsPost() throws Exception {
     reloadPlugins();
   }
 
-  public void reloadPlugins() {
-    IPluginManager pluginManager = PentahoSystem.get( IPluginManager.class, PentahoSessionHolder.getSession() );
-    pluginManager.reload();
+  public void reloadPlugins() throws Exception {
+    //  IPluginManager pluginManager = PentahoSystem.get(IPluginManager.class, PentahoSessionHolder.getSession());
+    //  pluginManager.loadNewPlugins();
+
   }
 
-
-  public RestRequestHandler getRequestHandler() {//XXX -  hmmm ...
-    return null;
-  }
 
   private Map<String, Map<String, Object>> buildBloatedMap( HttpServletRequest request, HttpServletResponse response,
                                                             HttpHeaders headers ) {
     Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
 
     mainMap.put( "request", buildRequestMap( request, headers ) );
-    mainMap.put( "path", buildPathMap( request, response, headers ) );
+    mainMap.put( "path" +
+      "", buildPathMap( request, response, headers ) );
 
     return mainMap;
 
@@ -330,19 +327,22 @@ public class CpkApi {
 
   private Map<String, Object> buildRequestMap( HttpServletRequest request, HttpHeaders headers ) {
     Map<String, Object> requestMap = new HashMap<String, Object>();
-    Enumeration e = request.getParameterNames();
-    while ( e.hasMoreElements() ) {
-      Object o = e.nextElement();
-      requestMap.put( o.toString(), request.getParameter( o.toString() ) );
+    try {
+      Enumeration e = request.getParameterNames();
+      while ( e.hasMoreElements() ) {
+        Object o = e.nextElement();
+        requestMap.put( o.toString(), request.getParameter( o.toString() ) );
+      }
+      Form form =
+        ( (ContainerRequest) headers ).getFormParameters();
+      Iterator<String> it = form.keySet().iterator();
+      while ( it.hasNext() ) {
+        String next = it.next();
+        requestMap.put( next, form.get( next ).get( 0 ) );
+      }
+    } catch ( NullPointerException e ) {
+      Logger.getLogger( CpkApi.class.getName() ).log( Level.SEVERE, null, e );
     }
-    Form form =
-      ( (ContainerRequest) headers ).getFormParameters();
-    Iterator<String> it = form.keySet().iterator();
-    while ( it.hasNext() ) {
-      String next = it.next();
-      requestMap.put( next, form.get( next ).get( 0 ) );
-    }
-
     return requestMap;
   }
 
@@ -352,7 +352,8 @@ public class CpkApi {
     Map<String, Object> pathMap = new HashMap<String, Object>();
     pathMap.put( "httprequest", request );
     pathMap.put( "httpresponse", response );
-    if ( headers != null ) {
+    if ( headers != null && headers.getRequestHeaders()
+      .containsKey( "contentType" ) ) {
       pathMap.put( "contentType", headers.getRequestHeader( "contentType" ) );
     }
     return pathMap;
@@ -365,5 +366,13 @@ public class CpkApi {
     Map<String, Map<String, Object>> bloatedMap = buildBloatedMap( request, response, headers );
     bloatedMap.get( "path" ).put( "path", "/" + endpoint );
     coreService.createContent( bloatedMap );
+  }
+
+  public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
+    coreService.createContent( bloatedMap );
+  }
+
+  private void setPluginName( String pluginId){
+    pluginUtils.setPluginName( pluginId );
   }
 }

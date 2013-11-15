@@ -122,12 +122,12 @@ public class CpkEngine {
     InputStream is = null;
 
     try {
-      if ( cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).fileExists( "cpk.xml" ) ) {//XXX review this
+      if ( cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).fileExists( "cpk.xml" ) ) {
         is = cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).getFileInputStream( "cpk.xml" );
       }
     } catch ( Exception e ) {
       is = getClass().getResourceAsStream( "/cpk.xml" );
-      if ( is == null ) {//XXX - debug code to bypass this classloader issue, remove later on -
+      if ( is == null ) {//XXX - when all else fails...
         is = new FileInputStream( cpkEnv.getPluginUtils().getPluginDirectory().getAbsolutePath() + "/cpk.xml" );
       }
     }

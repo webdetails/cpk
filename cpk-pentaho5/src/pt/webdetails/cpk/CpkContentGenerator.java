@@ -41,14 +41,21 @@ import pt.webdetails.cpk.sitemap.LinkGenerator;
 
 import javax.servlet.http.HttpServletResponse;
 
-public class CpkContentGeneratorDeprecated extends RestContentGenerator {
+public class CpkContentGenerator extends RestContentGenerator {
+  @Override public RestRequestHandler getRequestHandler() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 
+  @Override public String getPluginName() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+ /*
   private static final long serialVersionUID = 1L;
   public static final String PLUGIN_NAME = "cpk";
   protected CpkCoreService coreService;
   protected ICpkEnvironment cpkEnv;
 
-  public CpkContentGeneratorDeprecated() {
+  public CpkContentGenerator() {
     this.pluginUtils = new PluginUtils();
     this.cpkEnv = new CpkPentahoEnvironment( pluginUtils );
     this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
@@ -130,7 +137,7 @@ public class CpkContentGeneratorDeprecated extends RestContentGenerator {
       try {
         json = mapper.writeValueAsString( plugin );
       } catch ( IOException ex ) {
-        Logger.getLogger( CpkContentGeneratorDeprecated.class.getName() ).log( Level.SEVERE, null, ex );
+        Logger.getLogger( CpkContentGenerator.class.getName() ).log( Level.SEVERE, null, ex );
       }
     }
 
@@ -169,7 +176,7 @@ public class CpkContentGeneratorDeprecated extends RestContentGenerator {
     try {
       out.write( message.getBytes( ENCODING ) );
     } catch ( IOException ex ) {
-      Logger.getLogger( CpkContentGeneratorDeprecated.class.getName() ).log( Level.SEVERE, null, ex );
+      Logger.getLogger( CpkContentGenerator.class.getName() ).log( Level.SEVERE, null, ex );
     }
   }
 
@@ -285,4 +292,5 @@ public class CpkContentGeneratorDeprecated extends RestContentGenerator {
   private HttpServletResponse getHttpResponse() {
     return (HttpServletResponse) map.get( "path" ).getParameters().get( "httpresponse" );
   }
+  */
 }

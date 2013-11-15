@@ -34,7 +34,7 @@ public class CpkApiForTesting extends CpkApi{
     this.coreService = new CpkCoreService( cpkEnv );
   }
 
-  class PluginUtilsForTesting extends PluginUtils {//XXX - confirm if this isnt actually bypassing a problem -
+  class PluginUtilsForTesting extends PluginUtils {
 
     @Override
     public void initialize() throws IOException, DocumentException {

@@ -91,7 +91,7 @@ public class DashboardElementType extends AbstractElementType {
       return;
     }
     try {
-        InterPluginBroker.run( params, response, out );
+        InterPluginBroker.run( params, out );
     } catch ( Exception e ) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
@@ -101,7 +101,7 @@ public class DashboardElementType extends AbstractElementType {
                                     Map<String, Object> params ) throws IOException {
 
     StringBuilder urlBuilder = new StringBuilder();
-    urlBuilder.append( "../pentaho-cdf-dd/edit" );
+    urlBuilder.append( "../../pentaho-cdf-dd/api/renderer/edit" );
     if ( params.size() > 0 ) {
       urlBuilder.append( "?" );
     }
@@ -116,7 +116,6 @@ public class DashboardElementType extends AbstractElementType {
 
     urlBuilder.append( StringUtils.join( paramArray, "&" ) );
 
-    //XXX - copied from pluginUtils
     if (response == null) {
       logger.error("response not found");
       return;

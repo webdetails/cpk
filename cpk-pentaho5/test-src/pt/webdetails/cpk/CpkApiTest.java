@@ -72,7 +72,7 @@ public class CpkApiTest {
   }
 
   @Test
-  public void testCreateContent() throws Exception { //XXX - not done yet
+  public void testCreateContent() throws Exception {
 
     PentahoSystemForTesting.runAsSystem( new Callable<Void>() {
 
@@ -81,32 +81,22 @@ public class CpkApiTest {
         KettleEnvironment.init();
         outResponse = new ByteArrayOutputStream();
 
-
-        //cpkApi.setParameterProviders( unwrapParams( sampleTrans() ) );
-        //cpkApi.wrapParameters();
-
-        cpkApi.createContentGet( "sampleTrans", new MockHttpServletRequest(  ), new HttpServletResponseForTesting( outResponse ), null );     //XXX - buildSampleTrans request , response?
+        sampleTrans();
         String sampleTrans_result = outResponse.toString();
         outResponse.close();
         outResponse = new ByteArrayOutputStream();
 
-        //cpkApi.setParameterProviders( unwrapParams( evaluateResultRows() ) );
-        //cpkApi.wrapParameters();
-        cpkApi.createContentGet( "evaluateResultRows",null, null, null );
+        evaluateResultRows();
         String evaluateResultRows_result = outResponse.toString();
         outResponse.close();
         outResponse = new ByteArrayOutputStream();
 
-        //cpkApi.setParameterProviders( unwrapParams( createResultRows() ) );
-        //cpkApi.wrapParameters();
-        cpkApi.createContentGet( "createResultRows",null, null, null );
+        createResultRows();
         String createResultRows_result = outResponse.toString();
         outResponse.close();
         outResponse = new ByteArrayOutputStream();
 
-        //cpkApi.setParameterProviders( unwrapParams( generateRows() ) );
-        //cpkApi.wrapParameters();
-        cpkApi.createContentGet( "generateRows",null, null, null );
+        generateRows();
         String generateRows_result = outResponse.toString();
         outResponse.close();
 
@@ -149,7 +139,7 @@ public class CpkApiTest {
       public Void call() throws Exception {
         boolean successful = true;
         out = new ByteArrayOutputStream();
-        cpkApi.elementsList( null,null, null ); //XXX - build request and response
+        cpkApi.elementsList( null, new HttpServletResponseForTesting( out ), null );
         String str = out.toString();
 
         JSONArray elementsListJson = new JSONArray( str );
@@ -177,7 +167,7 @@ public class CpkApiTest {
       @Override
       public Void call() throws Exception {
         out = new ByteArrayOutputStream();
-        cpkApi.reload( null,null, null );                          //XXX - build request and response
+        cpkApi.reload( null, new HttpServletResponseForTesting( out ), null );
         String str = out.toString();
         out.close();
         Assert.assertTrue( str.contains( "cpkSol Status" ) );
@@ -189,17 +179,6 @@ public class CpkApiTest {
 
   }
 
-  @Test
-  public void testGetRequestHandler() throws Exception {
-    PentahoSystemForTesting.runAsSystem( new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        RestRequestHandler r = cpkApi.getRequestHandler();
-        Assert.assertTrue( r != null );
-        return null;
-      }
-    } );
-  }
 
   @Test
   public void testGetPluginName() throws Exception {
@@ -224,7 +203,8 @@ public class CpkApiTest {
         boolean successful = true;
         boolean sublinksExist = false;
         out = new ByteArrayOutputStream();
-        cpkApi.getSitemapJson( null,null, null ); //XXX - build request and response
+        cpkApi
+          .getSitemapJson( new HttpServletResponseForTesting( out ) );
         String str = out.toString();
         out.close();
 
@@ -253,81 +233,68 @@ public class CpkApiTest {
     } );
   }
 
-  private Map<String, ICommonParameterProvider> sampleTrans() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/sampleTrans" );//kjb or ktr
-    p.put( "httpresponse", new HttpServletResponseForTesting( outResponse ));
-    p1.put( "paramarg1", "value1" );
-    p1.put( "paramarg2", "value2" );
-    p1.put( "paramarg3", "value3" );
-    p1.put( "kettleOutput", "Json" );//not Infered kettle, so must pass Json Output
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
+  private void sampleTrans() throws Exception {
+    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Object> path = new HashMap<String, Object>();
+    Map<String, Object> request = new HashMap<String, Object>();
+
+    path.put( "path", "/sampleTrans" );//kjb or ktr
+    path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
+    path.put( "httprequest", new MockHttpServletRequest() );
+    request.put( "paramarg1", "value1" );
+    request.put( "paramarg2", "value2" );
+    request.put( "paramarg3", "value3" );
+    request.put( "kettleOutput", "Json" );//not Infered kettle, so must pass Json Output
+    mainMap.put( "path", path );
+    mainMap.put( "request", request );
+
+    cpkApi.createContent( mainMap );
   }
 
-  private Map<String, ICommonParameterProvider> evaluateResultRows() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/evaluate-result-rows" );//kjb or ktr
-    p.put( "httpresponse",  new HttpServletResponseForTesting( outResponse ) );
-    p1.put( "paramarg1", "value1" );
-    p1.put( "paramarg2", "value2" );
-    p1.put( "paramarg3", "value3" );
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
+  private void evaluateResultRows() throws Exception {
+    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Object> path = new HashMap<String, Object>();
+    Map<String, Object> request = new HashMap<String, Object>();
+    path.put( "path", "/evaluate-result-rows" );//kjb or ktr
+    path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
+    path.put( "httprequest", new MockHttpServletRequest() );
+    request.put( "paramarg1", "value1" );
+    request.put( "paramarg2", "value2" );
+    request.put( "paramarg3", "value3" );
+    mainMap.put( "path", path );
+    mainMap.put( "request", request );
+    cpkApi.createContent( mainMap );
   }
 
-  private Map<String, ICommonParameterProvider> createResultRows() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/create-result-rows" );//kjb or ktr
-    p.put( "httpresponse",  new HttpServletResponseForTesting( outResponse ) );
-    p1.put( "stepName", "copy rows to result" );
-    p1.put( "paramarg1", "value1" );
-    p1.put( "paramarg2", "value2" );
-    p1.put( "paramarg3", "value3" );
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
+  private void createResultRows() throws Exception {
+    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Object> path = new HashMap<String, Object>();
+    Map<String, Object> request = new HashMap<String, Object>();
+
+    path.put( "path", "/create-result-rows" );//kjb or ktr
+    path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
+    path.put( "httprequest", new MockHttpServletRequest() );
+    request.put( "stepName", "copy rows to result" );
+    request.put( "paramarg1", "value1" );
+    request.put( "paramarg2", "value2" );
+    request.put( "paramarg3", "value3" );
+    mainMap.put( "path", path );
+    mainMap.put( "request", request );
+    cpkApi.createContent( mainMap );
   }
 
-  private Map<String, ICommonParameterProvider> generateRows() {
-    Map<String, ICommonParameterProvider> map = new HashMap<String, ICommonParameterProvider>();
-    ICommonParameterProvider p = new CommonParameterProvider();
-    ICommonParameterProvider p1 = new CommonParameterProvider();
-    p.put( "path", "/generate-rows" );//kjb or ktr
-    p.put( "httpresponse",  new HttpServletResponseForTesting( outResponse ) );
-    p1.put( "stepName", "output" );
-    map.put( "path", p );
-    map.put( "request", p1 );
-    return map;
-  }
+  private void generateRows() throws Exception {
+    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Object> path = new HashMap<String, Object>();
+    Map<String, Object> request = new HashMap<String, Object>();
 
-  private static Map<String, IParameterProvider> unwrapParams( Map<String, ICommonParameterProvider> params ) {
-
-    Map<String, IParameterProvider> resultMap = new HashMap<String, IParameterProvider>();
-    SimpleParameterProvider result = new SimpleParameterProvider();
-    Iterator<Map.Entry<String, ICommonParameterProvider>> it = params.entrySet().iterator();
-    while ( it.hasNext() ) {
-      Map.Entry<String, ICommonParameterProvider> e = it.next();
-      Iterator<String> names = e.getValue().getParameterNames();
-      while ( names.hasNext() ) {
-        String name = names.next();
-        Object value = e.getValue().getParameter( name );
-        result.setParameter( name, value );
-      }
-      resultMap.put( e.getKey(), result );
-      result = new SimpleParameterProvider();
-
-    }
-    return resultMap;
-
+    path.put( "path", "/generate-rows" );//kjb or ktr
+    path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
+    path.put( "httprequest", new MockHttpServletRequest() );
+    request.put( "stepName", "output" );
+    mainMap.put( "path", path );
+    mainMap.put( "request", request );
+    cpkApi.createContent( mainMap );
   }
 
   private static UserDetailsService getUserDetailsService() {
@@ -386,13 +353,14 @@ public class CpkApiTest {
       }
     };
   }
-  private static MockHttpServletRequest buildRequest(Map<String,String> params){
-    MockHttpServletRequest request = new MockHttpServletRequest(  );
+
+  private static MockHttpServletRequest buildRequest( Map<String, String> params ) {
+    MockHttpServletRequest request = new MockHttpServletRequest();
 
     Iterator<String> it = params.keySet().iterator();
-    while(it.hasNext()){
+    while ( it.hasNext() ) {
       String key = it.next();
-      request.addParameter( key,params.get( key ) );
+      request.addParameter( key, params.get( key ) );
     }
 
     return request;

@@ -114,7 +114,7 @@ public class CpkCoreService {
    * @return Returns true if the file exists and there was no problem reading it, false otherwise
    */
   private boolean runSystemKettle( String filename, boolean adminOnly,
-                                   Map<String, Map<String, Object>> bloatedMap ) {  //XXX - change the javadoc above? -
+                                   Map<String, Map<String, Object>> bloatedMap ) {
     boolean success = false;
     AbstractElement element = new AbstractElement();
     element.setAdminOnly( adminOnly );

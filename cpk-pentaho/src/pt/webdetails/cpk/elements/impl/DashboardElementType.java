@@ -69,7 +69,7 @@ public class DashboardElementType extends AbstractElementType {
     Map<String, Object> params = new HashMap<String, Object>();
     Map<String, Object> requestParams = bloatedMap.get( "request" );
 
-    params.put( "solution", "" );
+    params.put( "solution", "system" );
     params.put( "path", path );
     if ( requestParams.containsKey( "mode" ) && requestParams.get( "mode" ).equals( "preview" ) ) {
       params.put( "file", element.getId() + "_tmp.cdfde" );
@@ -111,8 +111,6 @@ public class DashboardElementType extends AbstractElementType {
     }
 
     urlBuilder.append( StringUtils.join( paramArray, "&" ) );
-
-    //XXX - copied from pluginUtils
 
     if (response == null) {
       logger.error("response not found");

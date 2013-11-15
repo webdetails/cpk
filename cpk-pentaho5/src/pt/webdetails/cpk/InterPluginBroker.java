@@ -7,7 +7,6 @@ package pt.webdetails.cpk;
 
 import org.apache.commons.io.IOUtils;
 import org.pentaho.platform.api.engine.IContentGenerator;
-import pt.webdetails.cpf.PentahoInterPluginCall5;
 import pt.webdetails.cpf.PluginEnvironment;
 import pt.webdetails.cpf.plugin.CorePlugin;
 import pt.webdetails.cpf.plugincall.api.IPluginCall;
@@ -20,11 +19,8 @@ import java.util.Map;
 
 
 public class InterPluginBroker {
-  //XXX - first call to this breaks, the rest of the calls are ok
-  //XXX - something to do with the response...
-  //XXX - fix asap
 
-  public static void run( Map<String, Object> params, ServletResponse response, OutputStream out ) throws Exception {
+  public static void run( Map<String, Object> params, OutputStream out ) throws Exception {
     CallParameters parameters = new CallParameters();
     Iterator<String> it = params.keySet().iterator();
     while ( it.hasNext() ) {
@@ -34,7 +30,8 @@ public class InterPluginBroker {
     }
     IPluginCall pluginCall = PluginEnvironment.env().getPluginCall( CorePlugin.CDE.getId(), "renderer", "render" );
     String returnVal = pluginCall.call( parameters.getParameters() );
-    IOUtils.write( returnVal, response.getOutputStream() );
+    IOUtils.write( returnVal, out );
+    out.flush();
   }
 
 }

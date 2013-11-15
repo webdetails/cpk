@@ -20,14 +20,14 @@ public class CpkLifecycleListener extends SimpleLifeCycleListener implements IPl
 
     @Override
     public void init() throws PluginLifecycleException {
-         super.init();
+         //super.init();
         logger.info("Initializing CPK plugin");
 
     }
 
     //@Override
     public void loaded() throws PluginLifecycleException {
-
+       //super.init();
         logger.info("CPK plugin loaded");
 
     }
