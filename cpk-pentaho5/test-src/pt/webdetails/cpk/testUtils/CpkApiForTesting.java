@@ -1,9 +1,8 @@
 package pt.webdetails.cpk.testUtils;
 
 import org.dom4j.DocumentException;
-import org.pentaho.platform.api.engine.IParameterProvider;
-import pt.webdetails.cpf.WrapperUtils;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
+import pt.webdetails.cpf.repository.pentaho.unified.UnifiedRepositoryAccess;
+import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.CpkApi;
 import pt.webdetails.cpk.CpkCoreService;
@@ -12,25 +11,22 @@ import pt.webdetails.cpk.CpkPentahoEnvironment;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA. User: joao Date: 11/1/13 Time: 10:54 AM To change this template use File | Settings |
  * File Templates.
  */
-public class CpkApiForTesting extends CpkApi{
+public class CpkApiForTesting extends CpkApi {
 
 
     /*public CpkContentGeneratorForTesting(ICpkEnvironment environment) {
         super(environment);
     }//*/
 
-  public CpkApiForTesting() throws Exception {
+  public CpkApiForTesting() {
     super();
     this.pluginUtils = new PluginUtilsForTesting();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, null );
+    this.cpkEnv = new CpkPentahoEnvironmentForTesting( pluginUtils, null );
     this.coreService = new CpkCoreService( cpkEnv );
   }
 
@@ -55,6 +51,18 @@ public class CpkApiForTesting extends CpkApi{
 
       logger.debug( "Found resource? " + "?" );
 
+    }
+  }
+
+  class CpkPentahoEnvironmentForTesting extends CpkPentahoEnvironment {
+
+    public CpkPentahoEnvironmentForTesting( IPluginUtils pluginUtils, UnifiedRepositoryAccess repoAccess ) {
+      super( pluginUtils, repoAccess );
+    }
+
+    @Override
+    public String getPluginId() {
+      return "cpkSol";
     }
   }
 

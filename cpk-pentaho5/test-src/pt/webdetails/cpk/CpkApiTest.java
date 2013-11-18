@@ -1,29 +1,17 @@
 package pt.webdetails.cpk;
 
+import org.dom4j.Document;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
-import org.pentaho.platform.api.engine.IParameterProvider;
-import org.pentaho.platform.api.mt.ITenant;
-import org.pentaho.platform.api.mt.ITenantedPrincipleNameResolver;
-import org.pentaho.platform.core.mt.Tenant;
-import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
+import org.pentaho.platform.api.engine.ISystemSettings;
 import org.pentaho.platform.engine.core.system.StandaloneApplicationContext;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.objfac.StandaloneSpringPentahoObjectFactory;
-import org.pentaho.platform.plugin.services.security.userrole.PentahoCachingUserDetailsService;
-import org.springframework.dao.DataAccessException;
-import org.springframework.security.GrantedAuthority;
-import org.springframework.security.userdetails.UserDetails;
-import org.springframework.security.userdetails.UserDetailsService;
-import org.springframework.security.userdetails.UsernameNotFoundException;
 import org.springframework.mock.web.MockHttpServletRequest;
-import pt.webdetails.cpf.RestRequestHandler;
-import pt.webdetails.cpf.http.CommonParameterProvider;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.testUtils.CpkApiForTesting;
@@ -33,8 +21,9 @@ import pt.webdetails.cpk.testUtils.PentahoSystemForTesting;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 /**
@@ -43,7 +32,7 @@ import java.util.concurrent.Callable;
  */
 public class CpkApiTest {
   private static IPluginUtils pluginUtils;
-  private static CpkApiForTesting cpkApi;
+  private CpkApiForTesting cpkApi;
   private static OutputStream out;
   private static OutputStream outResponse;
   private static String userDir = System.getProperty( "user.dir" );
@@ -57,19 +46,25 @@ public class CpkApiTest {
 
     StandaloneSpringPentahoObjectFactory factory = new StandaloneSpringPentahoObjectFactory();
     factory.init( "test-resources/repository/system/pentahoObjects.spring.xml", null );
-    StandaloneSession session = new StandaloneSession( "admin" );
 
+    ISystemSettings settings = buildAMockSystemSettings();
+    PentahoSystemForTesting.setSystemSettingsService( settings );
 
-    PentahoCachingUserDetailsService p =
-      new PentahoCachingUserDetailsService( getUserDetailsService(), getTenantPrincipleNameResolver() );
     PentahoSystemForTesting.registerObjectFactory( factory );
     PentahoSystemForTesting.init( appContext );
 
 
     pluginUtils = new PluginUtils();
-    cpkApi = new CpkApiForTesting();
+
 
   }
+
+
+  @Before
+  public void beforeEachTest() throws Exception {
+    cpkApi = new CpkApiForTesting();
+  }
+
 
   @Test
   public void testCreateContent() throws Exception {
@@ -188,7 +183,7 @@ public class CpkApiTest {
       public Void call() throws Exception {
         String str = cpkApi.getPluginName();
 
-        Assert.assertTrue( str.equals( "cpkSol" ) );//compare with a plugin I know
+        Assert.assertTrue( str.equals( "cpkSol" ) ); //compare with a plugin I know
         return null;
       }
     } );
@@ -238,13 +233,13 @@ public class CpkApiTest {
     Map<String, Object> path = new HashMap<String, Object>();
     Map<String, Object> request = new HashMap<String, Object>();
 
-    path.put( "path", "/sampleTrans" );//kjb or ktr
+    path.put( "path", "/sampleTrans" ); //kjb or ktr
     path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
     path.put( "httprequest", new MockHttpServletRequest() );
     request.put( "paramarg1", "value1" );
     request.put( "paramarg2", "value2" );
     request.put( "paramarg3", "value3" );
-    request.put( "kettleOutput", "Json" );//not Infered kettle, so must pass Json Output
+    request.put( "kettleOutput", "Json" ); //not Infered kettle, so must pass Json Output
     mainMap.put( "path", path );
     mainMap.put( "request", request );
 
@@ -255,7 +250,7 @@ public class CpkApiTest {
     Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
     Map<String, Object> path = new HashMap<String, Object>();
     Map<String, Object> request = new HashMap<String, Object>();
-    path.put( "path", "/evaluate-result-rows" );//kjb or ktr
+    path.put( "path", "/evaluate-result-rows" ); //kjb or ktr
     path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
     path.put( "httprequest", new MockHttpServletRequest() );
     request.put( "paramarg1", "value1" );
@@ -271,7 +266,7 @@ public class CpkApiTest {
     Map<String, Object> path = new HashMap<String, Object>();
     Map<String, Object> request = new HashMap<String, Object>();
 
-    path.put( "path", "/create-result-rows" );//kjb or ktr
+    path.put( "path", "/create-result-rows" ); //kjb or ktr
     path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
     path.put( "httprequest", new MockHttpServletRequest() );
     request.put( "stepName", "copy rows to result" );
@@ -288,7 +283,7 @@ public class CpkApiTest {
     Map<String, Object> path = new HashMap<String, Object>();
     Map<String, Object> request = new HashMap<String, Object>();
 
-    path.put( "path", "/generate-rows" );//kjb or ktr
+    path.put( "path", "/generate-rows" ); //kjb or ktr
     path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
     path.put( "httprequest", new MockHttpServletRequest() );
     request.put( "stepName", "output" );
@@ -297,73 +292,41 @@ public class CpkApiTest {
     cpkApi.createContent( mainMap );
   }
 
-  private static UserDetailsService getUserDetailsService() {
-    return new UserDetailsService() {
-      @Override public UserDetails loadUserByUsername( String s )
-        throws UsernameNotFoundException, DataAccessException {
-        return new UserDetails() {
-          @Override public GrantedAuthority[] getAuthorities() {
-            return new GrantedAuthority[ 0 ];
-          }
+  private static ISystemSettings buildAMockSystemSettings() {
+    return new ISystemSettings() {
+      @Override public String getSystemCfgSourceName() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
 
-          @Override public String getPassword() {
-            return "##debugPassword##";
-          }
+      @Override public String getSystemSetting( String path, String settingName, String defaultValue ) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
 
-          @Override public String getUsername() {
-            return "##debugUsername##";
-          }
+      @Override public String getSystemSetting( String settingName, String defaultValue ) {
+        return "Administrator";  //To change body of implemented methods use File | Settings | File Templates.
+      }
 
-          @Override public boolean isAccountNonExpired() {
-            return true;
-          }
+      @Override public List getSystemSettings( String path, String settingSection ) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
 
-          @Override public boolean isAccountNonLocked() {
-            return true;
-          }
+      @Override public List getSystemSettings( String settingSection ) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
 
-          @Override public boolean isCredentialsNonExpired() {
-            return true;
-          }
+      @Override public void resetSettingsCache() {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
 
-          @Override public boolean isEnabled() {
-            return true;
-          }
-        };
+      @Override public Document getSystemSettingsDocument( String actionPath ) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override public Properties getSystemSettingsProperties( String path ) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
       }
     };
   }
 
-  private static ITenantedPrincipleNameResolver getTenantPrincipleNameResolver() {
-    return new ITenantedPrincipleNameResolver() {
-      @Override public ITenant getTenant( String s ) {
-        return new Tenant();
-      }
-
-      @Override public String getPrincipleName( String s ) {
-        return "admin";  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override public String getPrincipleId( ITenant iTenant, String s ) {
-        return "admin";  //To change body of implemented methods use File | Settings | File Templates.
-      }
-
-      @Override public boolean isValid( String s ) {
-        return true;  //To change body of implemented methods use File | Settings | File Templates.
-      }
-    };
-  }
-
-  private static MockHttpServletRequest buildRequest( Map<String, String> params ) {
-    MockHttpServletRequest request = new MockHttpServletRequest();
-
-    Iterator<String> it = params.keySet().iterator();
-    while ( it.hasNext() ) {
-      String key = it.next();
-      request.addParameter( key, params.get( key ) );
-    }
-
-    return request;
-  }
 
 }

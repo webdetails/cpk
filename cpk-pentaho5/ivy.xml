@@ -18,73 +18,76 @@
     <dependencies defaultconf="default->default">
 
 
-        <dependency org="pt.webdetails" name="cpk-core" 
-                    rev="TRUNK-SNAPSHOT" conf='default,runtime->default' transitive="false" changing="true"/>
+        <dependency org="pt.webdetails"     name="cpk-core"               rev="TRUNK-SNAPSHOT"                     transitive="false" changing="true" conf='default,runtime->default'/>
+        <dependency org="pt.webdetails"     name="cpf-core"               rev="REFACTOR-SNAPSHOT"                  transitive="false" changing="true" conf='default,runtime->default'/>
+        <dependency org="pt.webdetails"     name="cpf-pentaho5"           rev="REFACTOR-SNAPSHOT"                  transitive="false" changing="true" conf='default,runtime->default'/>
 
-        <dependency org="pt.webdetails" name="cpf-core"
-                    rev="REFACTOR-SNAPSHOT" transitive="false" changing="true" conf='default,runtime->default'/>
-        <dependency org="pt.webdetails" name="cpf-pentaho5"
-                    rev="REFACTOR-SNAPSHOT" transitive="false" changing="true" conf='default,runtime->default'/>
+        <dependency org="pentaho"           name="pentaho-platform-api"   rev="${dependency.bi-platform.revision}" transitive="false" changing="true"/>
+        <dependency org="pentaho"           name="pentaho-platform-core"  rev="${dependency.bi-platform.revision}" transitive="false" changing="true"/>
+        <dependency org="pentaho-kettle"    name="kettle-engine"          rev="${dependency.kettle.revision}"      transitive="false" changing="true"/>
+        <dependency org="pentaho-kettle"    name="kettle-core"            rev="${dependency.kettle.revision}"      transitive="false" changing="true"/>
 
-        <dependency org="pentaho" name="pentaho-platform-api"
-                    rev="${dependency.bi-platform.revision}" changing="true" transitive="false"/>
-        <dependency org="pentaho" name="pentaho-platform-core"
-                    rev="${dependency.bi-platform.revision}" changing="true" transitive="false"/>
-        <dependency org="pentaho-kettle" name="kettle-engine" transitive="false" rev="${dependency.kettle.revision}"
-                    changing="true"/>
-        <dependency org="pentaho-kettle" name="kettle-core" transitive="false" rev="${dependency.kettle.revision}" changing="true"/>
+        <dependency org="commons-logging"   name="commons-logging"        rev="1.1.1"/>
+        <dependency org="commons-lang"      name="commons-lang"           rev="2.3"/>
+                
+        <dependency org="javax.servlet"     name="servlet-api"            rev="2.4"     transitive="false"/>
+        <dependency org="javax.ws.rs"       name="jsr311-api"             rev="1.1.1"/>            
+        <dependency org="net.sf.ehcache"    name="ehcache"                rev="2.0.1"/>
 
-
-        <dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
-        <dependency org="commons-lang" name="commons-lang" rev="2.3"/>
-        <dependency org="commons-io" name="commons-io" rev="1.3.2"/>
-        <dependency org="dom4j" name="dom4j" rev="1.6.1" transitive="false"/>
-        <dependency org="javax.servlet" name="servlet-api" rev="2.4" transitive="false"/>
+        <dependency org="com.sun.jersey"    name="jersey-core"            rev="1.16"    transitive="false"/>
+        <dependency org="com.sun.jersey"    name="jersey-server"          rev="1.16"    transitive="false"/>
 
 
-        <dependency org="org.springframework.security" name="spring-security-core" conf="test,default->default" rev="2.0.5.RELEASE" transitive="false"/>
-        <dependency org="org.springframework" name="spring-beans" conf="test,default->default" rev="2.5.6" transitive="true"/>
-        <dependency org="org.springframework" name="spring-core" conf="test,default->default" rev="2.5.6" transitive="true"/>
-        <dependency org="org.springframework.ldap" name="spring-ldap-core" conf="test,default->default" rev="1.3.0.RELEASE" transitive="true"/>
-            
-        <dependency org="commons-collections" name="commons-collections" conf="test->default" rev="3.0" transitive="false"/>
+        <dependency org="org.springframework"           name="spring-support"       rev="2.0.3" />
 
+        <dependency org="org.codehaus.jackson"          name="jackson-mapper-asl"   rev="1.8.2" />
+        <dependency org="com.fasterxml.jackson.core"    name="jackson-core"         rev="2.2.2"/>
+        <dependency org="com.fasterxml.jackson.core"    name="jackson-databind"     rev="2.2.2"/>
+        <dependency org="com.fasterxml.jackson.core"    name="jackson-annotations"  rev="2.2.2"/>
 
-        <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2"/>
-        <dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.2.2"/>
-        <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.2.2"/>
-        <dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.2.2"/>
-
-        <dependency org="org.json" name="json" rev="20090211" conf="test->default"/>
-        <dependency org="junit" name="junit" conf="test->default" rev='4.10'/>
-        <dependency org="pentaho" name="pentaho-platform-extensions"
-                    rev="${dependency.bi-platform.revision}" conf="test->default" transitive="false" changing="true"/>
         
-        <dependency org="net.sf.ehcache" name="ehcache" rev="2.0.1"/>
+        <dependency org="dom4j"                         name="dom4j"                 rev="1.6.1"            transitive="false" conf="test,default->default"/>
+        
+        <dependency org="org.springframework.security"  name="spring-security-core"  rev="2.0.5.RELEASE"    transitive="false"  conf="test,default->default"/>
+        <dependency org="org.springframework"           name="spring-beans"          rev="2.5.6"            transitive="true"   conf="test,default->default"/>
+        <dependency org="org.springframework"           name="spring-core"           rev="2.5.6"            transitive="true"   conf="test,default->default"/>
+        <dependency org="org.springframework.ldap"      name="spring-ldap-core"      rev="1.3.0.RELEASE"    transitive="true"   conf="test,default->default"/>
+        
+        <dependency org="commons-io"                    name="commons-io"            rev="2.4"              transitive="false"  conf="test,default->default"/>
 
 
 
-                    <!-- Test Dependencies -->
-            <dependency org="pentaho" name="pentaho-user-console-package"
-                        rev="${dependency.bi-platform.revision}" conf="test->default" transitive="false" changing="true" />
-            <dependency org="pentaho" name="pentaho-platform-repository"
-                        rev="${dependency.bi-platform.revision}" conf="test->default" changing="true" transitive="false" />
-            <dependency org="pentaho" name="pentaho-platform-scheduler"
-                        rev="${dependency.bi-platform.revision}" conf="test->default" changing="true" transitive="false" />
-            <dependency org="pentaho" name="common-ui"
-                        rev="${dependency.bi-platform.revision}" conf="test->default" changing="true" transitive="false" >
-              <artifact name="common-ui" type="zip" />
-            </dependency>       
+        <!-- Test Dependencies -->
+
+        <dependency org="org.json"                  name="json"                 rev="20090211"                      conf="test->default"/>
+        <dependency org="junit"                     name="junit"                rev="4.10"                          conf="test->default"/>
+        
+        <dependency org="commons-collections"       name="commons-collections"  rev="3.0"   transitive="false"      conf="test->default"/>
+         
+        <dependency org="rhino"                     name="js"                   rev="1.7R1" transitive="false"      conf="test->default"/>
+        <dependency org="spring"                    name="spring-mock"          rev="1.0.2"                         conf="test->default"/>
+        <dependency org="org.slf4j"                 name="slf4j-log4j12"        rev="1.5.8"                         conf="test->default"/>
+        <dependency org="commons-vfs"               name="commons-vfs"          rev="1.0"                           conf="test->default"/>
+        <dependency org="jaxen"                     name="jaxen"                rev="1.1"                           conf="test->default"/>
+        <dependency org="org.apache.clerezza.ext"   name="org.json.simple"      rev="0.3-incubating"                conf="test->default" />
+
+    <dependency org="org.safehaus.jug"              name="jug"                  rev="2.0.0"                         conf="test->default">
+        <artifact name="jug" type="jar" ext="jar" m:classifier="asl"/>
+      </dependency> 
 
 
-        <dependency org="org.springframework" name="spring-support" rev="2.0.3" />
-        <dependency org="javax.ws.rs" name="jsr311-api" rev="1.1.1"/>
-        <dependency org="spring" name="spring-mock" rev="1.0.2" conf="test->default"/>
 
-        <dependency org="com.sun.jersey" name="jersey-core" rev="1.16"    transitive="false"/>
-        <dependency org="com.sun.jersey" name="jersey-server" rev="1.16"  transitive="false"/>
+        <dependency org="pentaho"       name="pentaho-platform-extensions"      rev="${dependency.bi-platform.revision}" transitive="false" changing="true"  conf="test->default"/>
+        <dependency org="pentaho"       name="pentaho-user-console-package"     rev="${dependency.bi-platform.revision}" transitive="false" changing="true"  conf="test->default"/>
+        <dependency org="pentaho"       name="pentaho-platform-repository"      rev="${dependency.bi-platform.revision}" transitive="false" changing="true"  conf="test->default"/>
+        <dependency org="pentaho"       name="pentaho-platform-scheduler"       rev="${dependency.bi-platform.revision}" transitive="false" changing="true"  conf="test->default"/>
+        <dependency org="pentaho"       name="common-ui"                        rev="${dependency.bi-platform.revision}" transitive="false" changing="true"  conf="test->default">
+          <artifact name="common-ui" type="zip" />
+        </dependency>       
 
-            
+        
+
+    
 
     </dependencies>
 </ivy-module>

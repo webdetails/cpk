@@ -77,7 +77,7 @@ public class CpkApi {
   protected PluginUtils pluginUtils;
 
 
-  public CpkApi() throws Exception {
+  public CpkApi() {
     this.pluginUtils = new PluginUtils();
     this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, null );
     this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
@@ -327,7 +327,9 @@ public class CpkApi {
 
   private Map<String, Object> buildRequestMap( HttpServletRequest request, HttpHeaders headers ) {
     Map<String, Object> requestMap = new HashMap<String, Object>();
-    try {
+    if ( request == null ) { //Assume empty map for null requests
+      return requestMap;
+    }
       Enumeration e = request.getParameterNames();
       while ( e.hasMoreElements() ) {
         Object o = e.nextElement();
@@ -340,9 +342,6 @@ public class CpkApi {
         String next = it.next();
         requestMap.put( next, form.get( next ).get( 0 ) );
       }
-    } catch ( NullPointerException e ) {
-      Logger.getLogger( CpkApi.class.getName() ).log( Level.SEVERE, null, e );
-    }
     return requestMap;
   }
 
