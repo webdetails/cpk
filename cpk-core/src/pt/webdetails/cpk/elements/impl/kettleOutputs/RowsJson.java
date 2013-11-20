@@ -9,6 +9,7 @@ import java.util.List;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.util.JSONPObject;
+import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 
@@ -28,7 +29,7 @@ public class RowsJson {
   @JsonIgnore
   private void init( ArrayList<Object[]> rows, RowMetaInterface meta ) {
     this.rows = rows;
-    this.rowsMeta = meta;
+    this.rowsMeta = meta != null ? meta : new RowMeta(  );
   }
 
   @JsonProperty( "queryInfo" )
