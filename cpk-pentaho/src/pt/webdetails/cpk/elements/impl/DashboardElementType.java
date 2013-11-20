@@ -13,6 +13,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.PluginUtils;
@@ -68,6 +69,8 @@ public class DashboardElementType extends AbstractElementType {
 
     Map<String, Object> params = new HashMap<String, Object>();
     Map<String, Object> requestParams = bloatedMap.get( "request" );
+
+    path = FilenameUtils.separatorsToUnix( FilenameUtils.normalize( path ) );
 
     params.put( "solution", "system" );
     params.put( "path", path );
