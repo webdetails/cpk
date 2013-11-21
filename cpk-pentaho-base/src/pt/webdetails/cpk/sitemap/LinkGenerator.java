@@ -28,6 +28,7 @@ public class LinkGenerator {
   //private ArrayList<Link> kettleLinks;
   protected Log logger = LogFactory.getLog( this.getClass() );
   private IPluginUtils pluginUtils;
+  private static String ADMIN_DIR = "admin";
 
   public LinkGenerator( Map<String, IElement> elementsMap, IPluginUtils pluginUtils ) {
     this.pluginUtils = pluginUtils;
@@ -74,33 +75,34 @@ public class LinkGenerator {
     Link l = null;
 
     for ( File directory : directories.values() ) {
+      if ( !directory.getName().equals( ADMIN_DIR )) {
 
-      for ( File file : getFiles( directory ) ) {
-        int index = file.getName().indexOf( "." );
-        String filename = file.getName().substring( 0, index ).toLowerCase();
+        for ( File file : getFiles( directory ) ) {
+          int index = file.getName().indexOf( "." );
+          String filename = file.getName().substring( 0, index ).toLowerCase();
 
-        if ( elementsMap.containsKey( filename ) ) {
-          IElement element = elementsMap.get( filename );
-          if ( isDashboard( element ) ) {
-            l = new Link( elementsMap.get( filename ), pluginUtils );
-            if ( !linkExists( dashboardLinks, l ) ) {
-              dashboardLinks.add( l );
+          if ( elementsMap.containsKey( filename ) ) {
+            IElement element = elementsMap.get( filename );
+            if ( isDashboard( element ) ) {
+              l = new Link( elementsMap.get( filename ), pluginUtils );
+              if ( !linkExists( dashboardLinks, l ) ) {
+                dashboardLinks.add( l );
+              }
             }
-          }
-        }
+         }
 
-        for ( File dir : getDirectories( directory ) ) {
-          if ( !directories.containsValue( dir ) ) {
-            l = new Link( dir, elementsMap, pluginUtils );
-            if ( !linkExists( dashboardLinks, l ) ) {
-              dashboardLinks.add( l );
+          for ( File dir : getDirectories( directory ) ) {
+            if ( !dir.getName().equals( ADMIN_DIR ) && !directories.containsValue( dir ) ) {
+              l = new Link( dir, elementsMap, pluginUtils );
+              if ( !linkExists( dashboardLinks, l ) ) {
+                dashboardLinks.add( l );
+              }
             }
+
           }
 
         }
-
       }
-
     }
   }
 
