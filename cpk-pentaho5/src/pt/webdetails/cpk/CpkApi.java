@@ -69,6 +69,7 @@ public class CpkApi {
 
   private static final Log logger = LogFactory.getLog( CpkApi.class );
   private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm" );
+  private static final String PARAM_WEBAPP_DIR = "paramcpk.webapp.dir";
 
   public static final String PLUGIN_NAME = "sparkl";
 
@@ -327,7 +328,8 @@ public class CpkApi {
 
   private Map<String, Object> buildRequestMap( HttpServletRequest request, HttpHeaders headers ) {
     Map<String, Object> requestMap = new HashMap<String, Object>();
-    if ( request == null ) { //Assume empty map for null requests
+    requestMap.put( PARAM_WEBAPP_DIR, PentahoSystem.getApplicationContext().getApplicationPath( "" ) );
+    if ( request == null ) {
       return requestMap;
     }
       Enumeration e = request.getParameterNames();
