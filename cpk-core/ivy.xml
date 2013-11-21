@@ -29,7 +29,7 @@
         <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" changing="true" transitive="false"/>
         <dependency org="pentaho-kettle" name="kettle-db" rev="${dependency.kettle.revision}" changing="true" transitive="false"/>
 
-        <dependency org="pt.webdetails" name="cpf-core"
+        <dependency org="pentaho" name="cpf-core"
             rev="REFACTOR-SNAPSHOT" transitive="false" changing="true" conf='runtime->default'/>
 
         <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2"/>
