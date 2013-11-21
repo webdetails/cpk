@@ -237,6 +237,7 @@ public class KettleOutput implements IKettleOutput {
       Object result = getRows().get( 0 )[ 0 ];
       if ( result != null ) {
         response.getOutputStream().write( result.toString().getBytes( ENCODING ) );
+        response.getOutputStream().flush();
       }
 
     } catch ( UnsupportedEncodingException ex ) {
