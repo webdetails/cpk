@@ -223,6 +223,7 @@ public class CpkApi {
   private void writeMessage( OutputStream out, String message ) {
     try {
       out.write( message.getBytes( getEncoding() ) );
+      out.flush();
     } catch ( IOException ex ) {
       Logger.getLogger( CpkApi.class.getName() ).log( Level.SEVERE, null, ex );
     }
