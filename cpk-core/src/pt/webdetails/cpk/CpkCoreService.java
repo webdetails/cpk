@@ -211,6 +211,7 @@ public class CpkCoreService {
   private void writeMessage( OutputStream out, String message ) {
     try {
       out.write( message.getBytes( ENCODING ) );
+      out.flush();
     } catch ( IOException ex ) {
       logger.error( "Error writing message", ex );
     }
