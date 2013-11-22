@@ -12,8 +12,6 @@ import org.pentaho.platform.api.engine.ISystemSettings;
 import org.pentaho.platform.engine.core.system.StandaloneApplicationContext;
 import org.pentaho.platform.engine.core.system.objfac.StandaloneSpringPentahoObjectFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
-import pt.webdetails.cpf.utils.IPluginUtils;
-import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.testUtils.CpkApiForTesting;
 import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 import pt.webdetails.cpk.testUtils.PentahoSystemForTesting;
@@ -31,7 +29,6 @@ import java.util.concurrent.Callable;
  * File Templates.
  */
 public class CpkApiTest {
-  private static IPluginUtils pluginUtils;
   private CpkApiForTesting cpkApi;
   private static OutputStream out;
   private static OutputStream outResponse;
@@ -54,15 +51,12 @@ public class CpkApiTest {
     PentahoSystemForTesting.init( appContext );
 
 
-    pluginUtils = new PluginUtils();
-
-
   }
 
 
   @Before
   public void beforeEachTest() throws Exception {
-    cpkApi = new CpkApiForTesting();
+    cpkApi = new CpkApiForTesting( true );
   }
 
 
@@ -209,10 +203,8 @@ public class CpkApiTest {
           JSONObject obj = json.getJSONObject( i );
           String id = obj.getString( "id" );
           String link = obj.getString( "link" );
-          String name = obj.getString( "name" );
           JSONArray sublinks = obj.getJSONArray( "sublinks" );
-          if ( id.contains( "wcdf" ) && link.contains( "cpkSol" ) ) {
-          } else { //probably a folder with sublinks
+          if ( !( id.contains( "wcdf" ) && link.contains( "cpkSol" ) ) ) {
             if ( sublinks.length() > 0 ) {
               sublinksExist = true;
             } else {
