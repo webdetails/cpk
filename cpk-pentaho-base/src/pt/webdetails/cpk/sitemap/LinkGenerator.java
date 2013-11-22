@@ -1,6 +1,16 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/*!
+* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+*
+* This software was developed by Webdetails and is provided under the terms
+* of the Mozilla Public License, Version 2.0, or any later version. You may not use
+* this file except in compliance with the license. If you need a copy of the license,
+* please go to  http://mozilla.org/MPL/2.0/. The Initial Developer is Webdetails.
+*
+* Software distributed under the Mozilla Public License is distributed on an "AS IS"
+* basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
+* the license for the specific language governing your rights and limitations.
+*/
+
 package pt.webdetails.cpk.sitemap;
 
 import java.io.File;
@@ -19,9 +29,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import pt.webdetails.cpf.utils.IPluginUtils;
 
-/**
- * @author Luís Paulo Silva
- */
 public class LinkGenerator {
 
   private ArrayList<Link> dashboardLinks;
@@ -29,6 +36,7 @@ public class LinkGenerator {
   protected Log logger = LogFactory.getLog( this.getClass() );
   private IPluginUtils pluginUtils;
   private static String ADMIN_DIR = "admin";
+  private static String KETTLE_DIR = "kettle";
 
   public LinkGenerator( Map<String, IElement> elementsMap, IPluginUtils pluginUtils ) {
     this.pluginUtils = pluginUtils;
@@ -75,7 +83,7 @@ public class LinkGenerator {
     Link l = null;
 
     for ( File directory : directories.values() ) {
-      if ( !directory.getName().equals( ADMIN_DIR )) {
+      if ( !directory.getName().equals( ADMIN_DIR ) && !directory.getName().equals( KETTLE_DIR ) ) {
 
         for ( File file : getFiles( directory ) ) {
           int index = file.getName().indexOf( "." );
