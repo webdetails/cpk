@@ -82,7 +82,7 @@ public class CpkApi {
     this.pluginUtils = new PluginUtils();
     this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, null );
     this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
-    pluginUtils.setPluginName( PLUGIN_NAME );
+    pluginUtils.setPluginName( ((CpkPentahoEnvironment)cpkEnv ).getPluginId() );
   }
 
 
@@ -93,7 +93,7 @@ public class CpkApi {
   @GET
   @Path( "/ping" )
   public String ping() {
-    return "ping";
+    return "Pong: I was called from " + getPluginName();
   }
 
   @GET
@@ -159,7 +159,6 @@ public class CpkApi {
   @Produces(MimeTypes.PLAIN_TEXT)
   public void version( @PathParam( "pluginId" ) String pluginId, @Context HttpServletResponse response )
     throws IOException {
-    setPluginName( pluginId );
     PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
     pluginsAnalyzer.refresh();
 
@@ -195,7 +194,6 @@ public class CpkApi {
   @Path( "/getSitemapJson" )
   public void getSitemapJson( @Context HttpServletResponse response )
     throws IOException {
-    setPluginName( ((CpkPentahoEnvironment)cpkEnv).getPluginId() );
     TreeMap<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
     JsonNode sitemap = null;
     if ( elementsMap != null ) {
@@ -243,7 +241,6 @@ public class CpkApi {
   public void listDataAccessTypes( @Context HttpServletResponse response )
     throws Exception {
     //boolean refreshCache = Boolean.parseBoolean(getRequestParameters().getStringParameter("refreshCache", "false"));
-    setPluginName( ((CpkPentahoEnvironment)cpkEnv).getPluginId() );
 
     Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
     StringBuilder dsDeclarations = new StringBuilder( "{" );
