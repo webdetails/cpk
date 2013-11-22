@@ -16,7 +16,6 @@ package pt.webdetails.cpk.elements;
 import java.util.List;
 import java.util.Map;
 import org.dom4j.Node;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 
 public interface IElementType {
 

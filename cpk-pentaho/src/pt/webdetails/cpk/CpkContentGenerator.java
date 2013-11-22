@@ -49,7 +49,6 @@ import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.impl.KettleElementType;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletResponse;
 
 public class CpkContentGenerator extends RestContentGenerator {

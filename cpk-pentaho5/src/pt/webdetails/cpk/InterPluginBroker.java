@@ -14,13 +14,11 @@
 package pt.webdetails.cpk;
 
 import org.apache.commons.io.IOUtils;
-import org.pentaho.platform.api.engine.IContentGenerator;
 import pt.webdetails.cpf.PluginEnvironment;
 import pt.webdetails.cpf.plugin.CorePlugin;
 import pt.webdetails.cpf.plugincall.api.IPluginCall;
 import pt.webdetails.cpf.plugincall.base.CallParameters;
 
-import javax.servlet.ServletResponse;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;

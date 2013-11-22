@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.dom4j.DocumentException;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.elements.AbstractElement;
 import pt.webdetails.cpk.elements.IElement;

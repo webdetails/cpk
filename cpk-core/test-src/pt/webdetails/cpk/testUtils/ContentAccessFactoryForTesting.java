@@ -14,18 +14,11 @@
 package pt.webdetails.cpk.testUtils;
 
 import pt.webdetails.cpf.repository.IRepositoryAccess;
-import pt.webdetails.cpf.repository.api.FileAccess;
-import pt.webdetails.cpf.repository.api.IBasicFile;
-import pt.webdetails.cpf.repository.api.IBasicFileFilter;
 import pt.webdetails.cpf.repository.api.IContentAccessFactory;
 import pt.webdetails.cpf.repository.api.IRWAccess;
 import pt.webdetails.cpf.repository.api.IReadAccess;
 import pt.webdetails.cpf.repository.api.IUserContentAccess;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
 
 public class ContentAccessFactoryForTesting implements IContentAccessFactory {
 

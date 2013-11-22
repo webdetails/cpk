@@ -13,6 +13,7 @@
 
 package pt.webdetails.cpk;
 
+/*
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -30,8 +31,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.dom4j.DocumentException;
 import org.pentaho.platform.api.engine.IParameterProvider;
 
-import pt.webdetails.cpf.RestContentGenerator;
-import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
 import pt.webdetails.cpf.WrapperUtils;
 import pt.webdetails.cpf.annotations.AccessLevel;
@@ -50,6 +49,10 @@ import pt.webdetails.cpk.elements.impl.KettleElementType;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 
 import javax.servlet.http.HttpServletResponse;
+*/
+
+import pt.webdetails.cpf.RestContentGenerator;
+import pt.webdetails.cpf.RestRequestHandler;
 
 public class CpkContentGenerator extends RestContentGenerator {
   @Override public RestRequestHandler getRequestHandler() {

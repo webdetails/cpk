@@ -13,9 +13,6 @@
 
 package pt.webdetails.cpk.security;
 
-import java.util.Map;
-
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpk.elements.IElement;
 
 import javax.servlet.http.HttpServletResponse;

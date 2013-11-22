@@ -13,6 +13,10 @@
 
 package pt.webdetails.cpk.elements.impl;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,14 +29,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.InterPluginBroker;
 import pt.webdetails.cpk.elements.AbstractElementType;
 import pt.webdetails.cpk.elements.ElementInfo;
 import pt.webdetails.cpk.elements.IElement;
 
 
-import java.io.*;
 import java.util.HashMap;
 
 import pt.webdetails.cpf.utils.IPluginUtils;

@@ -14,10 +14,8 @@
 
 package pt.webdetails.cpk.security;
 
-import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
-import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpf.session.PentahoSessionUtils;
