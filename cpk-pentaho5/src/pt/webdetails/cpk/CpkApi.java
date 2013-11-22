@@ -82,7 +82,12 @@ public class CpkApi {
     this.pluginUtils = new PluginUtils();
     this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, null );
     this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
-    pluginUtils.setPluginName( ((CpkPentahoEnvironment)cpkEnv ).getPluginId() );
+    init();
+  }
+
+
+  protected void init() {
+    pluginUtils.setPluginName( ( (CpkPentahoEnvironment) cpkEnv ).getPluginId() );
   }
 
 
@@ -183,7 +188,7 @@ public class CpkApi {
   public void status( @Context HttpServletRequest request, @Context HttpServletResponse response,
                       @Context HttpHeaders headers )
     throws DocumentException, IOException {
-    if (request.getParameter( "json" ) != null) { //XXX - confirm this one
+    if (request.getParameter( "json" ) != null) {
       coreService.statusJson( response.getOutputStream(), response );
     } else {
       coreService.status( response.getOutputStream(), buildBloatedMap( request, response, headers ) );

@@ -56,7 +56,7 @@ public class CpkApiTest {
 
   @Before
   public void beforeEachTest() throws Exception {
-    cpkApi = new CpkApiForTesting( true );
+    cpkApi = new CpkApiForTesting( );
   }
 
 

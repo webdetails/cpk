@@ -32,12 +32,17 @@ public class CpkApiForTesting extends CpkApi {
         super(environment);
     }//*/
 
-  public CpkApiForTesting( boolean argh ) {
+  public CpkApiForTesting( ) {
 
     this.pluginUtils = new PluginUtilsForTesting();
     this.cpkEnv = new CpkPentahoEnvironmentForTesting( pluginUtils, null );
     this.coreService = new CpkCoreService( cpkEnv );
   }
+
+
+
+  @Override
+  protected void init() {}
 
   class PluginUtilsForTesting extends PluginUtils {
 
