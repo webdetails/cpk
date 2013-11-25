@@ -14,6 +14,7 @@
 package pt.webdetails.cpk.testUtils;
 
 import org.springframework.mock.web.DelegatingServletOutputStream;
+
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -107,7 +108,7 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
   }
 
   @Override public ServletOutputStream getOutputStream() throws IOException {
-    return new DelegatingServletOutputStream(outputStream);
+    return new DelegatingServletOutputStream( outputStream );
   }
 
   @Override public PrintWriter getWriter() throws IOException {

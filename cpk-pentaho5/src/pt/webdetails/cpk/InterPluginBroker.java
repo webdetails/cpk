@@ -32,7 +32,7 @@ public class InterPluginBroker {
     while ( it.hasNext() ) {
       String key = it.next();
       Object value = params.get( key );
-      parameters.put(key, value.toString());
+      parameters.put( key, value.toString() );
     }
     IPluginCall pluginCall = PluginEnvironment.env().getPluginCall( CorePlugin.CDE.getId(), "renderer", "render" );
     String returnVal = pluginCall.call( parameters.getParameters() );

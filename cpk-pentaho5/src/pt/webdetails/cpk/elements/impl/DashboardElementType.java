@@ -102,7 +102,7 @@ public class DashboardElementType extends AbstractElementType {
       return;
     }
     try {
-        InterPluginBroker.run( params, out );
+      InterPluginBroker.run( params, out );
     } catch ( Exception e ) {
       e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
@@ -127,14 +127,14 @@ public class DashboardElementType extends AbstractElementType {
 
     urlBuilder.append( StringUtils.join( paramArray, "&" ) );
 
-    if (response == null) {
-      logger.error("response not found");
+    if ( response == null ) {
+      logger.error( "response not found" );
       return;
     }
     try {
-      response.sendRedirect(urlBuilder.toString());
-    } catch (IOException e) {
-      logger.error("could not redirect", e);
+      response.sendRedirect( urlBuilder.toString() );
+    } catch ( IOException e ) {
+      logger.error( "could not redirect", e );
     }
 
 

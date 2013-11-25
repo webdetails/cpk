@@ -13,26 +13,9 @@
 
 package pt.webdetails.cpk.elements.impl;
 
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-
-import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import pt.webdetails.cpk.elements.AbstractElementType;
-import pt.webdetails.cpk.elements.ElementInfo;
-import pt.webdetails.cpk.elements.IElement;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.RowMetaAndData;
@@ -57,7 +40,22 @@ import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.CpkEngine;
+import pt.webdetails.cpk.elements.AbstractElementType;
+import pt.webdetails.cpk.elements.ElementInfo;
+import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
+
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class KettleElementType extends AbstractElementType {
 
@@ -78,8 +76,8 @@ public class KettleElementType extends AbstractElementType {
   private String cpkSolutionSystemDir = null, cpkSolutionDir = null, cpkPluginDir = null, cpkPluginId = null,
     cpkPluginSystemDir = null;
   private final String CPK_SOLUTION_SYSTEM_DIR = "cpk.solution.system.dir",
-    //CPK_SOLUTION_DIR = "cpk.solution.dir",
-    CPK_PLUGIN_DIR = "cpk.plugin.dir",
+  //CPK_SOLUTION_DIR = "cpk.solution.dir",
+  CPK_PLUGIN_DIR = "cpk.plugin.dir",
     CPK_PLUGIN_ID = "cpk.plugin.id",
     CPK_PLUGIN_SYSTEM_DIR = "cpk.plugin.system.dir",
     CPK_SESSION_USERNAME = "cpk.session.username",
@@ -182,7 +180,7 @@ public class KettleElementType extends AbstractElementType {
     // initialize default parameters for kettle transformation
     defaultParameters
       .setParameterValue( CPK_SOLUTION_SYSTEM_DIR, cpkSolutionSystemDir ); // eg: project-X/solution/system
-   // defaultParameters.setParameterValue( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
+    // defaultParameters.setParameterValue( CPK_SOLUTION_DIR, cpkSolutionDir ); // eg: project-X/solution
     defaultParameters.setParameterValue( CPK_PLUGIN_DIR, cpkPluginDir ); // eg: project-X/solution/system/cpk
     defaultParameters.setParameterValue( CPK_PLUGIN_ID, cpkPluginId ); // eg: "cpk"
     defaultParameters
@@ -354,19 +352,20 @@ public class KettleElementType extends AbstractElementType {
     }
 
 
-
     //transformation.setParameterValue( CPK_SOLUTION_DIR, defaultParameters.getParameterDefault( CPK_SOLUTION_DIR ) );
     transformationMeta.setParameterValue( CPK_PLUGIN_DIR, defaultParameters.getParameterDefault( CPK_PLUGIN_DIR ) );
     transformationMeta.setParameterValue( CPK_PLUGIN_ID, defaultParameters.getParameterDefault( CPK_PLUGIN_ID ) );
-    transformationMeta.setParameterValue( CPK_PLUGIN_SYSTEM_DIR, defaultParameters.getParameterDefault( CPK_PLUGIN_SYSTEM_DIR ) );
-    transformationMeta.setParameterValue( CPK_SOLUTION_SYSTEM_DIR, defaultParameters.getParameterDefault( CPK_SOLUTION_SYSTEM_DIR ) );
+    transformationMeta
+      .setParameterValue( CPK_PLUGIN_SYSTEM_DIR, defaultParameters.getParameterDefault( CPK_PLUGIN_SYSTEM_DIR ) );
+    transformationMeta
+      .setParameterValue( CPK_SOLUTION_SYSTEM_DIR, defaultParameters.getParameterDefault( CPK_SOLUTION_SYSTEM_DIR ) );
 
         /*
          * Loading parameters, if there are any.
          */
-      for ( String arg : customParams.keySet() ) {
-        transformationMeta.setParameterValue( arg, customParams.get( arg ) );
-      }
+    for ( String arg : customParams.keySet() ) {
+      transformationMeta.setParameterValue( arg, customParams.get( arg ) );
+    }
 
     transformation.copyParametersFrom( transformationMeta );
     transformation.activateParameters();

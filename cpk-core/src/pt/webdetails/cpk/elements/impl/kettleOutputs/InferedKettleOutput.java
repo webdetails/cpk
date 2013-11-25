@@ -13,9 +13,9 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
-import java.util.Map;
-
 import pt.webdetails.cpf.utils.IPluginUtils;
+
+import java.util.Map;
 
 public class InferedKettleOutput extends KettleOutput {
 

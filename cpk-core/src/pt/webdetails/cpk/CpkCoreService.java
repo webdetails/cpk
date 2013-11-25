@@ -60,12 +60,12 @@ public class CpkCoreService {
     //Make sure the instance is first set so we have pluginUtils
     CpkEngine engine = getCpkEngine();
     IAccessControl accessControl = cpkEnvironment.getAccessControl();
-    HttpServletResponse response = (HttpServletResponse)bloatedMap.get( "path" ).get( "httpresponse" );
+    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
     logger.debug( "Creating content" );
 
     // Get the path, remove leading slash
     IPluginUtils pluginUtils = cpkEnvironment.getPluginUtils();
-    String path = (String)bloatedMap.get( "path" ).get( "path" );
+    String path = (String) bloatedMap.get( "path" ).get( "path" );
     IElement element = null;
 
     if ( path == null || path.equals( "/" ) ) {
@@ -107,7 +107,7 @@ public class CpkCoreService {
       getCpkEngine().reload();
       status( out, bloatedMap );
     } else {
-      accessControl.throwAccessDenied( (HttpServletResponse)bloatedMap.get( "path" ).get( "httpresponse" ) );
+      accessControl.throwAccessDenied( (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" ) );
     }
   }
 
@@ -151,10 +151,10 @@ public class CpkCoreService {
     return success;
   }
 
-  public void status( OutputStream out ,Map<String, Map<String, Object>> bloatedMap )
+  public void status( OutputStream out, Map<String, Map<String, Object>> bloatedMap )
     throws DocumentException, IOException {
     final String key = "status";
-    HttpServletResponse response = (HttpServletResponse)bloatedMap.get( "path" ).get( "httpresponse" );
+    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
     boolean success = runSystemKettle( key, false, bloatedMap );
 
     if ( !success ) {

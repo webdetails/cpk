@@ -13,14 +13,14 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // This class aids in the construction of a CDA-like JSON output (made to be build with jackson library)
 public class RowsJson {
@@ -34,7 +34,7 @@ public class RowsJson {
   @JsonIgnore
   private void init( ArrayList<Object[]> rows, RowMetaInterface meta ) {
     this.rows = rows;
-    this.rowsMeta = meta != null ? meta : new RowMeta(  );
+    this.rowsMeta = meta != null ? meta : new RowMeta();
   }
 
   @JsonProperty( "queryInfo" )

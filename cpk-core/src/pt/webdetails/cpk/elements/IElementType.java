@@ -13,20 +13,21 @@
 
 package pt.webdetails.cpk.elements;
 
+import org.dom4j.Node;
+
 import java.util.List;
 import java.util.Map;
-import org.dom4j.Node;
 
 public interface IElementType {
 
-    public String getType();
+  public String getType();
 
-    public List<IElement> scanElements(Node node);
-    
-    public IElement registerElement(String elementLocation, Node node);
-    
-    public void processRequest(Map<String, Map<String, Object>> bloatedMap, IElement element);
-        
-    public boolean isShowInSitemap();
-    
+  public List<IElement> scanElements( Node node );
+
+  public IElement registerElement( String elementLocation, Node node );
+
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap, IElement element );
+
+  public boolean isShowInSitemap();
+
 }

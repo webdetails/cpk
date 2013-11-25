@@ -277,11 +277,11 @@ public class CpkContentGenerator extends RestContentGenerator {
   }
 
   private Map<String, Object> getPathMap() {
-    Map<String,Object> pathMap = map.get( "path" ).getParameters();
+    Map<String, Object> pathMap = map.get( "path" ).getParameters();
 
     try {
       pathMap.put( "httpresponse", getHttpResponse() );
-      pathMap.put( "httprequest",map.get( "path" ).getParameter( "httprequest" ) );
+      pathMap.put( "httprequest", map.get( "path" ).getParameter( "httprequest" ) );
     } catch ( NullPointerException e ) {
       return pathMap;
     }
@@ -289,7 +289,7 @@ public class CpkContentGenerator extends RestContentGenerator {
   }
 
   private Map<String, Object> getRequestMap() {
-    return map.get("request").getParameters();
+    return map.get( "request" ).getParameters();
   }
 
   private HttpServletResponse getHttpResponse() {

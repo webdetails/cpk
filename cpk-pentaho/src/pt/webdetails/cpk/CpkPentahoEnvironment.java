@@ -26,43 +26,43 @@ import pt.webdetails.cpk.security.IAccessControl;
 
 public class CpkPentahoEnvironment extends PentahoPluginEnvironment implements pt.webdetails.cpk.ICpkEnvironment {
 
-    private IPluginUtils pluginUtils;
+  private IPluginUtils pluginUtils;
 
-    public CpkPentahoEnvironment(IPluginUtils pluginUtils) {
-        this.pluginUtils = pluginUtils;
-    }
+  public CpkPentahoEnvironment( IPluginUtils pluginUtils ) {
+    this.pluginUtils = pluginUtils;
+  }
 
-    @Override
-    public IPluginUtils getPluginUtils() {
-        return pluginUtils;
-    }
+  @Override
+  public IPluginUtils getPluginUtils() {
+    return pluginUtils;
+  }
 
-    @Override
-    public IAccessControl getAccessControl() {
-        return new AccessControl(pluginUtils);
-    }
+  @Override
+  public IAccessControl getAccessControl() {
+    return new AccessControl( pluginUtils );
+  }
 
-    @Override
-    public String getPluginName() {
-        return pluginUtils.getPluginName();
-    }
+  @Override
+  public String getPluginName() {
+    return pluginUtils.getPluginName();
+  }
 
-    @Override
-    public ISessionUtils getSessionUtils() {
-        return new PentahoSessionUtils();
-    }
+  @Override
+  public ISessionUtils getSessionUtils() {
+    return new PentahoSessionUtils();
+  }
 
-    @Override
-    public void reload() {
-        PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
-        pluginsAnalyzer.refresh();
-        List<Plugin> plugins = pluginsAnalyzer.getInstalledPlugins();
-        String pluginName = pluginUtils.getPluginName();
-        for (Plugin plgn : plugins) {
-            if (plgn.getName().equalsIgnoreCase(pluginName) || plgn.getId().equalsIgnoreCase(pluginName)) {
-                plgn.setName(pluginName);
-                break;
-            }
-        }
+  @Override
+  public void reload() {
+    PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
+    pluginsAnalyzer.refresh();
+    List<Plugin> plugins = pluginsAnalyzer.getInstalledPlugins();
+    String pluginName = pluginUtils.getPluginName();
+    for ( Plugin plgn : plugins ) {
+      if ( plgn.getName().equalsIgnoreCase( pluginName ) || plgn.getId().equalsIgnoreCase( pluginName ) ) {
+        plgn.setName( pluginName );
+        break;
+      }
     }
+  }
 }

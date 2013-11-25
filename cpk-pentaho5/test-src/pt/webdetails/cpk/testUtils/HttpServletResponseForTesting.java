@@ -109,7 +109,7 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
   }
 
   @Override public ServletOutputStream getOutputStream() throws IOException {
-    return new DelegatingServletOutputStream(outputStream);
+    return new DelegatingServletOutputStream( outputStream );
   }
 
   @Override public PrintWriter getWriter() throws IOException {

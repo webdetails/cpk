@@ -13,15 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,12 +27,20 @@ import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
-import pt.webdetails.cpk.utils.CpkUtils;
-import pt.webdetails.cpk.utils.ZipUtil;
 import pt.webdetails.cpk.elements.impl.KettleElementType;
 import pt.webdetails.cpk.elements.impl.KettleElementType.KettleType;
+import pt.webdetails.cpk.utils.CpkUtils;
+import pt.webdetails.cpk.utils.ZipUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class KettleOutput implements IKettleOutput {
 

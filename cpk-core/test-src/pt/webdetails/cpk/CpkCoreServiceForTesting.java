@@ -19,19 +19,19 @@ import pt.webdetails.cpf.repository.IRepositoryAccess;
 
 public class CpkCoreServiceForTesting extends CpkCoreService {
 
-    private static final long serialVersionUID = 1L;
-    private static final String ENCODING = "UTF-8";
-    private final String PLUGIN_UTILS = "PluginUtils";
-    private IRepositoryAccess repAccess;
-    private static final Logger logger = Logger.getLogger(CpkCoreServiceForTesting.class.getName());
+  private static final long serialVersionUID = 1L;
+  private static final String ENCODING = "UTF-8";
+  private final String PLUGIN_UTILS = "PluginUtils";
+  private IRepositoryAccess repAccess;
+  private static final Logger logger = Logger.getLogger( CpkCoreServiceForTesting.class.getName() );
 
-    public CpkCoreServiceForTesting(ICpkEnvironment environment) {
+  public CpkCoreServiceForTesting( ICpkEnvironment environment ) {
 
-        // this.pluginUtils=pluginUtils;
-        // this.repAccess=repAccess;
-        super(environment);
-        cpkEngine = CpkEngine.getInstanceWithEnv(environment);
+    // this.pluginUtils=pluginUtils;
+    // this.repAccess=repAccess;
+    super( environment );
+    cpkEngine = CpkEngine.getInstanceWithEnv( environment );
 
 
-    }
+  }
 }

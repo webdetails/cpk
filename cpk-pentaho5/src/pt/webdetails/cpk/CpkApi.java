@@ -162,7 +162,7 @@ public class CpkApi {
 
   @GET
   @Path( "/version" )
-  @Produces(MimeTypes.PLAIN_TEXT)
+  @Produces( MimeTypes.PLAIN_TEXT )
   public void version( @PathParam( "pluginId" ) String pluginId, @Context HttpServletResponse response )
     throws IOException {
     PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
@@ -189,7 +189,7 @@ public class CpkApi {
   public void status( @Context HttpServletRequest request, @Context HttpServletResponse response,
                       @Context HttpHeaders headers )
     throws DocumentException, IOException {
-    if (request.getParameter( "json" ) != null) {
+    if ( request.getParameter( "json" ) != null ) {
       coreService.statusJson( response.getOutputStream(), response );
     } else {
       coreService.status( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
@@ -336,18 +336,18 @@ public class CpkApi {
     if ( request == null ) {
       return requestMap;
     }
-      Enumeration e = request.getParameterNames();
-      while ( e.hasMoreElements() ) {
-        Object o = e.nextElement();
-        requestMap.put( o.toString(), request.getParameter( o.toString() ) );
-      }
-      Form form =
-        ( (ContainerRequest) headers ).getFormParameters();
-      Iterator<String> it = form.keySet().iterator();
-      while ( it.hasNext() ) {
-        String next = it.next();
-        requestMap.put( next, form.get( next ).get( 0 ) );
-      }
+    Enumeration e = request.getParameterNames();
+    while ( e.hasMoreElements() ) {
+      Object o = e.nextElement();
+      requestMap.put( o.toString(), request.getParameter( o.toString() ) );
+    }
+    Form form =
+      ( (ContainerRequest) headers ).getFormParameters();
+    Iterator<String> it = form.keySet().iterator();
+    while ( it.hasNext() ) {
+      String next = it.next();
+      requestMap.put( next, form.get( next ).get( 0 ) );
+    }
     return requestMap;
   }
 
@@ -377,7 +377,7 @@ public class CpkApi {
     coreService.createContent( bloatedMap );
   }
 
-  private void setPluginName( String pluginId){
+  private void setPluginName( String pluginId ) {
     pluginUtils.setPluginName( pluginId );
   }
 }

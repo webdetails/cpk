@@ -13,34 +13,35 @@
 
 package pt.webdetails.cpk.elements;
 
-import java.util.Map;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import java.util.Map;
+
 public interface IElement {
-    
-    @JsonProperty("id")
-    public String getId();
-    
-    @JsonProperty("name")
-    public String getName();
-    
-    @JsonIgnore
-    public String getLocation();
-    
-    @JsonProperty("type")
-    public String getElementType();
- 
-    public void processRequest(Map<String, Map<String, Object>> bloatedMap);
-    
-    @JsonProperty("adminOnly")
-    public boolean isAdminOnly();
-    
-    @JsonIgnore
-    public ElementInfo getElementInfo();
-    
-    @JsonProperty("location")
-    public String getTopLevel();
-    
-    
+
+  @JsonProperty( "id" )
+  public String getId();
+
+  @JsonProperty( "name" )
+  public String getName();
+
+  @JsonIgnore
+  public String getLocation();
+
+  @JsonProperty( "type" )
+  public String getElementType();
+
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap );
+
+  @JsonProperty( "adminOnly" )
+  public boolean isAdminOnly();
+
+  @JsonIgnore
+  public ElementInfo getElementInfo();
+
+  @JsonProperty( "location" )
+  public String getTopLevel();
+
+
 }

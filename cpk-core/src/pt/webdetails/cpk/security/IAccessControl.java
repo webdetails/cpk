@@ -24,6 +24,6 @@ public interface IAccessControl {
 
 
   //Bloody stupid name
-  public void throwAccessDenied(HttpServletResponse response);
+  public void throwAccessDenied( HttpServletResponse response );
 
 }

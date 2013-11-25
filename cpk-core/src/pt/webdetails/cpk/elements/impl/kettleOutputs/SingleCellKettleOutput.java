@@ -13,22 +13,23 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
-import java.util.Map;
 import pt.webdetails.cpf.utils.IPluginUtils;
+
+import java.util.Map;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
-    public SingleCellKettleOutput(Map<String, Map<String, Object>> bloatedMap,IPluginUtils plug) {
-        super(bloatedMap,plug);
-    }
+  public SingleCellKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
+    super( bloatedMap, plug );
+  }
 
-    @Override
-    public boolean needsRowListener() {
-        return true;
-    }
+  @Override
+  public boolean needsRowListener() {
+    return true;
+  }
 
-    @Override
-    public void processResult() {
-        super.processSingleCell();
-    }
+  @Override
+  public void processResult() {
+    super.processSingleCell();
+  }
 }

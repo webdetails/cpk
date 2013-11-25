@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public class ReadAccessForTesting implements IReadAccess{
+public class ReadAccessForTesting implements IReadAccess {
 
   private IRepositoryAccess repAccess;
 
