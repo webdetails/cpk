@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
 import pt.webdetails.cpf.RestRequestHandler;
+import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.repository.IRepositoryAccess;
 import pt.webdetails.cpf.repository.vfs.VfsRepositoryAccess;
 import pt.webdetails.cpf.utils.IPluginUtils;

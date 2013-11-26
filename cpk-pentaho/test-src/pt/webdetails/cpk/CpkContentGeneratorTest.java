@@ -25,6 +25,7 @@ import org.dom4j.DocumentException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import org.junit.Assert;
@@ -61,7 +62,7 @@ public class CpkContentGeneratorTest {
   private static StandaloneSession session = new StandaloneSession( "joe" );
 
   @BeforeClass
-  public static void setUp() throws IOException, pt.webdetails.cpk.InitializationException, ObjectFactoryException {
+  public static void setUp() throws IOException, InitializationException, ObjectFactoryException {
 
 
     StandaloneApplicationContext appContext =
