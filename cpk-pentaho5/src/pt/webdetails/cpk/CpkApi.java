@@ -63,6 +63,7 @@ import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.impl.KettleElementType;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
+import pt.webdetails.cpk.utils.CpkUtils;
 
 
 @Path( "/{pluginId}/api" )
@@ -71,6 +72,9 @@ public class CpkApi {
   private static final Log logger = LogFactory.getLog( CpkApi.class );
   private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm" );
   private static final String PARAM_WEBAPP_DIR = "paramcpk.webapp.dir";
+  private static final String HOME_ELEMENT = "home";
+  private static final String MAIN_ELEMENT = "main";
+  private static final String DEFAULT_ELEMENT_TYPE = "Dashboard";
 
   public static final String PLUGIN_NAME = "sparkl";
 
@@ -108,6 +112,12 @@ public class CpkApi {
                                   @Context HttpServletResponse response, @Context HttpHeaders headers )
     throws Exception {
     callEndpoint( param, request, response, headers );
+  }
+
+  @GET
+  @Path( "/default" )
+  public void defaultElement( @Context HttpServletResponse response ) {
+    CpkUtils.redirect( response, getDefaultElement() );
   }
 
   @POST
@@ -379,5 +389,21 @@ public class CpkApi {
 
   private void setPluginName( String pluginId ) {
     pluginUtils.setPluginName( pluginId );
+  }
+
+  private String getDefaultElement() {
+    if ( coreService.hasElement( HOME_ELEMENT ) ) {
+      return HOME_ELEMENT;
+    } else if ( coreService.hasElement( MAIN_ELEMENT ) ) {
+      return MAIN_ELEMENT;
+    } else {
+      IElement[] elements = coreService.getElements();
+      for ( int i = 0; i < elements.length; i++ ) {
+        if ( elements[ i ].getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
+          return elements[ i ].getId().toLowerCase();
+        }
+      }
+      return null;
+    }
   }
 }
