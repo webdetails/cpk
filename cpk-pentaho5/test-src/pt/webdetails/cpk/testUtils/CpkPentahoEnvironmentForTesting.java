@@ -13,20 +13,18 @@
 
 package pt.webdetails.cpk.testUtils;
 
-import pt.webdetails.cpk.CpkApi;
-import pt.webdetails.cpk.CpkCoreService;
+import pt.webdetails.cpf.repository.pentaho.unified.UnifiedRepositoryAccess;
+import pt.webdetails.cpf.utils.IPluginUtils;
+import pt.webdetails.cpk.CpkPentahoEnvironment;
 
-public class CpkApiForTesting extends CpkApi {
+public class CpkPentahoEnvironmentForTesting extends CpkPentahoEnvironment {
 
-  public CpkApiForTesting() {
-
-    this.pluginUtils = new PluginUtilsForTesting();
-    this.cpkEnv = new CpkPentahoEnvironmentForTesting( pluginUtils, null );
-    this.coreService = new CpkCoreService( cpkEnv );
+  public CpkPentahoEnvironmentForTesting( IPluginUtils pluginUtils, UnifiedRepositoryAccess repoAccess ) {
+    super( pluginUtils, repoAccess );
   }
 
   @Override
-  protected void init() {
+  public String getPluginId() {
+    return "cpkSol";
   }
-
 }
