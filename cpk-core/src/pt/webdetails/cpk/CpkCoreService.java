@@ -210,6 +210,10 @@ public class CpkCoreService {
     }
   }
 
+  public IElement getElement( String elementId ) {
+    return getCpkEngine().getElement( elementId );
+  }
+
   public String getPluginName() {
     return cpkEnvironment.getPluginName();
   }

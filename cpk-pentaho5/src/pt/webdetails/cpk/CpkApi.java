@@ -72,9 +72,11 @@ public class CpkApi {
   private static final Log logger = LogFactory.getLog( CpkApi.class );
   private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm" );
   private static final String PARAM_WEBAPP_DIR = "paramcpk.webapp.dir";
+  //TODO remove these constants, expose defaultElement from coreservice
   private static final String HOME_ELEMENT = "home";
   private static final String MAIN_ELEMENT = "main";
   private static final String DEFAULT_ELEMENT_TYPE = "Dashboard";
+  private static final String DEFAULT_NO_DASHBOARD_MESSAGE = "This plugin does not contain a dashboard";
 
   public static final String PLUGIN_NAME = "sparkl";
 
@@ -116,8 +118,14 @@ public class CpkApi {
 
   @GET
   @Path( "/default" )
-  public void defaultElement( @Context HttpServletResponse response ) {
-    CpkUtils.redirect( response, getDefaultElement() );
+  public void defaultElement( @Context HttpServletResponse response ) throws IOException {
+    String defaultElement = getDefaultElement();
+    if ( defaultElement != null ) {
+      CpkUtils.redirect( response, defaultElement );
+    } else {
+      response.getOutputStream().write( DEFAULT_NO_DASHBOARD_MESSAGE.getBytes( getEncoding() ) );
+      response.getOutputStream().flush();
+    }
   }
 
   @POST
@@ -392,18 +400,22 @@ public class CpkApi {
   }
 
   private String getDefaultElement() {
-    if ( coreService.hasElement( HOME_ELEMENT ) ) {
+    IElement element = coreService.getElement( HOME_ELEMENT );
+    if ( element != null && element.getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
       return HOME_ELEMENT;
-    } else if ( coreService.hasElement( MAIN_ELEMENT ) ) {
-      return MAIN_ELEMENT;
-    } else {
-      IElement[] elements = coreService.getElements();
-      for ( int i = 0; i < elements.length; i++ ) {
-        if ( elements[ i ].getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
-          return elements[ i ].getId().toLowerCase();
-        }
-      }
-      return null;
     }
+
+    element = coreService.getElement( MAIN_ELEMENT );
+    if ( element != null && element.getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
+      return MAIN_ELEMENT;
+    }
+
+    IElement[] elements = coreService.getElements();
+    for ( int i = 0; i < elements.length; i++ ) {
+      if ( elements[ i ].getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
+        return elements[ i ].getId().toLowerCase();
+      }
+    }
+    return null;
   }
 }
