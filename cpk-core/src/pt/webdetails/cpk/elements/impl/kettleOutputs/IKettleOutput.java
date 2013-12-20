@@ -15,7 +15,7 @@ package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.row.RowMetaInterface;
-import pt.webdetails.cpk.elements.impl.KettleElementType;
+import pt.webdetails.cpk.elements.impl.KettleElementHelper;
 
 public interface IKettleOutput {
 
@@ -29,9 +29,9 @@ public interface IKettleOutput {
 
   public Result getResult();
 
-  public KettleElementType.KettleType getKettleType();
+  public KettleElementHelper.KettleType getKettleType();
 
-  public void setKettleType( KettleElementType.KettleType kettleType );
+  public void setKettleType( KettleElementHelper.KettleType kettleType );
 
   public void setOutputStepName( String stepName );
 

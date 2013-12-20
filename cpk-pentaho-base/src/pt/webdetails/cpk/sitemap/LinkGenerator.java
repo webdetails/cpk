@@ -18,16 +18,19 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import pt.webdetails.cpk.elements.IElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import pt.webdetails.cpf.utils.IPluginUtils;
+import pt.webdetails.cpk.elements.impl.DashboardElement;
 
 public class LinkGenerator {
 
@@ -35,19 +38,19 @@ public class LinkGenerator {
   //private ArrayList<Link> kettleLinks;
   protected Log logger = LogFactory.getLog( this.getClass() );
   private IPluginUtils pluginUtils;
-  private static String ADMIN_DIR = "admin";
-  private static String KETTLE_DIR = "kettle";
+  private final static String ADMIN_DIR = "admin";
+  private final static String KETTLE_DIR = "kettle";
 
   public LinkGenerator( Map<String, IElement> elementsMap, IPluginUtils pluginUtils ) {
     this.pluginUtils = pluginUtils;
     generateLinks( elementsMap );
   }
 
-  private Map<String, File> getTopLevelDirectories( Map<String, IElement> elementsMap ) {
+  private Map<String, File> getTopLevelDirectories( Collection<IElement> elements ) {
     HashMap<String, File> directories = new HashMap<String, File>();
 
-    for ( IElement element : elementsMap.values() ) {
-      File directory = new File( pluginUtils.getPluginDirectory() + "/" + element.getTopLevel() );
+    for ( IElement element : elements ) {
+      File directory = new File( FilenameUtils.getFullPath( element.getLocation() ) );
       if ( directory != null ) {
         try {
           directories.put( directory.getCanonicalPath(), directory );
@@ -79,13 +82,16 @@ public class LinkGenerator {
 
   private void generateLinks( Map<String, IElement> elementsMap ) {
     dashboardLinks = new ArrayList<Link>();
-    Map<String, File> directories = getTopLevelDirectories( elementsMap );
+    Map<String, File> directories = getTopLevelDirectories( elementsMap.values() );
     Link l = null;
 
     for ( File directory : directories.values() ) {
       if ( !directory.getName().equals( ADMIN_DIR ) && !directory.getName().equals( KETTLE_DIR ) ) {
 
         for ( File file : getFiles( directory ) ) {
+
+
+
           int index = file.getName().indexOf( "." );
           String filename = file.getName().substring( 0, index ).toLowerCase();
 
@@ -168,22 +174,7 @@ public class LinkGenerator {
   }
 
   public boolean isDashboard( IElement e ) {
-    boolean is = false;
-
-    if ( e.getElementType().equalsIgnoreCase( "dashboard" ) ) {
-      is = true;
-    }
-
-    return is;
+    return ( e instanceof DashboardElement );
   }
 
-  public boolean isKettle( IElement e ) {
-    boolean is = false;
-
-    if ( e.getElementType().equalsIgnoreCase( "kettle" ) ) {
-      is = true;
-    }
-
-    return is;
-  }
 }

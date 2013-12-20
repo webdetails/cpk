@@ -61,7 +61,11 @@ public class CpkContentGeneratorTest {
   private static String userDir = System.getProperty( "user.dir" );
   private static StandaloneSession session = new StandaloneSession( "joe" );
 
-  @BeforeClass
+    private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
+            "getSitemapJson", "version", "getPluginMetadata" };
+
+
+    @BeforeClass
   public static void setUp() throws IOException, InitializationException, ObjectFactoryException {
 
 
@@ -85,7 +89,7 @@ public class CpkContentGeneratorTest {
     PentahoSystem.init( appContext );
 
     pluginUtils = new PluginUtils();
-    ICpkEnvironment environment = new CpkPentahoEnvironment( pluginUtils );
+    ICpkEnvironment environment = new CpkPentahoEnvironment( pluginUtils, reserverdWords );
     cpkContentGenerator = new CpkContentGeneratorForTesting();
 
 

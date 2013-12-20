@@ -13,11 +13,12 @@
 
 package pt.webdetails.cpk;
 
-
 import pt.webdetails.cpf.session.ISessionUtils;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.repository.api.IContentAccessFactory;
 import pt.webdetails.cpk.security.IAccessControl;
+
+import java.util.Set;
 
 
 public interface ICpkEnvironment {
@@ -30,7 +31,11 @@ public interface ICpkEnvironment {
 
   public String getPluginName();
 
+  public Set<String> getReservedWords();
+
   public ISessionUtils getSessionUtils();
+
+  public String getWebAppDir();
 
   public void reload();
 }

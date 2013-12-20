@@ -13,18 +13,30 @@
 
 package pt.webdetails.cpk.testUtils;
 
+import pt.webdetails.cpf.repository.api.IReadAccess;
+import pt.webdetails.cpf.repository.impl.FileBasedResourceAccess;
+import pt.webdetails.cpf.repository.pentaho.SystemPluginResourceAccess;
 import pt.webdetails.cpf.repository.pentaho.unified.UnifiedRepositoryAccess;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.CpkPentahoEnvironment;
 
+import java.io.File;
+import java.util.Collection;
+
 public class CpkPentahoEnvironmentForTesting extends CpkPentahoEnvironment {
 
-  public CpkPentahoEnvironmentForTesting( IPluginUtils pluginUtils, UnifiedRepositoryAccess repoAccess ) {
-    super( pluginUtils, repoAccess );
+  public CpkPentahoEnvironmentForTesting( IPluginUtils pluginUtils, String[] reservedWords ) {
+    super( pluginUtils, reservedWords );
   }
 
   @Override
   public String getPluginId() {
     return "cpkSol";
+  }
+
+  @Override
+  public IReadAccess getPluginSystemReader(String basePath) {
+    return new FileBasedResourceAccessForTesting( System.getProperty( "user.dir" )
+      + "/test-resources/repository/system/cpkSol/" );
   }
 }

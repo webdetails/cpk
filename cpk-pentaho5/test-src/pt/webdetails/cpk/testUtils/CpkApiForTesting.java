@@ -18,15 +18,16 @@ import pt.webdetails.cpk.CpkCoreService;
 
 public class CpkApiForTesting extends CpkApi {
 
-  public CpkApiForTesting() {
+  private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
+    "getSitemapJson", "version", "getPluginMetadata" };
 
-    this.pluginUtils = new PluginUtilsForTesting();
-    this.cpkEnv = new CpkPentahoEnvironmentForTesting( pluginUtils, null );
-    this.coreService = new CpkCoreService( cpkEnv );
+  public CpkApiForTesting() {
   }
 
   @Override
   protected void init() {
+    this.cpkEnv = new CpkPentahoEnvironmentForTesting( new PluginUtilsForTesting(), reserverdWords );
+    this.coreService = new CpkCoreService( cpkEnv );
   }
 
 }

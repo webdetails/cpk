@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -40,7 +41,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,7 +48,6 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.dom4j.DocumentException;
 
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import pt.webdetails.cpf.plugins.IPluginFilter;
 import pt.webdetails.cpf.plugins.Plugin;
 import pt.webdetails.cpf.plugins.PluginsAnalyzer;
@@ -60,7 +59,8 @@ import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceDefinition;
 import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.elements.IElement;
-import pt.webdetails.cpk.elements.impl.KettleElementType;
+import pt.webdetails.cpk.elements.impl.KettleJobElement;
+import pt.webdetails.cpk.elements.impl.KettleTransformationElement;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
 import pt.webdetails.cpk.utils.CpkUtils;
@@ -71,30 +71,28 @@ public class CpkApi {
 
   private static final Log logger = LogFactory.getLog( CpkApi.class );
   private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm" );
-  private static final String PARAM_WEBAPP_DIR = "paramcpk.webapp.dir";
-  //TODO remove these constants, expose defaultElement from coreservice
-  private static final String HOME_ELEMENT = "home";
-  private static final String MAIN_ELEMENT = "main";
-  private static final String DEFAULT_ELEMENT_TYPE = "Dashboard";
+
   private static final String DEFAULT_NO_DASHBOARD_MESSAGE = "This plugin does not contain a dashboard";
 
-  public static final String PLUGIN_NAME = "sparkl";
+  private static final String[] reservedWords = { "ping", "default", "reload", "refresh", "version", "status",
+    "getSitemapJson", "elementsList", "listDataAccessTypes", "reloadPlugins" };
 
   protected CpkCoreService coreService;
-  protected pt.webdetails.cpk.ICpkEnvironment cpkEnv;
-  protected PluginUtils pluginUtils;
+  protected ICpkEnvironment cpkEnv;
 
 
   public CpkApi() {
-    this.pluginUtils = new PluginUtils();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, null );
-    this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
     init();
   }
 
 
   protected void init() {
-    pluginUtils.setPluginName( ( (CpkPentahoEnvironment) cpkEnv ).getPluginId() );
+    PluginUtils pluginUtils = new PluginUtils();
+    CpkPentahoEnvironment cpkEnv = new CpkPentahoEnvironment( new PluginUtils(), reservedWords );
+    pluginUtils.setPluginName( cpkEnv.getPluginId() );
+
+    this.cpkEnv = cpkEnv;
+    this.coreService = new CpkCoreService( cpkEnv );
   }
 
 
@@ -102,11 +100,7 @@ public class CpkApi {
     return CharsetHelper.getEncoding();
   }
 
-  @GET
-  @Path( "/ping" )
-  public String ping() {
-    return "Pong: I was called from " + getPluginName();
-  }
+
 
   @GET
   @Path( "/{param}" )
@@ -114,18 +108,6 @@ public class CpkApi {
                                   @Context HttpServletResponse response, @Context HttpHeaders headers )
     throws Exception {
     callEndpoint( param, request, response, headers );
-  }
-
-  @GET
-  @Path( "/default" )
-  public void defaultElement( @Context HttpServletResponse response ) throws IOException {
-    String defaultElement = getDefaultElement();
-    if ( defaultElement != null ) {
-      CpkUtils.redirect( response, defaultElement );
-    } else {
-      response.getOutputStream().write( DEFAULT_NO_DASHBOARD_MESSAGE.getBytes( getEncoding() ) );
-      response.getOutputStream().flush();
-    }
   }
 
   @POST
@@ -136,7 +118,25 @@ public class CpkApi {
     callEndpoint( param, request, response, headers );
   }
 
+  @GET
+  @Path( "/ping" )
+  public String ping() {
+    return "Pong: I was called from " + cpkEnv.getPluginName();
+  }
 
+  @GET
+  @Path( "/default" )
+  public void defaultElement( @Context HttpServletResponse response ) throws IOException {
+    IElement defaultElement = coreService.getDefaultElement();
+    if ( defaultElement != null ) {
+      CpkUtils.redirect( response, defaultElement.getId() );
+    } else {
+      response.getOutputStream().write( DEFAULT_NO_DASHBOARD_MESSAGE.getBytes( getEncoding() ) );
+      response.getOutputStream().flush();
+    }
+  }
+
+  /*
   @GET
   @Path( "/createContent/{param}" )
   @Produces( MimeTypes.JSON )
@@ -145,6 +145,7 @@ public class CpkApi {
                                 @Context HttpHeaders headers ) throws Exception {
     callEndpoint( param, request, response, headers );
   }
+  */
 
   @GET
   @Path( "/reload" )
@@ -191,7 +192,7 @@ public class CpkApi {
     IPluginFilter thisPlugin = new IPluginFilter() {
       @Override
       public boolean include( Plugin plugin ) {
-        return plugin.getId().equalsIgnoreCase( pluginUtils.getPluginName() );
+        return plugin.getId().equalsIgnoreCase( cpkEnv.getPluginName() );
       }
     };
 
@@ -218,10 +219,10 @@ public class CpkApi {
   @Path( "/getSitemapJson" )
   public void getSitemapJson( @Context HttpServletResponse response )
     throws IOException {
-    TreeMap<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
+    Map<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
     JsonNode sitemap = null;
     if ( elementsMap != null ) {
-      LinkGenerator linkGen = new LinkGenerator( elementsMap, pluginUtils );
+      LinkGenerator linkGen = new LinkGenerator( elementsMap, cpkEnv.getPluginUtils() );
       sitemap = linkGen.getLinksJson();
     }
     ObjectMapper mapper = new ObjectMapper();
@@ -236,11 +237,12 @@ public class CpkApi {
     coreService.getElementsList( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
   }
 
-
+  /*
   public String getPluginName() {
 
-    return pluginUtils.getPluginName();
+    return cpkEnv.getPluginName();
   }
+  */
 
   private void writeMessage( OutputStream out, String message ) {
     try {
@@ -268,20 +270,20 @@ public class CpkApi {
 
     Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
     StringBuilder dsDeclarations = new StringBuilder( "{" );
-    IElement[] endpoints = coreService.getElements();
+    Collection<IElement> endpoints = coreService.getElements();
 
     if ( endpoints != null ) {
       for ( IElement endpoint : endpoints ) {
 
         // filter endpoints that aren't of kettle type
-        if ( !( endpoint instanceof KettleElementType || endpoint.getElementType().equalsIgnoreCase( "kettle" ) ) ) {
+        if ( !( endpoint instanceof KettleJobElement || endpoint instanceof KettleTransformationElement ) ) {
           continue;
         }
 
         logger.info( String.format( "CPK Kettle Endpoint found: %s)", endpoint ) );
 
 
-        String pluginId = pluginUtils.getPluginName();
+        String pluginId = cpkEnv.getPluginName();
         String endpointName = endpoint.getName();
 
         //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
@@ -329,6 +331,8 @@ public class CpkApi {
     reloadPlugins();
   }
 
+
+  //TODO: ????
   public void reloadPlugins() throws Exception {
     //  IPluginManager pluginManager = PentahoSystem.get(IPluginManager.class, PentahoSessionHolder.getSession());
     //  pluginManager.loadNewPlugins();
@@ -350,7 +354,9 @@ public class CpkApi {
 
   private Map<String, Object> buildRequestMap( HttpServletRequest request, HttpHeaders headers ) {
     Map<String, Object> requestMap = new HashMap<String, Object>();
-    requestMap.put( PARAM_WEBAPP_DIR, PentahoSystem.getApplicationContext().getApplicationPath( "" ) );
+
+    //requestMap.put( PARAM_WEBAPP_DIR, PentahoSystem.getApplicationContext().getApplicationPath( "" ) );
+
     if ( request == null ) {
       return requestMap;
     }
@@ -382,7 +388,6 @@ public class CpkApi {
     return pathMap;
   }
 
-
   private void callEndpoint( String endpoint, HttpServletRequest request, HttpServletResponse response,
                              HttpHeaders headers )
     throws Exception {
@@ -393,29 +398,5 @@ public class CpkApi {
 
   public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
     coreService.createContent( bloatedMap );
-  }
-
-  private void setPluginName( String pluginId ) {
-    pluginUtils.setPluginName( pluginId );
-  }
-
-  private String getDefaultElement() {
-    IElement element = coreService.getElement( HOME_ELEMENT );
-    if ( element != null && element.getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
-      return HOME_ELEMENT;
-    }
-
-    element = coreService.getElement( MAIN_ELEMENT );
-    if ( element != null && element.getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
-      return MAIN_ELEMENT;
-    }
-
-    IElement[] elements = coreService.getElements();
-    for ( int i = 0; i < elements.length; i++ ) {
-      if ( elements[ i ].getElementType().equals( DEFAULT_ELEMENT_TYPE ) ) {
-        return elements[ i ].getId().toLowerCase();
-      }
-    }
-    return null;
   }
 }

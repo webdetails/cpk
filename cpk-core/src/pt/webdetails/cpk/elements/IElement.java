@@ -20,28 +20,24 @@ import java.util.Map;
 
 public interface IElement {
 
+  @JsonProperty( "type" )
+  public String getType();
+
   @JsonProperty( "id" )
   public String getId();
 
   @JsonProperty( "name" )
   public String getName();
 
-  @JsonIgnore
+  @JsonProperty( "location" )
   public String getLocation();
-
-  @JsonProperty( "type" )
-  public String getElementType();
-
-  public void processRequest( Map<String, Map<String, Object>> bloatedMap );
 
   @JsonProperty( "adminOnly" )
   public boolean isAdminOnly();
 
+  @JsonProperty( "renderable" )
+  public boolean isRenderable();
+
   @JsonIgnore
-  public ElementInfo getElementInfo();
-
-  @JsonProperty( "location" )
-  public String getTopLevel();
-
-
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap );
 }

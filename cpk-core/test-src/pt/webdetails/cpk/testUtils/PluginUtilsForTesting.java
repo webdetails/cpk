@@ -76,10 +76,6 @@ public class PluginUtilsForTesting implements IPluginUtils {
   @Override
   public void initialize() throws IOException, DocumentException {
 
-    // We need to get the plugin name
-       
-
-     
         /*
          * Verify if the index 0 is actually the file we want!
          */

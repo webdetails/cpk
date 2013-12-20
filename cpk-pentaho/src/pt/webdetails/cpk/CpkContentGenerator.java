@@ -15,13 +15,7 @@ package pt.webdetails.cpk;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,7 +40,8 @@ import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceDefinition;
 import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.elements.IElement;
-import pt.webdetails.cpk.elements.impl.KettleElementType;
+import pt.webdetails.cpk.elements.impl.KettleJobElement;
+import pt.webdetails.cpk.elements.impl.KettleTransformationElement;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 
 import javax.servlet.http.HttpServletResponse;
@@ -58,9 +53,13 @@ public class CpkContentGenerator extends RestContentGenerator {
   protected CpkCoreService coreService;
   protected ICpkEnvironment cpkEnv;
 
-  public CpkContentGenerator() {
+  public static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
+            "getSitemapJson", "version", "getPluginMetadata" };
+
+
+    public CpkContentGenerator() {
     this.pluginUtils = new PluginUtils();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils );
+    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, reserverdWords );
     this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
   }
 
@@ -69,7 +68,7 @@ public class CpkContentGenerator extends RestContentGenerator {
     wrapParams();
     try {
       coreService.createContent( buildBloatedMap() );
-    } catch ( NoElementException e ) {
+    } catch ( Exception e ) {
       super.createContent();
     }
   }
@@ -154,7 +153,7 @@ public class CpkContentGenerator extends RestContentGenerator {
   @Exposed( accessLevel = AccessLevel.PUBLIC )
   public void getSitemapJson( OutputStream out ) throws IOException {
 
-    TreeMap<String, IElement> elementsMap = pt.webdetails.cpk.CpkEngine.getInstance().getElementsMap();
+    Map<String, IElement> elementsMap = pt.webdetails.cpk.CpkEngine.getInstance().getElementsMap();
     JsonNode sitemap = null;
     if ( elementsMap != null ) {
       LinkGenerator linkGen = new LinkGenerator( elementsMap, pluginUtils );
@@ -214,20 +213,20 @@ public class CpkContentGenerator extends RestContentGenerator {
 
     Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
     StringBuilder dsDeclarations = new StringBuilder( "{" );
-    IElement[] endpoints = coreService.getElements();
+    Collection<IElement> endpoints = coreService.getElements();
 
     if ( endpoints != null ) {
       for ( IElement endpoint : endpoints ) {
 
         // filter endpoints that aren't of kettle type
-        if ( !( endpoint instanceof KettleElementType || endpoint.getElementType().equalsIgnoreCase( "kettle" ) ) ) {
+        if ( !( endpoint instanceof KettleJobElement || endpoint instanceof KettleTransformationElement ) ) {
           continue;
         }
 
         logger.info( String.format( "CPK Kettle Endpoint found: %s)", endpoint ) );
 
 
-        String pluginId = coreService.getPluginName();
+        String pluginId = pluginUtils.getPluginName();
         String endpointName = endpoint.getName();
 
         //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric

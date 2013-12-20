@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
+import org.pentaho.di.core.exception.KettleException;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.repository.IRepositoryAccess;
@@ -41,7 +42,7 @@ import java.util.Map;
 public class CpkCoreServiceTest {
 
   private static IPluginUtils pluginUtils;
-  private static CpkCoreServiceForTesting cpkCore;
+  private static CpkCoreService cpkCore;
   private static Map<String, Map<String, Object>> bloatedMap;
   private static IRepositoryAccess repAccess;
   private static OutputStream out;
@@ -49,13 +50,17 @@ public class CpkCoreServiceTest {
   private static String userDir = System.getProperty( "user.dir" );
 
   @BeforeClass
-  public static void setUp() throws IOException, InitializationException {
+  public static void setUp() throws IOException, InitializationException, KettleException {
 
     repAccess = new VfsRepositoryAccess( userDir + "/test-resources/repository",
       userDir + "/test-resources/settings" );
+
     pluginUtils = new PluginUtilsForTesting();
     ICpkEnvironment environment = new CpkEnvironmentForTesting( pluginUtils, repAccess );
-    cpkCore = new CpkCoreServiceForTesting( environment );
+
+    KettleEnvironment.init();
+    cpkCore = new CpkCoreService( environment );
+
     bloatedMap = buildBloatedMap( null, null );
 
 
@@ -63,7 +68,6 @@ public class CpkCoreServiceTest {
 
   @Test
   public void testCreateContent() throws Exception { //start a hypersonic to test
-    KettleEnvironment.init();
     outResponse = new ByteArrayOutputStream();
 
 
@@ -152,14 +156,6 @@ public class CpkCoreServiceTest {
   public void testGetRequestHandler() {
     RestRequestHandler r = cpkCore.getRequestHandler();
     Assert.assertTrue( r != null );
-  }
-
-  @Test
-  public void testGetPluginName() {
-
-    String str = cpkCore.getPluginName();
-    Assert.assertTrue( str.equals( "cpkSol" ) );
-
   }
 
   private Map<String, Map<String, Object>> sampleTrans() {

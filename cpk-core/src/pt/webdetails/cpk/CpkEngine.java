@@ -13,262 +13,232 @@
 
 package pt.webdetails.cpk;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
-import pt.webdetails.cpf.Util;
+import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IElement;
-import pt.webdetails.cpk.elements.IElementType;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class CpkEngine {
 
-  private static CpkEngine instance;
-  protected static Log logger = LogFactory.getLog( CpkEngine.class );
-  private Document cpkDoc;
+  private static Log logger = LogFactory.getLog( CpkEngine.class );
+  private static final String DEFAULT_SETTINGS_FILENAME = "cpk.xml";
+  private ICpkEnvironment environment;
+  private String settingsFilename;
   private TreeMap<String, IElement> elementsMap;
-  private HashMap<String, IElementType> elementTypesMap;
-  private static List reserverdWords =
-    Arrays.asList( "refresh", "status", "reload", "getElementsList", "getSitemapJson", "version", "getPluginMetadata" );
-  private String defaultElementName = null;
-  private ICpkEnvironment cpkEnv;
-
+  private IElement defaultElement;
 
   private CpkEngine() {
-    // Starting elementEngine
-    logger.debug( "Starting ElementEngine" );
-    elementsMap = new TreeMap<String, IElement>();
-    elementTypesMap = new HashMap<String, IElementType>();
+    this.elementsMap = new TreeMap<String, IElement>();
   }
 
-  private CpkEngine( ICpkEnvironment environment ) {
-    this();
-    this.cpkEnv = environment;
-  }
-
-
-  public static CpkEngine getInstanceWithEnv( ICpkEnvironment environment ) {
-    if ( instance == null ) {
-      instance = new CpkEngine( environment );
-      try {
-        instance.initialize();
-      } catch ( Exception ex ) {
-        logger.fatal( "Error initializing CpkEngine: " + Util.getExceptionDescription( ex ) );
-      }
-
-    }
-    return instance;
-  }
-
+  // singleton
   public static CpkEngine getInstance() {
+    return CpkEngineHolder.INSTANCE;
+  }
 
-    if ( instance == null ) {
-      instance = new CpkEngine();
-      try {
-        instance.initialize();
-      } catch ( Exception ex ) {
-        logger.fatal( "Error initializing CpkEngine: " + Util.getExceptionDescription( ex ) );
-      }
+  public synchronized void init( ICpkEnvironment environment ) {
+    // invalid environment
+    if ( environment == null ) {
+      logger.fatal( "Failed to initialize CPK Plugin: null environment" );
+      return;
     }
 
-    return instance;
+    // skip initialization, engine was previously initialized
+    if ( this.environment != null ) {
+      logger.warn( "CPK Plugin '" + this.environment.getPluginName() + "' was already initialized" );
+      return;
+    }
 
+    // initialize engine
+    this.environment = environment;
+    this.settingsFilename = DEFAULT_SETTINGS_FILENAME;
+    this.reload();
   }
 
-  protected synchronized void initialize() throws DocumentException, IOException {
-    logger.info( "Initializing CPK Plugin " + cpkEnv.getPluginUtils().getPluginName().toUpperCase() );
-    reload();
+  public void reload() {
+    logger.info( "Initializing CPK Plugin '" + this.environment.getPluginName() + "'" );
+    long start = System.currentTimeMillis();
 
-  }
+    // TODO: check why we need to reload environment
+    this.environment.reload();
 
-  public List getReservedWords() {
-    return reserverdWords;
+    // load elements
+    loadElements();
+
+    long end = System.currentTimeMillis();
+    logger.info( "Finished initialization of CPK PLugin '" + this.environment.getPluginName() + "' in "
+      + ( end - start ) + " ms" );
   }
 
   public ICpkEnvironment getEnvironment() {
-    return this.cpkEnv;
+    return this.environment;
   }
 
-  private Document getDocument( InputStream is ) throws IOException, DocumentException {
-    SAXReader reader;
-    Document doc = null;
-    reader = new SAXReader();
-    try {
-      doc = reader.read( is );
-    } finally {
-      is.close();
-    }
-
-    return doc;
+  // return element or null
+  public IElement getElement( String elementId ) {
+    logger.debug( "Getting element '" + elementId + "'" );
+    return this.elementsMap.get( elementId );
   }
 
-  /**
-   * Reloads or initializes the ElementManager
-   */
-  public void reload() throws DocumentException, IOException {
+  // return read-only elements collection
+  public Collection<IElement> getElements() {
+    logger.debug( "Getting read-only collection of elements" );
+    return Collections.unmodifiableCollection( this.elementsMap.values() );
+  }
 
-    // Clean the types
-    elementsMap.clear();
-    elementTypesMap.clear();
-    cpkEnv.reload();
-    Document cpkDoc = null;
+  // return read-only elements map < id, element >
+  public Map<String, IElement> getElementsMap() {
+    logger.debug( "Getting read-only map of elements" );
+    return Collections.unmodifiableMap( this.elementsMap );
+  }
 
-    InputStream is = null;
+  // return default element or null
+  public IElement getDefaultElement() {
+    logger.debug( "Getting default element '" + this.defaultElement.getName() + "'" );
+    return this.defaultElement;
+  }
 
-    try {
-      if ( cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).fileExists( "cpk.xml" ) ) {
-        is = cpkEnv.getContentAccessFactory().getPluginSystemReader( null ).getFileInputStream( "cpk.xml" );
-      }
-    } catch ( Exception e ) {
-      is = getClass().getResourceAsStream( "/cpk.xml" );
-      if ( is == null ) {//XXX - when all else fails...
-        is = new FileInputStream( cpkEnv.getPluginUtils().getPluginDirectory().getAbsolutePath() + "/cpk.xml" );
-      }
+  // TODO: refactor
+  public Status getStatus() {
+    if (this.defaultElement != null ) {
+      return new Status( this.elementsMap, this.defaultElement.getName(), this.environment );
+    } else {
+      return new Status( this.elementsMap, "", this.environment );
     }
+  }
 
-    cpkDoc = getDocument( is );
+  private void loadElements() {
+    try {
+      // open settings file
+      InputStream is = this.environment.getContentAccessFactory().getPluginSystemReader( null ).
+        getFileInputStream( this.settingsFilename );
 
+      // parse settings file
+      SAXReader reader = new SAXReader();
+      Document doc = reader.read( is );
 
-    List<Node> elementTypeNodes = cpkDoc.selectNodes( "/cpk/elementTypes/elementType" );
-    defaultElementName = cpkDoc.selectSingleNode( "/cpk/elementTypes" ).valueOf( "@defaultElement" ).toLowerCase();
+      // clean elements map
+      this.elementsMap.clear();
 
-    for ( Node node : elementTypeNodes ) {
+      // go through each element type
+      List elementTypeNodes = doc.selectNodes( "/cpk/elementTypes/elementType" );
+      for ( Object elementTypeNode : elementTypeNodes ) {
+        Node type = (Node) elementTypeNode;
 
-      // Loop and instantiate the element types
-      String clazz = node.valueOf( "./@class" );
-      logger.debug( "Found elementType: " + clazz );
+        // get element type attributes
+        String typeName = type.valueOf( "./@name" );
+        String typeClass = type.valueOf( "./@class" );
+        logger.info( "Loading '" + typeName + "' elements [" + typeClass + "]" );
 
-      IElementType elementType;
-      try {
-        Object o[] = new Object[ 1 ];
-        o[ 0 ] = cpkEnv.getPluginUtils(); //Should get the environment
-        elementType = (IElementType) Class.forName( clazz ).getDeclaredConstructors()[ 0 ].newInstance( o );
+        // go through each location for elements of that type
+        List elementLocations = type.selectNodes( "elementLocations/elementLocation" );
+        for ( Object elementLocation : elementLocations ) {
+          Node location = (Node) elementLocation;
 
-        // Store it
-        elementTypesMap.put( elementType.getType(), elementType );
+          // get location attributes
+          String path = location.valueOf( "@path" );
+          Boolean isRecursive = Boolean.parseBoolean( location.valueOf( "@isRecursive" ) );
+          String pattern = location.valueOf( "@pattern" );
+          Boolean adminOnly = Boolean.parseBoolean( location.valueOf( "@adminOnly" ) );
 
-      } catch ( Exception ex ) {
-        logger.error( "Error initializing element type " + clazz + ": " + Util.getExceptionDescription( ex ) );
-        continue;
-      }
-      List<IElement> elements = new ArrayList<IElement>();
-      // Now that we have the class, scan the elements
-      for ( Node elementNode : (List<Node>) cpkDoc.selectNodes(
-        "/cpk/elementTypes/elementType[@class='" + clazz + "']" ) ) {
-        elements.addAll( elementType.scanElements( elementNode ) );
-      }
-
-
-      // Register them in the map. We don't support duplicates, and we don't allow some reserved names
-      for ( IElement element : elements ) {
-
-        String key = element.getId().toLowerCase();
-
-        if ( reserverdWords.contains( key ) ) {
-
-          logger.warn( "Element with reserved word '" + key + "' can't be registred: " + element.toString() );
-
-        } else {
-          // All ok
-          if ( !element.getName().startsWith( "_" ) ) {
-            elementsMap.put( element.getId().toLowerCase(), element );
+          // go through each file in that location and load elements
+          Collection<File> files = this.environment.getPluginUtils().getPluginResources( path, isRecursive, pattern );
+          if ( files != null ) {
+            for ( File file : files ) {
+              loadElement( typeName, typeClass, file.getAbsolutePath(), adminOnly );
+            }
           }
         }
-
       }
 
-      logger.debug(
-        "Initialization for " + elementType.getType() + " successfull. Registred " + elements.size() + " elements" );
+      // get default element
+      this.defaultElement = findDefaultElement(
+        doc.selectSingleNode( "/cpk/elementTypes" ).valueOf( "@defaultElement" ).toLowerCase() );
 
+      // close file
+      is.close();
+    } catch ( IOException e ) {
+      logger.error( "Failed to open settings file '" + this.settingsFilename + "'" );
+    } catch ( DocumentException e ) {
+      logger.error( "Failed to parse settings file '" + this.settingsFilename + "'" );
+    }
+  }
+
+  private void loadElement( String type, String typeClass, String filePath, boolean adminOnly ) {
+    // id = filename in lowercase
+    String id = FilenameUtils.getBaseName( filePath ).toLowerCase();
+
+    // skip element if id starts with '_' (private elements)
+    if ( id.startsWith( "_" ) ) {
+      logger.debug( "Skipped element '" + filePath + "'" );
+      return;
     }
 
-  }
+    logger.info( "Loading element '" + filePath + "'" );
 
-  public Document getCpkDoc() {
-    return cpkDoc;
-  }
-
-  public void setCpkDoc( Document cpkDoc ) {
-    this.cpkDoc = cpkDoc;
-  }
-
-  public TreeMap<String, IElement> getElementsMap() {
-    return elementsMap;
-  }
-
-  public IElementType getElementType( String type ) {
-    return elementTypesMap.get( type );
-  }
-
-  /**
-   * Gets the element corresponding to the registred key
-   *
-   * @param key
-   * @return
-   */
-  public IElement getElement( String key ) {
-    return this.elementsMap.get( key );
-  }
-
-  /**
-   * Gets the element corresponding to the registered key
-   *
-   * @param key
-   * @return
-   */
-  public IElement getDefaultElement() {
-    IElement element = elementsMap.get( defaultElementName );
-    if ( element == null ) {
-      for ( IElement e : this.elementsMap.values() ) {
-        if ( CpkEngine.getInstance().getElementType( e.getElementType() ).isShowInSitemap() ) {
-          element = e;
-          break;
-        }
-      }
+    // skip element if the id already exists
+    if ( this.elementsMap.containsKey( id ) ) {
+      logger.warn( "Failed: an element '" + id + "' already exists" );
+      return;
     }
-    return element;
-  }
 
-  /**
-   * @return
-   */
-  public String getStatus() {
-    return new Status( elementsMap, elementTypesMap, defaultElementName, reserverdWords, cpkEnv ).getStatus();
-  }
-
-  public String getStatusJson() {
-    return new Status( elementsMap, elementTypesMap, defaultElementName, reserverdWords, cpkEnv ).getStatusJson();
-  }
-
-  public Map<String, IElementType> getElementTypes() {
-    return this.elementTypesMap;
-  }
-
-  public String getElementsJson() {
-    ObjectMapper mapper = new ObjectMapper();
-    String json = null;
+    // skip element if the id is a reserved word
+    if ( this.environment.getReservedWords().contains( id ) ) {
+      logger.warn( "Failed: '" + id + "' is a reserved word" );
+      return;
+    }
 
     try {
-      json = mapper.writeValueAsString( this.elementsMap.values() );
-    } catch ( IOException ex ) {
-      logger.error( "Error getting json elements", ex );
+      // create element wrapper
+      Element element = (Element) Class.forName( typeClass ).newInstance();
+      if ( element.init( id, type, filePath, adminOnly ) ) {
+        // add element to elements map
+        this.elementsMap.put( id, element );
+        logger.info( "Done " + element.toString() );
+      }
+    } catch ( Exception e ) {
+      logger.error( "Failed: missing '" + typeClass + "'" );
     }
-
-    return json;
   }
 
+  private IElement findDefaultElement( String defaultElementId ) {
+    // check if the default element exists
+    if ( this.elementsMap.containsKey( defaultElementId ) ) {
+      logger.info( "Found default element '" + defaultElementId + "'" );
+      return this.elementsMap.get( defaultElementId );
+    } else {
+      logger.info( "Didn't find default element '" + defaultElementId + "'" );
+    }
 
+    // try to find a suitable default element
+    for ( IElement element : this.elementsMap.values() ) {
+      if ( element.isRenderable() ) {
+        logger.info( "Will use '" + element.getId() + "' as default element" );
+        return element;
+      }
+    }
+
+    // no suitable element found
+    logger.error( "There isn't a default element" );
+    return null;
+  }
+
+  // CpkEngineHolder is loaded on the first execution of CpkEngine.getInstance(), not before
+  private static class CpkEngineHolder {
+    public static final CpkEngine INSTANCE = new CpkEngine();
+  }
 }

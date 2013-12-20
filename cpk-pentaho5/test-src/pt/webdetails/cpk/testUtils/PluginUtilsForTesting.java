@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+
 public class PluginUtilsForTesting extends PluginUtils {
 
   @Override
@@ -29,7 +30,9 @@ public class PluginUtilsForTesting extends PluginUtils {
         /*
          * Verify if the index 0 is actually the file we want!
          */
+
     String url = "file://" + System.getProperty( "user.dir" ) + "/test-resources/repository/system/cpkSol/plugin.xml";
+    //String url = "file://" + System.getProperty( "user.dir" ) + "/test-resources/cpkSol/plugin.xml";
 
     URL pluginUrl = new URL( url );
     //URL pluginUrl = new File("plugin.xml").toURI().toURL();
@@ -43,3 +46,4 @@ public class PluginUtilsForTesting extends PluginUtils {
 
   }
 }
+

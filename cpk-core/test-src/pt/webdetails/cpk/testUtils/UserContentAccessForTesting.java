@@ -53,8 +53,6 @@ public class UserContentAccessForTesting implements IUserContentAccess {
   }
 
   @Override public InputStream getFileInputStream( String s ) throws IOException {
-    //return repAccess.getResourceInputStream(
-    // "/home/joao/work/ctools/cpk/cpk-core/test-resources/settings/cpk.xml" );
     return new ByteArrayInputStream( repAccess.getSettingsResourceAsString( "cpk.xml" ).getBytes() );
   }
 
@@ -66,7 +64,6 @@ public class UserContentAccessForTesting implements IUserContentAccess {
     return 0;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  @Override
   public List<IBasicFile> listFiles( String s, IBasicFileFilter iBasicFileFilter, int i, boolean b,
                                      boolean b2 ) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.

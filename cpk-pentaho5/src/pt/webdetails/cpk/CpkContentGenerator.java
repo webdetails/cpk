@@ -14,4 +14,5 @@
 package pt.webdetails.cpk;
 
 public class CpkContentGenerator  {
+
 }

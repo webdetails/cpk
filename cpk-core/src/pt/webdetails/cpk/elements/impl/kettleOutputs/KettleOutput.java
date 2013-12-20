@@ -27,8 +27,8 @@ import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
-import pt.webdetails.cpk.elements.impl.KettleElementType;
-import pt.webdetails.cpk.elements.impl.KettleElementType.KettleType;
+import pt.webdetails.cpk.elements.Element;
+import pt.webdetails.cpk.elements.impl.KettleElementHelper.KettleType;
 import pt.webdetails.cpk.utils.CpkUtils;
 import pt.webdetails.cpk.utils.ZipUtil;
 
@@ -171,7 +171,7 @@ public class KettleOutput implements IKettleOutput {
     try {
       mapper.writeValue( out, resultStruct );
     } catch ( IOException ex ) {
-      Logger.getLogger( KettleElementType.class.getName() ).log( Level.SEVERE, null, ex );
+      Logger.getLogger( Element.class.getName() ).log( Level.SEVERE, null, ex );
     }
   }
 

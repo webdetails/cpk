@@ -59,7 +59,7 @@ public class CpkApiTest {
     PentahoSystemForTesting.registerObjectFactory( factory );
     PentahoSystemForTesting.init( appContext );
 
-
+    KettleEnvironment.init();
   }
 
 
@@ -76,7 +76,6 @@ public class CpkApiTest {
 
       @Override
       public Void call() throws Exception {
-        KettleEnvironment.init();
         outResponse = new ByteArrayOutputStream();
 
         sampleTrans();
@@ -177,7 +176,7 @@ public class CpkApiTest {
 
   }
 
-
+  /*
   @Test
   public void testGetPluginName() throws Exception {
 
@@ -191,6 +190,7 @@ public class CpkApiTest {
       }
     } );
   }
+  */
 
   @Test
   public void testGetSitemapJson() throws Exception {
@@ -201,8 +201,7 @@ public class CpkApiTest {
         boolean successful = true;
         boolean sublinksExist = false;
         out = new ByteArrayOutputStream();
-        cpkApi
-          .getSitemapJson( new HttpServletResponseForTesting( out ) );
+        cpkApi.getSitemapJson( new HttpServletResponseForTesting( out ) );
         String str = out.toString();
         out.close();
 

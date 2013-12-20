@@ -25,6 +25,9 @@ import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.security.IAccessControl;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CpkEnvironmentForTesting implements ICpkEnvironment {
 
@@ -32,9 +35,16 @@ public class CpkEnvironmentForTesting implements ICpkEnvironment {
   private IRepositoryAccess repAccess;
   final IUserSession userSession = new SimpleUserSession( "userName", null, true, null );
 
+
+  private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
+    "getSitemapJson", "version", "getPluginMetadata" };
+  private HashSet<String> reservedWords;
+
+
   public CpkEnvironmentForTesting( IPluginUtils pluginUtils, IRepositoryAccess repAccess ) {
     this.pluginUtils = pluginUtils;
     this.repAccess = repAccess;
+    this.reservedWords = new HashSet<String>( Arrays.asList( CpkEnvironmentForTesting.reserverdWords ) );
   }
 
   @Override
@@ -72,8 +82,18 @@ public class CpkEnvironmentForTesting implements ICpkEnvironment {
   }
 
   @Override
+  public Set<String> getReservedWords() {
+    return this.reservedWords;
+  }
+
+  @Override
   public ISessionUtils getSessionUtils() {
     return new SimpleSessionUtils( userSession, null, null );
+  }
+
+  @Override public String getWebAppDir() {
+    // TODO
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override

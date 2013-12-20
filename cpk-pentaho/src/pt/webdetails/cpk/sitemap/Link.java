@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import pt.webdetails.cpk.elements.IElement;
 
 import java.util.logging.Level;
@@ -177,7 +178,7 @@ public class Link {
   public boolean isDashboard( IElement e ) {
     boolean is = false;
 
-    if ( e.getElementType().equalsIgnoreCase( "dashboard" ) ) {
+    if ( e.getType().equalsIgnoreCase( "dashboard" ) ) {
       is = true;
     }
 
@@ -187,7 +188,7 @@ public class Link {
   public boolean isKettle( IElement e ) {
     boolean is = false;
 
-    if ( e.getElementType().equalsIgnoreCase( "kettle" ) ) {
+    if ( e.getType().equalsIgnoreCase( "kettle" ) ) {
       is = true;
     }
 
@@ -261,7 +262,7 @@ public class Link {
     HashMap<String, File> directories = new HashMap<String, File>();
 
     for ( IElement element : elementsMap.values() ) {
-      File directory = new File( pluginUtils.getPluginDirectory() + "/" + element.getTopLevel() );
+        File directory = new File( FilenameUtils.getPath(element.getLocation()) );
       if ( directory != null ) {
         try {
           directories.put( directory.getCanonicalPath(), directory );

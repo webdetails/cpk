@@ -31,9 +31,12 @@ public class CpkContentGeneratorForTesting extends CpkContentGenerator {
         super(environment);
     }//*/
 
+
+
+
   public CpkContentGeneratorForTesting() {
     super();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils );
+    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, reserverdWords );
     this.coreService = new CpkCoreService( cpkEnv );
   }
 

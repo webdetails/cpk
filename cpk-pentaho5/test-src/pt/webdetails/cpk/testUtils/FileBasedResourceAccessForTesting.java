@@ -11,23 +11,22 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk;
+package pt.webdetails.cpk.testUtils;
 
-public class NoElementException extends Exception {
+import pt.webdetails.cpf.repository.impl.FileBasedResourceAccess;
 
-  public NoElementException() {
-    super();
+import java.io.File;
+
+public class FileBasedResourceAccessForTesting extends FileBasedResourceAccess {
+
+  private String baseDir;
+
+  public FileBasedResourceAccessForTesting( final String baseDir ) {
+    this.baseDir = baseDir;
   }
 
-  public NoElementException( String message ) {
-    super( message );
-  }
-
-  public NoElementException( String message, Throwable cause ) {
-    super( message, cause );
-  }
-
-  public NoElementException( Throwable cause ) {
-    super( cause );
+  @Override
+  protected File getFile( String path ) {
+    return new File( this.baseDir + path );
   }
 }

@@ -30,7 +30,7 @@ public class CpkCoreServiceForTesting extends CpkCoreService {
     // this.pluginUtils=pluginUtils;
     // this.repAccess=repAccess;
     super( environment );
-    cpkEngine = CpkEngine.getInstanceWithEnv( environment );
+    //cpkEngine = CpkEngine.getInstanceWithEnv( environment );
 
 
   }
