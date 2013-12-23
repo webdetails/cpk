@@ -71,9 +71,9 @@ public class DashboardElement extends Element {
     params.put( "solution", "system" );
     params.put( "path", path );
     if ( requestParams.containsKey( "mode" ) && requestParams.get( "mode" ).equals( "preview" ) ) {
-      params.put( "file", this.getId() + "_tmp.cdfde" );
+      params.put( "file", this.getName() + "_tmp.cdfde" );
     } else {
-      params.put( "file", this.getId() + ".wcdf" );
+      params.put( "file", this.getName() + ".wcdf" );
     }
     params.put( "absolute", "false" );
     params.put( "inferScheme", "false" );

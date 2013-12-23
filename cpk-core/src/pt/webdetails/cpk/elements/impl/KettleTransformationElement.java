@@ -40,7 +40,7 @@ public class KettleTransformationElement extends Element {
 
   private static final String DEFAULT_STEP = "OUTPUT";
   private TransMeta transMeta = null;
-  private Trans transformation = null;
+  //private Trans transformation = null;
 
   public KettleTransformationElement() {
   }
@@ -90,13 +90,13 @@ public class KettleTransformationElement extends Element {
     transMeta.setVariable( name, value );
   }
 
-  private void enforceExecutionParameterSet( Map<String, String> parameterSet ) {
+  private void enforceExecutionParameterSet( Trans transformation, Map<String, String> parameterSet ) {
     for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      enforceExecutionParameter( entry.getKey(), entry.getValue() );
+      enforceExecutionParameter( transformation, entry.getKey(), entry.getValue() );
     }
   }
 
-  private void enforceExecutionParameter( String name, String value ) {
+  private void enforceExecutionParameter( Trans transformation, String name, String value ) {
     logger.debug( "Parameter '" + name + "' = '" + value + "'" );
     try {
       transformation.setParameterValue( name, value );
@@ -201,8 +201,21 @@ public class KettleTransformationElement extends Element {
     long start = System.currentTimeMillis();
 
     try {
+      transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
+      transMeta.setResultFiles( new ArrayList<ResultFile>() );
+
       // create a new transformation using the meta info
-      transformation = new Trans( transMeta );
+      Trans transformation = new Trans( transMeta );
+
+      transformation.initializeVariablesFrom( null );
+      transformation.getTransMeta().setInternalKettleVariables( transformation );
+
+      // add runtime parameters
+      enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
+
+      transformation.copyParametersFrom( transMeta );
+      transformation.copyVariablesFrom( transMeta );
+      transformation.activateParameters();
 
       transformation.prepareExecution( null ); // get the step threads after this line
       StepInterface step = transformation.findRunThread( DEFAULT_STEP );
@@ -217,9 +230,7 @@ public class KettleTransformationElement extends Element {
     }
 
     // clear previous results
-    transformation = null;
-    transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
-    transMeta.setResultFiles( new ArrayList<ResultFile>() );
+    //transformation = null;
 
     long end = System.currentTimeMillis();
     logger.info( "Finished transformation '" + this.getName() + "' [" + this.transMeta.getName() + "] in " + ( end - start ) + " ms" );
@@ -239,15 +250,15 @@ public class KettleTransformationElement extends Element {
       transMeta.setResultFiles( new ArrayList<ResultFile>() );
 
       // create a new transformation using the meta info
-      transformation = new Trans( transMeta );
+      Trans transformation = new Trans( transMeta );
 
       transformation.initializeVariablesFrom( null );
       transformation.getTransMeta().setInternalKettleVariables( transformation );
 
       // add runtime parameters
       enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
-      enforceExecutionParameterSet( KettleElementHelper.getUserSessionParameters() );
-      addMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+      enforceExecutionParameterSet( transformation, KettleElementHelper.getUserSessionParameters() );
+      enforceMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
 
       transformation.copyParametersFrom( transMeta );
       transformation.copyVariablesFrom( transMeta );
@@ -286,7 +297,7 @@ public class KettleTransformationElement extends Element {
     kettleOutput.processResult();
 
     // clear previous results
-    transformation = null;
+    //transformation = null;
 
     long end = System.currentTimeMillis();
     logger.info( "Finished transformation '" + this.getName() + "' [" + this.transMeta.getName() + "] in " + ( end - start ) + " ms" );

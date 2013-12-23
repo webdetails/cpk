@@ -196,6 +196,18 @@ public class KettleJobElement extends Element {
     logger.info( "Starting job '" + this.getName() + "' [" + this.jobMeta.getName() + "]" );
     long start = System.currentTimeMillis(); 
     this.job = new Job( null, this.jobMeta );
+
+    job.initializeVariablesFrom( null );
+    job.getJobMeta().setInternalKettleVariables( job );
+
+    // add runtime parameters
+    enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
+
+    job.copyParametersFrom( job.getJobMeta() );
+    job.copyVariablesFrom( job.getJobMeta() );
+    job.activateParameters();
+
+
     this.job.start();
     this.job.waitUntilFinished();
     this.job = null;
@@ -221,7 +233,7 @@ public class KettleJobElement extends Element {
     // add runtime parameters
     enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
     enforceMetaParameterSet( KettleElementHelper.getUserSessionParameters() );
-    addMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+    enforceMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
 
     job.copyParametersFrom( job.getJobMeta() );
     job.copyVariablesFrom( job.getJobMeta() );
