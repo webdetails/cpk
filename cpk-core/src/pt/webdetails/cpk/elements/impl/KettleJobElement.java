@@ -59,7 +59,7 @@ public class KettleJobElement extends Element {
     }
 
     // init default parameters
-    enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
+    //enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
 
     // execute at start
     if ( getParameterDefaultBoolean( KettleElementHelper.getExecuteAtStartParameter() ) ) {
@@ -76,13 +76,14 @@ public class KettleJobElement extends Element {
   }
 
   private void enforceMetaParameter( String name, String value ) {
+    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
     try {
       jobMeta.setParameterValue( name, value );
     } catch ( UnknownParamException e ) {
       // ensure that a variable replaces the parameter if it wasn't defined
-      jobMeta.setVariable( name, value );
+      logger.debug( "Didn't find parameter: using a replacement variable" );
     }
-    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
+    jobMeta.setVariable( name, value );
   }
 
   private void enforceExecutionParameterSet( Map<String, String> parameterSet ) {
@@ -92,25 +93,26 @@ public class KettleJobElement extends Element {
   }
 
   private void enforceExecutionParameter( String name, String value ) {
+    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
     try {
       job.setParameterValue( name, value );
     } catch ( UnknownParamException e ) {
       // ensure that a variable replaces the parameter if it wasn't defined
-      job.setVariable( name, value );
+      logger.debug( "Didn't find parameter: using a replacement variable" );
     }
-    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
+    job.setVariable( name, value );
   }
 
-  private void addExecutionParameterSet( Map<String, String> parameterSet ) {
+  private void addMetaParameterSet( Map<String, String> parameterSet ) {
     for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      addExecutionParameter( entry.getKey(), entry.getValue() );
+      addMetaParameter( entry.getKey(), entry.getValue() );
     }
   }
 
-  private void addExecutionParameter( String name, String value ) {
+  private void addMetaParameter( String name, String value ) {
     try {
-      job.setParameterValue( name, value );
-      logger.debug( "Parameter '" + name + "' = '" + value + "'." );
+      jobMeta.setParameterValue( name, value );
+      logger.debug( "Parameter '" + name + "' = '" + value + "'" );
     } catch ( UnknownParamException e ) {
       // ignore unknown parameters
     }
@@ -120,7 +122,7 @@ public class KettleJobElement extends Element {
     try {
       return Boolean.parseBoolean( jobMeta.getParameterDefault( name ) );
     } catch ( UnknownParamException e ) {
-      logger.debug( "Unknown parameter '" + name + "'. Using default value 'false'." );
+      logger.debug( "Unknown parameter '" + name + "': using default value 'false'" );
       return false;
     }
   }
@@ -213,16 +215,18 @@ public class KettleJobElement extends Element {
 
     this.job = new Job( null, jobMeta );
 
-    // do we need this?
-    //job.initializeVariablesFrom( null );
-    //job.getJobMeta().setInternalKettleVariables( job );
-    //job.copyParametersFrom( job.getJobMeta() );
-    //job.copyVariablesFrom( job.getJobMeta() );
-    //job.activateParameters();
+    job.initializeVariablesFrom( null );
+    job.getJobMeta().setInternalKettleVariables( job );
 
     // add runtime parameters
-    enforceExecutionParameterSet( KettleElementHelper.getUserSessionParameters() );
-    addExecutionParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+    enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
+    enforceMetaParameterSet( KettleElementHelper.getUserSessionParameters() );
+    addMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+
+    job.copyParametersFrom( job.getJobMeta() );
+    job.copyVariablesFrom( job.getJobMeta() );
+    job.activateParameters();
+
 
     this.job.start();
     this.job.waitUntilFinished();

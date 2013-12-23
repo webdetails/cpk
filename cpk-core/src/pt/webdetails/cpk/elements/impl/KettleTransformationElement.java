@@ -80,13 +80,14 @@ public class KettleTransformationElement extends Element {
   }
 
   private void enforceMetaParameter( String name, String value ) {
+    logger.debug( "Parameter '" + name + "' = '" + value + "'" );
     try {
       transMeta.setParameterValue( name, value );
     } catch ( UnknownParamException e ) {
       // ensure that a variable replaces the parameter if it wasn't defined
-      transMeta.setVariable( name, value );
+      logger.debug( "Didn't find parameter: using a replacement variable" );
     }
-    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
+    transMeta.setVariable( name, value );
   }
 
   private void enforceExecutionParameterSet( Map<String, String> parameterSet ) {
@@ -96,24 +97,25 @@ public class KettleTransformationElement extends Element {
   }
 
   private void enforceExecutionParameter( String name, String value ) {
+    logger.debug( "Parameter '" + name + "' = '" + value + "'" );
     try {
       transformation.setParameterValue( name, value );
     } catch ( UnknownParamException e ) {
       // ensure that a variable replaces the parameter if it wasn't defined
-      transformation.setVariable( name, value );
+      logger.debug( "Didn't find parameter: using a replacement variable" );
     }
-    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
+    transformation.setVariable( name, value );
   }
 
-  private void addExecutionParameterSet( Map<String, String> parameterSet ) {
+  private void addMetaParameterSet( Map<String, String> parameterSet ) {
     for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      addExecutionParameter( entry.getKey(), entry.getValue() );
+      addMetaParameter( entry.getKey(), entry.getValue() );
     }
   }
 
-  private void addExecutionParameter( String name, String value ) {
+  private void addMetaParameter( String name, String value ) {
     try {
-      transformation.setParameterValue( name, value );
+      transMeta.setParameterValue( name, value );
       logger.debug( "Parameter '" + name + "' = '" + value + "'." );
     } catch ( UnknownParamException e ) {
       // ignore unknown parameters
@@ -233,18 +235,23 @@ public class KettleTransformationElement extends Element {
     final IKettleOutput kettleOutput = inferResult( bloatedMap );
 
     try {
+      transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
+      transMeta.setResultFiles( new ArrayList<ResultFile>() );
+
       // create a new transformation using the meta info
       transformation = new Trans( transMeta );
 
-      // TODO: do we need any of this??
-      //transformation.initializeVariablesFrom( null );
-      //transformation.getTransMeta().setInternalKettleVariables( transformation );
-      //transformation.copyParametersFrom( transMeta );
-      //transformation.activateParameters();
+      transformation.initializeVariablesFrom( null );
+      transformation.getTransMeta().setInternalKettleVariables( transformation );
 
       // add runtime parameters
+      enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
       enforceExecutionParameterSet( KettleElementHelper.getUserSessionParameters() );
-      addExecutionParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+      addMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+
+      transformation.copyParametersFrom( transMeta );
+      transformation.copyVariablesFrom( transMeta );
+      transformation.activateParameters();
 
       transformation.prepareExecution( null ); // get the step threads after this line
 
@@ -280,8 +287,6 @@ public class KettleTransformationElement extends Element {
 
     // clear previous results
     transformation = null;
-    transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
-    transMeta.setResultFiles( new ArrayList<ResultFile>() );
 
     long end = System.currentTimeMillis();
     logger.info( "Finished transformation '" + this.getName() + "' [" + this.transMeta.getName() + "] in " + ( end - start ) + " ms" );
