@@ -173,12 +173,8 @@ public class KettleTransformationElement extends Element {
       // create a new transformation
       Trans transformation = new Trans( transMeta );
 
-      //KettleElementHelper.dump( transformation, transformation, "AFTER CREATION", true );
-
       // not necessary
       //transformation.copyParametersFrom( transMeta );
-
-      // not necessary
       //transformation.initializeVariablesFrom( null );
       //transformation.getTransMeta().setInternalKettleVariables( transformation );
       //transformation.copyVariablesFrom( transMeta );
@@ -187,8 +183,6 @@ public class KettleTransformationElement extends Element {
       // transformation.activateParameters();
 
       transformation.prepareExecution( null ); // get the step threads after this line
-
-      //KettleElementHelper.dump( transformation, transformation, "AFTER PREPARE", true );
 
       String stepName = DEFAULT_STEP;
       if ( bloatedMap != null ) {

@@ -125,7 +125,8 @@ public final class KettleElementHelper {
           return StringUtils.join( userSession.getAuthorities(), "," );
         }
         // any other session parameter
-        return userSession.getParameter( paramName.substring( CPK_SESSION_PARAM_PREFIX.length() ) ).toString();
+        logger.debug( "Getting using session variable '" + paramName.substring( CPK_SESSION_PARAM_PREFIX.length() ) + "'" );
+        return userSession.getStringParameter( paramName.substring( CPK_SESSION_PARAM_PREFIX.length() ) );
       }
     }
 

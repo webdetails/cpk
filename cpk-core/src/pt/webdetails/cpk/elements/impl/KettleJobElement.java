@@ -185,8 +185,6 @@ public class KettleJobElement extends Element {
     job.start();
     job.waitUntilFinished();
 
-    //KettleElementHelper.dump( job, job, "", true );
-
     // process result
     if ( bloatedMap != null ) {
       processResult( job, inferResult( bloatedMap ) );
