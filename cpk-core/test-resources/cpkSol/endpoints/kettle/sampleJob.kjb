@@ -16,6 +16,21 @@
             <default_value>true</default_value>
             <description/>
         </parameter>
+        <parameter>
+            <name>cpk.plugin.id</name>
+            <default_value>a_plugin</default_value>
+            <description/>
+        </parameter>
+        <parameter>
+            <name>cpk.session.username</name>
+            <default_value>a_user</default_value>
+            <description/>
+        </parameter>
+        <parameter>
+            <name>cpk.webapp.dir</name>
+            <default_value>a_dir</default_value>
+            <description/>
+        </parameter>
     </parameters>
     <slaveservers>
     </slaveservers>

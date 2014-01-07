@@ -25,15 +25,16 @@ public interface IKettleOutput {
 
   public void storeRow( Object[] row, RowMetaInterface rowMeta );
 
-  public void setResult( Result r );
 
+  // can be probably replaced
+  public void setResult( Result r );
   public Result getResult();
 
+  // can be probably replaced
   public KettleElementHelper.KettleType getKettleType();
-
   public void setKettleType( KettleElementHelper.KettleType kettleType );
 
+  // not needed
   public void setOutputStepName( String stepName );
-
   public String getOutputStepName();
 }

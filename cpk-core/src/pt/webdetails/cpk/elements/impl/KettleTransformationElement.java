@@ -18,8 +18,6 @@ import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
-import org.pentaho.di.core.exception.KettleXMLException;
-import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -40,14 +38,13 @@ public class KettleTransformationElement extends Element {
 
   private static final String DEFAULT_STEP = "OUTPUT";
   private TransMeta transMeta = null;
-  //private Trans transformation = null;
 
   public KettleTransformationElement() {
   }
 
   @Override
   public boolean init( final String id, final String type, final String filePath, boolean adminOnly ) {
-    logger.debug( "Creating Kettle Transformation from '" + filePath + "'." );
+    logger.debug( "Creating Kettle Transformation from '" + filePath + "'" );
 
     // base init
     if ( !super.init( id, type, filePath, adminOnly ) ) {
@@ -58,78 +55,22 @@ public class KettleTransformationElement extends Element {
     try {
       this.transMeta = new TransMeta( this.getLocation() );
     } catch ( Exception e ) {
-      logger.error( "Failed to retrieve '" + this.getLocation() + "'." );
+      logger.error( "Failed to retrieve '" + this.getLocation() + "'" );
       return false;
     }
 
-    // init default parameters
-    enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
+    // add base parameters to ensure they exist
+    KettleElementHelper.addBaseParameters( this.transMeta );
 
-    // execute at start
-    if ( getParameterDefaultBoolean( KettleElementHelper.getExecuteAtStartParameter() ) ) {
-      execute();
+    // execute at start?
+    if ( KettleElementHelper.isExecuteAtStart( this.transMeta ) ) {
+      processRequest( null );
     }
 
+    // init was successful
     return true;
   }
 
-  private void enforceMetaParameterSet( Map<String, String> parameterSet ) {
-    for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      enforceMetaParameter( entry.getKey(), entry.getValue() );
-    }
-  }
-
-  private void enforceMetaParameter( String name, String value ) {
-    logger.debug( "Parameter '" + name + "' = '" + value + "'" );
-    try {
-      transMeta.setParameterValue( name, value );
-    } catch ( UnknownParamException e ) {
-      // ensure that a variable replaces the parameter if it wasn't defined
-      logger.debug( "Didn't find parameter: using a replacement variable" );
-    }
-    transMeta.setVariable( name, value );
-  }
-
-  private void enforceExecutionParameterSet( Trans transformation, Map<String, String> parameterSet ) {
-    for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      enforceExecutionParameter( transformation, entry.getKey(), entry.getValue() );
-    }
-  }
-
-  private void enforceExecutionParameter( Trans transformation, String name, String value ) {
-    logger.debug( "Parameter '" + name + "' = '" + value + "'" );
-    try {
-      transformation.setParameterValue( name, value );
-    } catch ( UnknownParamException e ) {
-      // ensure that a variable replaces the parameter if it wasn't defined
-      logger.debug( "Didn't find parameter: using a replacement variable" );
-    }
-    transformation.setVariable( name, value );
-  }
-
-  private void addMetaParameterSet( Map<String, String> parameterSet ) {
-    for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      addMetaParameter( entry.getKey(), entry.getValue() );
-    }
-  }
-
-  private void addMetaParameter( String name, String value ) {
-    try {
-      transMeta.setParameterValue( name, value );
-      logger.debug( "Parameter '" + name + "' = '" + value + "'." );
-    } catch ( UnknownParamException e ) {
-      // ignore unknown parameters
-    }
-  }
-
-  private boolean getParameterDefaultBoolean( String name ) {
-    try {
-      return Boolean.parseBoolean( transMeta.getParameterDefault( name ) );
-    } catch ( UnknownParamException e ) {
-      logger.debug( "Unknown parameter '" + name + "'. Using default value 'false'." );
-      return false;
-    }
-  }
 
   // TODO: refactor / see what's common between transformations and jobs
   private IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
@@ -195,112 +136,96 @@ public class KettleTransformationElement extends Element {
 
     return kettleOutput;
   }
-
-  private void execute() {
-    logger.info( "Starting transformation '" + this.getName() + "' [" + this.transMeta.getName() + "]" );
-    long start = System.currentTimeMillis();
-
-    try {
-      transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
-      transMeta.setResultFiles( new ArrayList<ResultFile>() );
-
-      // create a new transformation using the meta info
-      Trans transformation = new Trans( transMeta );
-
-      transformation.initializeVariablesFrom( null );
-      transformation.getTransMeta().setInternalKettleVariables( transformation );
-
-      // add runtime parameters
-      enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
-
-      transformation.copyParametersFrom( transMeta );
-      transformation.copyVariablesFrom( transMeta );
-      transformation.activateParameters();
-
-      transformation.prepareExecution( null ); // get the step threads after this line
-      StepInterface step = transformation.findRunThread( DEFAULT_STEP );
-      if ( step != null ) {
-        transformation.startThreads(); // all the operations to get step names need to be placed above this line
-        transformation.waitUntilFinished();
-      } else {
-        logger.error( "Couldn't find step '" + DEFAULT_STEP + "'." );
+  private void prepareOutput( StepInterface step, final IKettleOutput output ) {
+    step.addRowListener( new RowAdapter() {
+      @Override
+      public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] row ) throws KettleStepException {
+        output.storeRow( row, rowMeta );
       }
-    } catch ( KettleException e ) {
-      logger.debug( e );
-    }
-
-    // clear previous results
-    //transformation = null;
-
-    long end = System.currentTimeMillis();
-    logger.info( "Finished transformation '" + this.getName() + "' [" + this.transMeta.getName() + "] in " + ( end - start ) + " ms" );
+    } );
   }
+  private void processResult( StepInterface step, IKettleOutput output ) {
+    Result result = step.getTrans().getResult();
+    output.setResult( result );
+    output.processResult();
+    logger.info( "[ " + output.getResult() + " ]" );
+  }
+
 
   @Override
   public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
-    logger.info( "Starting transformation '" + this.getName() + "' [" + this.transMeta.getName() + "]" );
+    logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
 
-    // TODO: refactor / optimize results processing
-    Result result = null;
-    final IKettleOutput kettleOutput = inferResult( bloatedMap );
-
     try {
+      // clean?
       transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
       transMeta.setResultFiles( new ArrayList<ResultFile>() );
 
-      // create a new transformation using the meta info
+      // update parameters
+      KettleElementHelper.updateParameters( this.transMeta );
+
+      // add request parameters
+      if ( bloatedMap != null ) {
+        KettleElementHelper.addRequestParameters( this.transMeta, bloatedMap.get( "request" ) );
+      }
+
+      // create a new transformation
       Trans transformation = new Trans( transMeta );
 
-      transformation.initializeVariablesFrom( null );
-      transformation.getTransMeta().setInternalKettleVariables( transformation );
+      //KettleElementHelper.dump( transformation, transformation, "AFTER CREATION", true );
 
-      // add runtime parameters
-      enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
-      enforceExecutionParameterSet( transformation, KettleElementHelper.getUserSessionParameters() );
-      enforceMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
+      // not necessary
+      //transformation.copyParametersFrom( transMeta );
 
-      transformation.copyParametersFrom( transMeta );
-      transformation.copyVariablesFrom( transMeta );
-      transformation.activateParameters();
+      // not necessary
+      //transformation.initializeVariablesFrom( null );
+      //transformation.getTransMeta().setInternalKettleVariables( transformation );
+      //transformation.copyVariablesFrom( transMeta );
+
+      // prepare execution does this!
+      // transformation.activateParameters();
 
       transformation.prepareExecution( null ); // get the step threads after this line
 
-      StepInterface step = transformation.findRunThread( kettleOutput.getOutputStepName() );
+      //KettleElementHelper.dump( transformation, transformation, "AFTER PREPARE", true );
+
+      String stepName = DEFAULT_STEP;
+      if ( bloatedMap != null ) {
+        String requestStepName = (String) bloatedMap.get( "request" ).get( "stepName" );
+        if ( requestStepName != null ) {
+          stepName = requestStepName;
+        }
+      }
+
+      StepInterface step = transformation.findRunThread( stepName );
 
       if ( step != null ) {
 
-        // TODO: do it inside the kettle output
-        if ( kettleOutput.needsRowListener() ) {
+        if ( bloatedMap != null ) {
+          IKettleOutput kettleOutput = inferResult( bloatedMap );
+          if ( kettleOutput.needsRowListener() ) {
+            prepareOutput( step, kettleOutput );
 
-          step.addRowListener( new RowAdapter() {
-            @Override
-            public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] row ) throws KettleStepException {
-              kettleOutput.storeRow( row, rowMeta );
-            }
-          } );
+            // start transformation threads and wait until they finish
+            transformation.startThreads(); // all the operations to get step names need to be placed above this line
+            transformation.waitUntilFinished();
 
+            processResult( step, kettleOutput );
+          }
+        } else {
+          // start transformation threads and wait until they finish
           transformation.startThreads(); // all the operations to get step names need to be placed above this line
           transformation.waitUntilFinished();
-
-          result = step.getTrans().getResult();
         }
       } else {
-        logger.error( "Couldn't find step '" + kettleOutput.getOutputStepName() + "'." );
+        logger.error( "Couldn't find step '" + stepName + "'" );
       }
-
-      kettleOutput.setResult( result );
     } catch ( KettleException e ) {
-      logger.debug( e );
+      logger.debug( "KETTLE EXCEPTION: " + e );
     }
 
-    kettleOutput.processResult();
-
-    // clear previous results
-    //transformation = null;
-
     long end = System.currentTimeMillis();
-    logger.info( "Finished transformation '" + this.getName() + "' [" + this.transMeta.getName() + "] in " + ( end - start ) + " ms" );
-    logger.info( "[ " + kettleOutput.getResult() + " ]" );
+    logger.info( "Finished transformation '" + this.getName() + "' (" + this.transMeta.getName() + ") in " + ( end - start ) + " ms" );
   }
 }

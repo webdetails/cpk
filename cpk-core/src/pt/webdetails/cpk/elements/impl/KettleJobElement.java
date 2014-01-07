@@ -15,8 +15,6 @@ package pt.webdetails.cpk.elements.impl;
 
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.RowMetaAndData;
-import org.pentaho.di.core.exception.KettleXMLException;
-import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobEntryResult;
 import org.pentaho.di.job.JobMeta;
@@ -36,7 +34,6 @@ public class KettleJobElement extends Element {
 
   private static final String DEFAULT_STEP = "OUTPUT";
   private JobMeta jobMeta = null;
-  private Job job = null;
 
   public KettleJobElement() {
   }
@@ -45,7 +42,7 @@ public class KettleJobElement extends Element {
   public boolean init( final String id, final String type, final String filePath, boolean adminOnly ) {
     logger.debug( "Creating Kettle Job from '" + filePath + "'" );
 
-    // base init
+    // call base init
     if ( !super.init( id, type, filePath, adminOnly ) ) {
       return false;
     }
@@ -58,73 +55,16 @@ public class KettleJobElement extends Element {
       return false;
     }
 
-    // init default parameters
-    //enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
+    // add base parameters to ensure they exist
+    KettleElementHelper.addBaseParameters( this.jobMeta );
 
-    // execute at start
-    if ( getParameterDefaultBoolean( KettleElementHelper.getExecuteAtStartParameter() ) ) {
-      execute();
+    // execute at start?
+    if ( KettleElementHelper.isExecuteAtStart( this.jobMeta ) ) {
+      processRequest( null );
     }
 
+    // init was successful
     return true;
-  }
-
-  private void enforceMetaParameterSet( Map<String, String> parameterSet ) {
-    for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      enforceMetaParameter( entry.getKey(), entry.getValue() );
-    }
-  }
-
-  private void enforceMetaParameter( String name, String value ) {
-    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
-    try {
-      jobMeta.setParameterValue( name, value );
-    } catch ( UnknownParamException e ) {
-      // ensure that a variable replaces the parameter if it wasn't defined
-      logger.debug( "Didn't find parameter: using a replacement variable" );
-    }
-    jobMeta.setVariable( name, value );
-  }
-
-  private void enforceExecutionParameterSet( Map<String, String> parameterSet ) {
-    for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      enforceExecutionParameter( entry.getKey(), entry.getValue() );
-    }
-  }
-
-  private void enforceExecutionParameter( String name, String value ) {
-    logger.debug( "Parameter '" + name + "' = '" + value + "'." );
-    try {
-      job.setParameterValue( name, value );
-    } catch ( UnknownParamException e ) {
-      // ensure that a variable replaces the parameter if it wasn't defined
-      logger.debug( "Didn't find parameter: using a replacement variable" );
-    }
-    job.setVariable( name, value );
-  }
-
-  private void addMetaParameterSet( Map<String, String> parameterSet ) {
-    for ( Map.Entry<String, String> entry : parameterSet.entrySet() ) {
-      addMetaParameter( entry.getKey(), entry.getValue() );
-    }
-  }
-
-  private void addMetaParameter( String name, String value ) {
-    try {
-      jobMeta.setParameterValue( name, value );
-      logger.debug( "Parameter '" + name + "' = '" + value + "'" );
-    } catch ( UnknownParamException e ) {
-      // ignore unknown parameters
-    }
-  }
-
-  protected boolean getParameterDefaultBoolean( final String name ) {
-    try {
-      return Boolean.parseBoolean( jobMeta.getParameterDefault( name ) );
-    } catch ( UnknownParamException e ) {
-      logger.debug( "Unknown parameter '" + name + "': using default value 'false'" );
-      return false;
-    }
   }
 
   // TODO: refactor / see what's common between transformations and jobs
@@ -191,58 +131,9 @@ public class KettleJobElement extends Element {
 
     return kettleOutput;
   }
-
-  private void execute() {
-    logger.info( "Starting job '" + this.getName() + "' [" + this.jobMeta.getName() + "]" );
-    long start = System.currentTimeMillis(); 
-    this.job = new Job( null, this.jobMeta );
-
-    job.initializeVariablesFrom( null );
-    job.getJobMeta().setInternalKettleVariables( job );
-
-    // add runtime parameters
-    enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
-
-    job.copyParametersFrom( job.getJobMeta() );
-    job.copyVariablesFrom( job.getJobMeta() );
-    job.activateParameters();
-
-
-    this.job.start();
-    this.job.waitUntilFinished();
-    this.job = null;
-
-    long end = System.currentTimeMillis();
-    logger.info( "Finished job '" + this.getName() + "' [" + this.jobMeta.getName() + "] in " + ( end - start ) + " ms" );
-  }
-
-  @Override public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
-    logger.info( "Starting job '" + this.getName() + "' [" + this.jobMeta.getName() + "]" );
-    long start = System.currentTimeMillis();
-
-
+  private void processResult( Job job, IKettleOutput output ) {
     // TODO: refactor / optimize results processing
-    Result result = null;
-    final IKettleOutput kettleOutput = inferResult( bloatedMap );
-
-    this.job = new Job( null, jobMeta );
-
-    job.initializeVariablesFrom( null );
-    job.getJobMeta().setInternalKettleVariables( job );
-
-    // add runtime parameters
-    enforceMetaParameterSet( KettleElementHelper.getDefaultParameters() );
-    enforceMetaParameterSet( KettleElementHelper.getUserSessionParameters() );
-    enforceMetaParameterSet( KettleElementHelper.getUserDefinedParameters( bloatedMap.get( "request" ) ) );
-
-    job.copyParametersFrom( job.getJobMeta() );
-    job.copyVariablesFrom( job.getJobMeta() );
-    job.activateParameters();
-
-
-    this.job.start();
-    this.job.waitUntilFinished();
-    result = this.job.getResult();
+    Result result = job.getResult();
 
     // TODO: refactor as part of kettleOutput variable
     JobEntryResult entryResult = null;
@@ -251,7 +142,7 @@ public class KettleJobElement extends Element {
       for ( int i = 0; i < jobEntryResultList.size(); i++ ) {
         entryResult = jobEntryResultList.get( i );
         if ( entryResult != null ) {
-          if ( entryResult.getJobEntryName().equals( kettleOutput.getOutputStepName() ) ) {
+          if ( entryResult.getJobEntryName().equals( output.getOutputStepName() ) ) {
             result = entryResult.getResult();
             break;
           }
@@ -259,17 +150,49 @@ public class KettleJobElement extends Element {
       }
     }
 
-    // what does this do?
+    // what is this for?
     result.setRows( new ArrayList<RowMetaAndData>() );
 
-    kettleOutput.setResult( result );
+    output.setResult( result );
 
-    kettleOutput.processResult();
+    output.processResult();
+    logger.info( "[ " + output.getResult() + " ]" );
+  }
 
-    this.job = null;
+  @Override public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
+    logger.info( "Starting job '" + this.getName() + "' (" + this.jobMeta.getName() + ")" );
+    long start = System.currentTimeMillis();
+
+    // update parameters
+    KettleElementHelper.updateParameters( this.jobMeta );
+
+    // add request parameters
+    if ( bloatedMap != null ) {
+      KettleElementHelper.addRequestParameters( this.jobMeta, bloatedMap.get( "request" ) );
+    }
+
+    // create a new job
+    Job job = new Job( null, jobMeta );
+
+    // nothing of this is needed:
+    //job.initializeVariablesFrom( null );
+    //job.getJobMeta().setInternalKettleVariables( job );
+    //job.copyParametersFrom( job.getJobMeta() );
+    //job.copyVariablesFrom( job.getJobMeta() );
+    //job.activateParameters();
+
+    // start job thread and wait until it finishes
+    job.start();
+    job.waitUntilFinished();
+
+    //KettleElementHelper.dump( job, job, "", true );
+
+    // process result
+    if ( bloatedMap != null ) {
+      processResult( job, inferResult( bloatedMap ) );
+    }
 
     long end = System.currentTimeMillis();
-    logger.info( "Finished job '" + this.getName() + "' [" + this.jobMeta.getName() + "] in " + ( end - start ) + " ms" );
-    logger.info( "[ " + kettleOutput.getResult() + " ]" );
+    logger.info( "Finished job '" + this.getName() + "' (" + this.jobMeta.getName() + ") in " + ( end - start ) + " ms" );
   }
 }

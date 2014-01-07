@@ -52,12 +52,12 @@ public class KettleOutput implements IKettleOutput {
   private OutputStream out;
   protected KettleType kettleType;
   private String outputStepName = "OUTPUT";
-  private IPluginUtils pluginUtils;
+  //private IPluginUtils pluginUtils;
   private Map<String, Map<String, Object>> bloatedMap;
   private HttpServletResponse response;
 
   public KettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    pluginUtils = plug;
+    //pluginUtils = plug;
     init( bloatedMap );
 
   }
@@ -324,11 +324,13 @@ public class KettleOutput implements IKettleOutput {
     }
   }
 
+  // is this needed?
   @Override
   public String getOutputStepName() {
     return outputStepName;
   }
 
+  // is this needed?
   @Override
   public void setOutputStepName( String outputStepName ) {
     this.outputStepName = outputStepName;
