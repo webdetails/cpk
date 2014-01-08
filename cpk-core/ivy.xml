@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-    <info organisation="pt.webdetails" module="${ivy.artifact.id}" revision="${project.revision}"/>
+    <info organisation="pentaho" module="${ivy.artifact.id}" revision="${project.revision}"/>
     <configurations>
         <conf name="default"/>
         <conf name="source"/>
@@ -30,7 +30,7 @@
         <dependency org="pentaho-kettle" name="kettle-db" rev="${dependency.kettle.revision}" changing="true" transitive="false"/>
 
         <dependency org="pentaho" name="cpf-core"
-            rev="REFACTOR-SNAPSHOT" transitive="false" changing="true" conf='runtime->default'/>
+            rev="REFACTOR-SNAPSHOT" transitive="false" changing="true" conf='test,runtime->default'/>
 
         <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2"/>
         <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.8.2"/>              
@@ -42,8 +42,8 @@
         <dependency org="javax.servlet" name="servlet-api" rev="2.4" conf="default->default"/>
 
         <dependency org="jaxen" name="jaxen" rev="1.1"/>
-        <dependency org="org.mozilla" name="rhino" rev="1.7R4" conf="runtime->default"/>
-
+        <dependency org="org.mozilla" name="rhino" rev="1.7R4" conf="test,runtime->default"/>
+    <dependency org="commons-httpclient" name="commons-httpclient" conf="test->default" rev='3.1'/>    
         <dependency org="junit" name="junit" conf="test->default" rev='4.10'/>
         <dependency org="org.apache.clerezza.ext" name="org.json.simple" conf="test->default" rev='0.3-incubating'/>
         

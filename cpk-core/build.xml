@@ -2,10 +2,10 @@
          xmlns:ivy="antlib:org.apache.ivy.ant">
   <description>
     This build file is used to create the cpk-core project
-    and works with the common_build.xml file.
+    and works with the subflool file.
   </description>
-  <!-- Import the common_build.xml file which contains all the default tasks -->
-  <import file="common_build.xml"/>
+
+  <import file="../build-res/subfloor.xml"/>
   <property name="plugin.name"
             value="cpk-core"
             description="Name of the plugin"/>
@@ -33,6 +33,9 @@
       <include name="**/*.jar" />
     </fileset>
   </path>
+  
+  
+  
   <!-- Build the project.revision property -->
   <property name="distribution.version" value="${project.stage}-${project.version}"/>
   <echo>distribution.version = ${distribution.version}</echo>
@@ -42,6 +45,11 @@
   <property name="plugin.zipfile" value="${plugin.artifact.id}-${distribution.version}.zip"/>
   <property name="plugin.samples.zipfile" value="${plugin.artifact.id}-samples-${distribution.version}.zip"/>
   <property name="plugin.solution.zipfile" value="${plugin.artifact.id}-solution-${distribution.version}.zip"/>
+
+
+  <target name="publish" depends="dist, dist-source, cobertura, publish-nojar">
+    </target>
+
   <!--=======================================================================
               dist
               Creates a distribution of this project's plugin zip
