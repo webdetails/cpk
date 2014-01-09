@@ -25,7 +25,7 @@ import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.security.AccessControl;
 import pt.webdetails.cpk.security.IAccessControl;
 
-public class CpkPentahoEnvironment extends PentahoPluginEnvironment implements pt.webdetails.cpk.ICpkEnvironment {
+public class CpkPentahoEnvironment extends PentahoPluginEnvironment implements ICpkEnvironment {
 
   private IPluginUtils pluginUtils;
   private HashSet<String> reservedWords;

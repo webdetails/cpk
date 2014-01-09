@@ -87,12 +87,8 @@ public class CpkApi {
 
 
   protected void init() {
-    PluginUtils pluginUtils = new PluginUtils();
-    CpkPentahoEnvironment cpkEnv = new CpkPentahoEnvironment( new PluginUtils(), reservedWords );
-    pluginUtils.setPluginName( cpkEnv.getPluginId() );
-
-    this.cpkEnv = cpkEnv;
-    this.coreService = new CpkCoreService( cpkEnv );
+    this.cpkEnv = new CpkPentahoEnvironment( new PluginUtils(), reservedWords );
+    this.coreService = new CpkCoreService( this.cpkEnv );
   }
 
 

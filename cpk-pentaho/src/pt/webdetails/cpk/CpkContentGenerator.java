@@ -49,18 +49,21 @@ import javax.servlet.http.HttpServletResponse;
 public class CpkContentGenerator extends RestContentGenerator {
 
   private static final long serialVersionUID = 1L;
-  public static final String PLUGIN_NAME = "cpk";
   protected CpkCoreService coreService;
   protected ICpkEnvironment cpkEnv;
 
-  public static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
+  public static final String[] reservedWords = { "default", "refresh", "status", "reload", "getElementsList",
             "getSitemapJson", "version", "getPluginMetadata" };
 
 
-    public CpkContentGenerator() {
-    this.pluginUtils = new PluginUtils();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, reserverdWords );
-    this.coreService = new pt.webdetails.cpk.CpkCoreService( cpkEnv );
+  public CpkContentGenerator() {
+    init();
+  }
+
+  protected void init() {
+      this.pluginUtils = new PluginUtils();
+      this.cpkEnv = new CpkPentahoEnvironment( this.pluginUtils, reservedWords );
+      this.coreService = new CpkCoreService( this.cpkEnv );
   }
 
   @Override
@@ -94,7 +97,7 @@ public class CpkContentGenerator extends RestContentGenerator {
     IPluginFilter thisPlugin = new IPluginFilter() {
       @Override
       public boolean include( Plugin plugin ) {
-        return plugin.getId().equalsIgnoreCase( pluginUtils.getPluginName() );
+        return plugin.getId().equalsIgnoreCase(pluginUtils.getPluginName());
       }
     };
 
@@ -122,7 +125,7 @@ public class CpkContentGenerator extends RestContentGenerator {
 
       @Override
       public boolean include( Plugin plugin ) {
-        return plugin.getId().equals( pluginUtils.getPluginName() );
+        return plugin.getId().equals(pluginUtils.getPluginName());
       }
     };
 

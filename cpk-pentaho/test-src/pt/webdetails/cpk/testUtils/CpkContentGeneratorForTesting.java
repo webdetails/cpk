@@ -16,6 +16,7 @@ package pt.webdetails.cpk.testUtils;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import pt.webdetails.cpf.WrapperUtils;
 import pt.webdetails.cpf.http.ICommonParameterProvider;
+import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.CpkContentGenerator;
 import pt.webdetails.cpk.CpkCoreService;
 import pt.webdetails.cpk.CpkPentahoEnvironment;
@@ -24,21 +25,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-
 public class CpkContentGeneratorForTesting extends CpkContentGenerator {
 
-    /*public CpkContentGeneratorForTesting(ICpkEnvironment environment) {
-        super(environment);
-    }//*/
-
-
-
+  private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
+    "getSitemapJson", "version", "getPluginMetadata" };
 
   public CpkContentGeneratorForTesting() {
-    super();
-    this.cpkEnv = new CpkPentahoEnvironment( pluginUtils, reserverdWords );
+  }
+
+  @Override
+  protected void init() {
+    this.pluginUtils = new PluginUtils();
+    this.cpkEnv = new CpkPentahoEnvironmentForTesting( this.pluginUtils, reserverdWords );
     this.coreService = new CpkCoreService( cpkEnv );
   }
+
 
   public void wrapParameters() {
     if ( parameterProviders != null ) {

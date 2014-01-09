@@ -13,20 +13,20 @@
 
 package pt.webdetails.cpk.testUtils;
 
-import pt.webdetails.cpk.CpkApi;
-import pt.webdetails.cpk.CpkCoreService;
+import pt.webdetails.cpf.repository.impl.FileBasedResourceAccess;
 
-public class CpkApiForTesting extends CpkApi {
+import java.io.File;
 
-  private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
-    "getSitemapJson", "version", "getPluginMetadata" };
+public class FileBasedResourceAccessForTesting extends FileBasedResourceAccess {
 
-  public CpkApiForTesting() {
-  }
+    private String baseDir;
 
-  @Override
-  protected void init() {
-    this.cpkEnv = new CpkPentahoEnvironmentForTesting( new PluginUtilsForTesting(), reserverdWords );
-    this.coreService = new CpkCoreService( cpkEnv );
-  }
+    public FileBasedResourceAccessForTesting( final String baseDir ) {
+        this.baseDir = baseDir;
+    }
+
+    @Override
+    protected File getFile( String path ) {
+        return new File( this.baseDir + path );
+    }
 }

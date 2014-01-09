@@ -25,6 +25,7 @@ import org.dom4j.DocumentException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.pentaho.di.core.exception.KettleException;
 import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.http.ICommonParameterProvider;
 import pt.webdetails.cpf.utils.IPluginUtils;
@@ -54,19 +55,15 @@ import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 
 public class CpkContentGeneratorTest {
 
-  private static IPluginUtils pluginUtils;
   private static CpkContentGeneratorForTesting cpkContentGenerator;
   private static OutputStream out;
   private static OutputStream outResponse;
   private static String userDir = System.getProperty( "user.dir" );
   private static StandaloneSession session = new StandaloneSession( "joe" );
 
-    private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
-            "getSitemapJson", "version", "getPluginMetadata" };
-
 
     @BeforeClass
-  public static void setUp() throws IOException, InitializationException, ObjectFactoryException {
+  public static void setUp() throws IOException, InitializationException, ObjectFactoryException, KettleException {
 
 
     StandaloneApplicationContext appContext =
@@ -88,16 +85,15 @@ public class CpkContentGeneratorTest {
     PentahoSystem.setSystemSettingsService( factory.get( ISystemSettings.class, "systemSettingsService", session ) );
     PentahoSystem.init( appContext );
 
-    pluginUtils = new PluginUtils();
-    ICpkEnvironment environment = new CpkPentahoEnvironment( pluginUtils, reserverdWords );
+    KettleEnvironment.init();
     cpkContentGenerator = new CpkContentGeneratorForTesting();
 
+    int i = 10;
 
   }
 
   @Test
   public void testCreateContent() throws Exception {
-    KettleEnvironment.init();
     outResponse = new ByteArrayOutputStream();
 
 

@@ -13,20 +13,24 @@
 
 package pt.webdetails.cpk.testUtils;
 
-import pt.webdetails.cpk.CpkApi;
-import pt.webdetails.cpk.CpkCoreService;
+import pt.webdetails.cpf.repository.api.IReadAccess;
+import pt.webdetails.cpf.utils.IPluginUtils;
+import pt.webdetails.cpk.CpkPentahoEnvironment;
 
-public class CpkApiForTesting extends CpkApi {
+public class CpkPentahoEnvironmentForTesting extends CpkPentahoEnvironment {
 
-  private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
-    "getSitemapJson", "version", "getPluginMetadata" };
+    public CpkPentahoEnvironmentForTesting( IPluginUtils pluginUtils, String[] reservedWords ) {
+        super( pluginUtils, reservedWords );
+    }
 
-  public CpkApiForTesting() {
-  }
+    @Override
+    public String getPluginId() {
+        return "cpkSol";
+    }
 
-  @Override
-  protected void init() {
-    this.cpkEnv = new CpkPentahoEnvironmentForTesting( new PluginUtilsForTesting(), reserverdWords );
-    this.coreService = new CpkCoreService( cpkEnv );
-  }
+    @Override
+    public IReadAccess getPluginSystemReader(String basePath) {
+        return new FileBasedResourceAccessForTesting( System.getProperty( "user.dir" )
+                + "/test-resources/repository/system/cpkSol/" );
+    }
 }
