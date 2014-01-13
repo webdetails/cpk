@@ -57,7 +57,7 @@ public class DashboardElement extends Element {
     String path =
       CpkEngine.getInstance().getEnvironment().getPluginUtils().getPluginRelativeDirectory( this.getLocation(), true );
 
-    ServletRequest wrapper = (HttpServletRequest) bloatedMap.get( "path" ).get( "httprequest" );
+    //ServletRequest wrapper = (HttpServletRequest) bloatedMap.get( "path" ).get( "httprequest" );
     HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
     OutputStream out = response.getOutputStream();
 
