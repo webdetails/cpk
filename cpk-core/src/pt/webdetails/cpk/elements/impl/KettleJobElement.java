@@ -27,6 +27,7 @@ import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -167,8 +168,9 @@ public class KettleJobElement extends Element {
     KettleElementHelper.updateParameters( this.jobMeta );
 
     // add request parameters
+    Collection<String> requestParameters = null;
     if ( bloatedMap != null ) {
-      KettleElementHelper.addRequestParameters( this.jobMeta, bloatedMap.get( "request" ) );
+      requestParameters = KettleElementHelper.addRequestParameters( this.jobMeta, bloatedMap.get( "request" ) );
     }
 
     // create a new job
@@ -190,7 +192,28 @@ public class KettleJobElement extends Element {
       processResult( job, inferResult( bloatedMap ) );
     }
 
+    // clear request parameters
+    KettleElementHelper.clearRequestParameters( jobMeta, requestParameters );
+
     long end = System.currentTimeMillis();
     logger.info( "Finished job '" + this.getName() + "' (" + this.jobMeta.getName() + ") in " + ( end - start ) + " ms" );
+  }
+
+  public static void execute( String kettleJobPath ) {
+    try {
+      // load transformation meta info
+      JobMeta jobMeta = new JobMeta( kettleJobPath, null );
+      // add base parameters to ensure they exist
+      KettleElementHelper.addBaseParameters( jobMeta );
+      // update parameters
+      KettleElementHelper.updateParameters( jobMeta );
+      // create a new job
+      Job job = new Job( null, jobMeta );
+      // start job thread and wait until it finishes
+      job.start();
+      job.waitUntilFinished();
+    } catch ( Exception e ) {
+      // do nothing
+    }
   }
 }

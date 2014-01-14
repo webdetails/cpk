@@ -32,6 +32,7 @@ import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 public class KettleTransformationElement extends Element {
@@ -166,8 +167,9 @@ public class KettleTransformationElement extends Element {
       KettleElementHelper.updateParameters( this.transMeta );
 
       // add request parameters
+      Collection<String> requestParameters = null;
       if ( bloatedMap != null ) {
-        KettleElementHelper.addRequestParameters( this.transMeta, bloatedMap.get( "request" ) );
+        requestParameters = KettleElementHelper.addRequestParameters( this.transMeta, bloatedMap.get( "request" ) );
       }
 
       // create a new transformation
@@ -215,11 +217,38 @@ public class KettleTransformationElement extends Element {
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );
       }
+
+      // clear request parameters
+      KettleElementHelper.clearRequestParameters( transMeta, requestParameters );
+
     } catch ( KettleException e ) {
       logger.debug( "KETTLE EXCEPTION: " + e );
     }
 
     long end = System.currentTimeMillis();
     logger.info( "Finished transformation '" + this.getName() + "' (" + this.transMeta.getName() + ") in " + ( end - start ) + " ms" );
+  }
+
+  public static void execute( String kettleTransformationPath ) {
+    try {
+      // load transformation meta info
+      TransMeta transMeta = new TransMeta( kettleTransformationPath );
+      // add base parameters to ensure they exist
+      KettleElementHelper.addBaseParameters( transMeta );
+      // update parameters
+      KettleElementHelper.updateParameters( transMeta );
+      // create a new transformation
+      Trans transformation = new Trans( transMeta );
+      // prepare execution
+      transformation.prepareExecution( null );
+      StepInterface step = transformation.findRunThread( "OUTPUT" );
+      if ( step != null ) {
+        // start transformation threads and wait until they finish
+        transformation.startThreads();
+        transformation.waitUntilFinished();
+      }
+    } catch ( KettleException e ) {
+      // do nothing?
+    }
   }
 }

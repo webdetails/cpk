@@ -25,7 +25,9 @@ import pt.webdetails.cpk.CpkEngine;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public final class KettleElementHelper {
@@ -54,7 +56,7 @@ public final class KettleElementHelper {
 
 
   static {
-    // as a static helper class, the parameter cache is shared between kettle elements
+    // KettleElementHelper is a static helper class, so the parameter cache is shared between kettle elements
     File pluginDir = CpkEngine.getInstance().getEnvironment().getPluginUtils().getPluginDirectory();
     parameterCache = new HashMap<String, String>();
     parameterCache.put( CPK_PLUGIN_ID, CpkEngine.getInstance().getEnvironment().getPluginName() );
@@ -67,10 +69,19 @@ public final class KettleElementHelper {
   public static void addParameterDefinition( NamedParams params, String paramName, String defaultValue ) {
     try {
       params.addParameterDefinition( paramName, defaultValue, null );
-      logger.debug( "Added kettle param '" + paramName + "' with default value '" + defaultValue + "'");
+      logger.debug( "Added kettle param '" + paramName + "' with default value '" + defaultValue + "'" );
     } catch ( DuplicateParamException e ) {
       logger.debug( "Kettle param '" + paramName + "' already exists");
     }
+  }
+
+  public static boolean hasParameter( NamedParams params, String paramName ) {
+    for ( String name : params.listParameters() ) {
+      if ( name.equals( paramName ) ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static void setParameterValue( NamedParams params, String paramName, String paramValue ) {
@@ -103,7 +114,7 @@ public final class KettleElementHelper {
 
   public static void addBaseParameters( NamedParams params ) {
     for ( String paramName : BASE_PARAM_SET ) {
-      addParameterDefinition( params, paramName, parameterCache.get( paramName ) );
+      addParameterDefinition( params, paramName, null );
     }
   }
 
@@ -124,26 +135,21 @@ public final class KettleElementHelper {
         if ( paramName.equals( CPK_SESSION_ROLES ) ) {
           return StringUtils.join( userSession.getAuthorities(), "," );
         }
-        // any other session parameter
-        logger.debug( "Getting using session variable '" + paramName.substring( CPK_SESSION_PARAM_PREFIX.length() ) + "'" );
-        return userSession.getStringParameter( paramName.substring( CPK_SESSION_PARAM_PREFIX.length() ) );
+        // any other session variable
+        String varName = paramName.substring( CPK_SESSION_PARAM_PREFIX.length() );
+        logger.debug( "Getting session variable '" + varName + "'" );
+        return userSession.getStringParameter( varName );
       }
     }
 
-    // other known parameters should be in cache
-    if ( paramName.startsWith( CPK_PARAM_PREFIX ) ) {
-      return parameterCache.get( paramName );
-    }
-
-    // unknown parameter
-    return null;
+    // other known parameters should be in cache, otherwise the value is null
+    return parameterCache.get( paramName );
   }
 
   public static void updateParameters( NamedParams params ) {
     for ( String paramName : params.listParameters() ) {
-      String paramValue = getCurrentValue( paramName );
-      if ( paramValue != null ) {
-        setParameterValue( params, paramName, paramValue );
+      if ( paramName.startsWith( CPK_PARAM_PREFIX ) ) {
+        setParameterValue( params, paramName, getCurrentValue( paramName ) );
       }
     }
   }
@@ -157,27 +163,45 @@ public final class KettleElementHelper {
     return false;
   }
 
-  public static void addRequestParameters( NamedParams params, Map<String, Object> requestParams ) {
+  private static boolean addRequestParameter( NamedParams params, String paramName, String paramValue) {
+    if ( isReservedName( paramName ) ) {
+      logger.warn( "Request param '" + paramName + "' uses a reserved name in the Kettle job/transformation" );
+      return false;
+    }
+    if ( !hasParameter( params, paramName ) ) {
+      logger.warn( "Request param '" + paramName + "' doesn't exist in the Kettle job/transformation" );
+      return false;
+    }
+    setParameterValue( params, paramName, paramValue );
+    logger.debug( "Added request param '" + paramName + "' = '" + paramValue + "'" );
+    return true;
+  }
+
+  public static Collection<String> addRequestParameters( NamedParams params, Map<String, Object> requestParams ) {
+    LinkedList<String> addedParamNames = new LinkedList<String>();
     if ( requestParams != null ) {
       String paramName;
       String paramValue;
       for ( String key : requestParams.keySet() ) {
         if ( key.startsWith( REQUEST_PARAM_PREFIX ) ) {
           paramName = key.substring( REQUEST_PARAM_PREFIX.length() );
-          if ( !isReservedName( paramName ) ) {
-            paramValue = requestParams.get( key ).toString();
-            setParameterValue( params, paramName, paramValue );
-            logger.debug( "Request param '" + paramName + "' = '" + paramValue + "'" );
-          } else {
-            logger.warn( "Request param '" + paramName + "' uses a reserved name" );
+          paramValue = requestParams.get( key ).toString();
+          if ( addRequestParameter( params, paramName, paramValue ) ) {
+            addedParamNames.add( paramName );
           }
         }
       }
     }
+    return addedParamNames;
   }
 
-  public static void clearRequestParameters( NamedParams params, String[] paramNames ) {
-    // logic do clear request parameters from previous executions
+  public static void clearRequestParameters( NamedParams params, Collection<String> paramNames ) {
+    if ( paramNames != null ) {
+      for ( String paramName : paramNames ) {
+        setParameterValue( params, paramName, null );
+        logger.debug( "Cleared request param '" + paramName + "'" );
+      }
+    }
   }
 
   // debug only
@@ -197,7 +221,6 @@ public final class KettleElementHelper {
       }
     }
   }
-
 
   // TODO: remove in kettleOutput refactor
   public static enum KettleType {
