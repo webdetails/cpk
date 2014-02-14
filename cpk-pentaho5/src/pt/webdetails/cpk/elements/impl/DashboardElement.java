@@ -17,6 +17,7 @@ package pt.webdetails.cpk.elements.impl;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import pt.webdetails.cpf.Util;
+import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.InterPluginBroker;
 import pt.webdetails.cpk.elements.Element;
@@ -59,6 +60,7 @@ public class DashboardElement extends Element {
 
     //ServletRequest wrapper = (HttpServletRequest) bloatedMap.get( "path" ).get( "httprequest" );
     HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+    response.setContentType( MimeTypes.HTML );
     OutputStream out = response.getOutputStream();
 
     //String root = wrapper.getScheme() + "://" + wrapper.getServerName() + ":" + wrapper.getServerPort();
