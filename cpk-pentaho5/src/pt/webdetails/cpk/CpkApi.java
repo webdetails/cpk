@@ -58,8 +58,6 @@ import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceDefinition;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.IMetadata;
-import pt.webdetails.cpk.elements.impl.KettleJobElement;
-import pt.webdetails.cpk.elements.impl.KettleTransformationElement;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
 import pt.webdetails.cpk.utils.CpkUtils;
@@ -271,7 +269,7 @@ public class CpkApi {
       for ( IElement endpoint : endpoints ) {
 
         // filter endpoints that aren't data sources
-        if ( !endpoint.isDatasource()) {
+        if ( !endpoint.isDatasource() ) {
           continue;
         }
 

@@ -23,7 +23,6 @@ import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
-import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;

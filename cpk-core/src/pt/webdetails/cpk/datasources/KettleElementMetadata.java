@@ -8,7 +8,9 @@ import java.util.Collections;
 
 public class KettleElementMetadata extends CpkDataSourceMetadata {
 
-  private static Iterable<String> kettleOutputTypes = new ArrayList<String>();
+  private static Iterable<String> kettleOutputTypes;
+
+  private Iterable<String> kettleStepNames;
 
   static {
     ArrayList<String> list = new ArrayList<String>();
@@ -24,6 +26,11 @@ public class KettleElementMetadata extends CpkDataSourceMetadata {
   public Iterable<String> getKettleOutputTypes() { return kettleOutputTypes; }
 
   @JsonProperty( "kettleStepNames" )
-  public Iterable<String> getKettleStepNames() { return null; }
+  public Iterable<String> getKettleStepNames() { return this.kettleStepNames; }
+
+  public KettleElementMetadata setKettleStepNames( Iterable<String> kettleStepNames ) {
+    this.kettleStepNames = kettleStepNames;
+    return this;
+  }
 
 }
