@@ -24,6 +24,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
+import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 
@@ -68,7 +69,7 @@ public class KettleTransformationElement extends KettleElement {
   }
 
   public IMetadata getMetadata() {
-    return new CpkDataSourceMetadata().setEndpointName( this.getName() );
+    return new KettleElementMetadata().setEndpointName( this.getName() );
   }
 
   public boolean isDatasource() { return true; }

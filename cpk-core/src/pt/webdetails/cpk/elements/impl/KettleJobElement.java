@@ -18,15 +18,10 @@ import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobEntryResult;
 import org.pentaho.di.job.JobMeta;
-import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.utils.IPluginUtils;
-import pt.webdetails.cpk.CpkEngine;
-import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
+import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
-import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -69,7 +64,7 @@ public class KettleJobElement extends KettleElement {
   }
 
   public IMetadata getMetadata() {
-    return new CpkDataSourceMetadata().setEndpointName( this.getName() );
+    return new KettleElementMetadata().setEndpointName( this.getName() );
   }
 
   public boolean isDatasource() { return true; }
@@ -145,7 +140,8 @@ public class KettleJobElement extends KettleElement {
     KettleElementHelper.clearRequestParameters( jobMeta, requestParameters );
 
     long end = System.currentTimeMillis();
-    logger.info( "Finished job '" + this.getName() + "' (" + this.jobMeta.getName() + ") in " + ( end - start ) + " ms" );
+    this.logger.info( "Finished job '" + this.getName()
+      + "' (" + this.jobMeta.getName() + ") in " + ( end - start ) + " ms" );
   }
 
   public static void execute( String kettleJobPath ) {
