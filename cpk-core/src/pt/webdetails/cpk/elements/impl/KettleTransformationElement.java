@@ -23,12 +23,14 @@ import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
+import org.pentaho.di.trans.step.StepMeta;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement {
@@ -68,7 +70,15 @@ public class KettleTransformationElement extends KettleElement {
   }
 
   public IMetadata getMetadata() {
-    return new KettleElementMetadata().setEndpointName( this.getName() );
+    Iterable<StepMeta> steps = this.transMeta.getSteps();
+    Collection<String> stepNames = new ArrayList<String>();
+    for ( StepMeta step : steps ) {
+      stepNames.add( step.getName() );
+    }
+
+    return new KettleElementMetadata()
+      .setKettleStepNames( Collections.unmodifiableCollection(stepNames) )
+      .setEndpointName( this.getName() );
   }
 
   public boolean isDatasource() { return true; }
