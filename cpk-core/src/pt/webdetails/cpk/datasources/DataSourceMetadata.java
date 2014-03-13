@@ -14,19 +14,14 @@
 package pt.webdetails.cpk.datasources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import pt.webdetails.cpk.elements.IMetadata;
 
-public class DataSourceMetadata {
+public class DataSourceMetadata implements IMetadata {
 
-    @JsonProperty("datype")
+    private String pluginId;
     protected String dataType;
-
-    @JsonProperty("group")
     protected String groupId;
-
-    @JsonProperty("groupdesc")
     protected String groupDescription;
-
-    @JsonProperty("name")
     protected String name;
 
     /* (non-Javadoc)
@@ -75,9 +70,21 @@ public class DataSourceMetadata {
         return true;
     }
 
+    @JsonProperty("pluginId")
+    @Override public String getPluginId() {
+      return this.pluginId;
+    }
+
+    @Override
+    public DataSourceMetadata setPluginId( String pluginId ) {
+      this.pluginId = pluginId;
+      return this;
+    }
+
     /**
      * @return the datype
      */
+    @JsonProperty("datype")
     public String getDataType() {
         return dataType;
     }
@@ -85,6 +92,7 @@ public class DataSourceMetadata {
     /**
      * @return the group
      */
+    @JsonProperty("group")
     public String getGroup() {
         return groupId;
     }
@@ -92,6 +100,7 @@ public class DataSourceMetadata {
     /**
      * @return the groupdesc
      */
+    @JsonProperty("groupdesc")
     public String getGroupDescription() {
         return groupDescription;
     }
@@ -99,6 +108,7 @@ public class DataSourceMetadata {
     /**
      * @return the name
      */
+    @JsonProperty("name")
     public String getName() {
         return name;
     }
@@ -178,5 +188,6 @@ public class DataSourceMetadata {
         builder.append("]");
         return builder.toString();
     }
+
 
 }
