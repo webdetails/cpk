@@ -138,4 +138,6 @@ public class DashboardElement extends Element {
     return true;
   }
 
+  @Override
+  public boolean isDatasource() { return false; }
 }

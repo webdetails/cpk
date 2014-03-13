@@ -15,13 +15,14 @@ package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
 import pt.webdetails.cpf.utils.IPluginUtils;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
 public class InferedKettleOutput extends KettleOutput {
 
 
-  public InferedKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    super( bloatedMap, plug );
+  public InferedKettleOutput( HttpServletResponse response, boolean download ) {
+    super( response, download );
   }
 
 }

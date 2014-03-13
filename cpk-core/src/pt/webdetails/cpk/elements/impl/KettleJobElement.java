@@ -22,7 +22,6 @@ import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
-import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
@@ -33,9 +32,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class KettleJobElement extends Element {
+public class KettleJobElement extends KettleElement {
 
-  private static final String DEFAULT_STEP = "OUTPUT";
   private JobMeta jobMeta = null;
 
   public KettleJobElement() {
@@ -70,75 +68,19 @@ public class KettleJobElement extends Element {
     return true;
   }
 
-  public IMetadata getMetadata()
-  {
+  public IMetadata getMetadata() {
     return new CpkDataSourceMetadata().setEndpointName( this.getName() );
   }
 
-  // TODO: refactor / see what's common between transformations and jobs
-  private IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
+  public boolean isDatasource() { return true; }
 
-        /*
-         *  There are a few different types of kettle output processing.
-         *  They can be infered or specified from a request parameter: kettleOutput
-         *
-         *  1. ResultOnly - we'll discard the output and print statistics only
-         *  2. ResultFiles - Download the files we have as result filenames
-         *  3. Json - Json output of the resultset
-         *  4. csv - CSV output of the resultset
-         *  5. SingleCell - We'll get the first line, first row
-         *  6. Infered - Infering
-         *
-         *  If nothing specified, the behavior will be:
-         *  * Jobs and Transformations with result filenames: ResultFiles
-         *  * Without filenames:
-         *      * Jobs: ResultOnly
-         *      * Transformations:
-         *          * Just one cell: SingleCell
-         *          * Regular resultset: Json
-         *
-         *  By complexity:
-         *      These don't require rowListener:
-         *  1. ResultOnly
-         *  2. ResultFiles
-         *
-         *      These do:
-         *  3. SingleCell
-         *  4. Json
-         *  5. CSV
-         *  6. Infered
-         */
-
-    //These conditions will treat the different types of kettle operations
-
-    IKettleOutput kettleOutput;
-    String haveOutput = (String) bloatedMap.get( "request" ).get( "kettleOutput" );
-    String clazz = ( haveOutput != null ? haveOutput : "Infered" ) + "KettleOutput";
-
-    IPluginUtils pluginUtils = CpkEngine.getInstance().getEnvironment().getPluginUtils();
-
-    try {
-      // Get defined kettleOutput class name
-
-
-      Constructor constructor = Class.forName( "pt.webdetails.cpk.elements.impl.kettleOutputs." + clazz )
-        .getConstructor( Map.class, IPluginUtils.class );
-      kettleOutput = (IKettleOutput) constructor.newInstance( bloatedMap, pluginUtils );
-
-    } catch ( Exception ex ) {
-      logger.error( "Error initializing Kettle output type " + clazz + ", reverting to KettleOutput: " + Util
-        .getExceptionDescription( ex ) );
-      kettleOutput = new KettleOutput( bloatedMap, pluginUtils );
-    }
-
-    // Are we specifying a stepname?
-    String hasStepName = (String) bloatedMap.get( "request" ).get( "stepName" );
-    kettleOutput.setOutputStepName( hasStepName != null ? hasStepName : DEFAULT_STEP );
-
+  @Override
+  protected IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
+    IKettleOutput kettleOutput = super.inferResult( bloatedMap );
     kettleOutput.setKettleType( KettleElementHelper.KettleType.JOB );
-
     return kettleOutput;
   }
+
   private void processResult( Job job, IKettleOutput output ) {
     // TODO: refactor / optimize results processing
     Result result = job.getResult();

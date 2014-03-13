@@ -35,8 +35,11 @@ public interface IElement {
   @JsonProperty( "adminOnly" )
   public boolean isAdminOnly();
 
-  @JsonProperty( "renderable" )
+  @JsonProperty( "isRenderable" )
   public boolean isRenderable();
+
+  @JsonProperty( "isDataSource" )
+  public boolean isDatasource();
 
   @JsonIgnore
   public IMetadata getMetadata();

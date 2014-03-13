@@ -14,16 +14,15 @@
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
 import org.apache.commons.vfs.FileSystemException;
-import pt.webdetails.cpf.utils.IPluginUtils;
 
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ResultFilesKettleOutput extends KettleOutput {
 
-  public ResultFilesKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    super( bloatedMap, plug );
+  public ResultFilesKettleOutput( HttpServletResponse response, boolean download ) {
+    super( response, download );
   }
 
   @Override

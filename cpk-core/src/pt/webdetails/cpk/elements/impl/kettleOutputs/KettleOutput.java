@@ -25,7 +25,6 @@ import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpf.Util;
-import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper.KettleType;
@@ -38,7 +37,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,30 +50,26 @@ public class KettleOutput implements IKettleOutput {
   private OutputStream out;
   protected KettleType kettleType;
   private String outputStepName = "OUTPUT";
-  //private IPluginUtils pluginUtils;
-  private Map<String, Map<String, Object>> bloatedMap;
   private HttpServletResponse response;
 
-  public KettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    //pluginUtils = plug;
-    init( bloatedMap );
+  private boolean download;
 
+  public KettleOutput( HttpServletResponse response, boolean download ) {
+    this.init( response, download );
   }
 
-  protected void init( Map<String, Map<String, Object>> bloatedMap ) {
+  protected void init( HttpServletResponse response, boolean download ) {
+    this.response = response;
+    this.download = download;
 
-    this.bloatedMap = bloatedMap;
-    this.response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
-    rows = new ArrayList<Object[]>();
-    rowMeta = null;
-
+    this.rows = new ArrayList<Object[]>();
+    this.rowMeta = null;
 
     try {
-      out = response.getOutputStream();
+      this.out = response.getOutputStream();
     } catch ( IOException ex ) {
       Logger.getLogger( "Something went wrong on the KettleOutput class initialization." );
     }
-
   }
 
   @Override
@@ -190,8 +184,7 @@ public class KettleOutput implements IKettleOutput {
 
       // Do we know the mime type?
       String mimeType = MimeTypes.getMimeType( file.getFile().getName().getExtension() );
-      String download = (String) bloatedMap.get( "request" ).get( "download" );
-      if ( Boolean.parseBoolean( download != null ? download : "false" ) ) {
+      if ( this.download ) {
         try {
           long attachmentSize = file.getFile().getContent().getInputStream().available();
           CpkUtils.setResponseHeaders( response, mimeType, file.getFile().getName().getBaseName(),

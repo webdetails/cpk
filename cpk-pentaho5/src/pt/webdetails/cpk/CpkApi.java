@@ -270,12 +270,12 @@ public class CpkApi {
     if ( endpoints != null ) {
       for ( IElement endpoint : endpoints ) {
 
-        // filter endpoints that aren't of kettle type
-        if ( !( endpoint instanceof KettleJobElement || endpoint instanceof KettleTransformationElement ) ) {
+        // filter endpoints that aren't data sources
+        if ( !endpoint.isDatasource()) {
           continue;
         }
 
-        logger.info( String.format( "CPK Kettle Endpoint found: %s)", endpoint ) );
+        logger.info( String.format( "DataSource Endpoint found: %s)", endpoint ) );
 
         String pluginId = cpkEnv.getPluginName();
         String endpointName = endpoint.getName();

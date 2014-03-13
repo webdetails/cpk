@@ -13,14 +13,13 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
-import pt.webdetails.cpf.utils.IPluginUtils;
 
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
-  public SingleCellKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    super( bloatedMap, plug );
+  public SingleCellKettleOutput( HttpServletResponse response, boolean download ) {
+    super( response, download );
   }
 
   @Override

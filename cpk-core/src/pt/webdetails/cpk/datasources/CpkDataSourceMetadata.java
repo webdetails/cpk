@@ -33,7 +33,8 @@ public class CpkDataSourceMetadata extends DataSourceMetadata {
         .setEndpointName( endpointName );
   }
 
-  @Override public CpkDataSourceMetadata setPluginId( String pluginId ) {
+  @Override
+  public CpkDataSourceMetadata setPluginId( String pluginId ) {
     super.setPluginId( pluginId );
     this.setGroup( String.format( "%s_CPKENDPOINTS", pluginId.toUpperCase() ) )
         .setGroupDescription( String.format( "%s Endpoints", pluginId.toUpperCase() ) );
