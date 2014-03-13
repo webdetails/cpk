@@ -21,7 +21,9 @@ import org.pentaho.di.job.JobMeta;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.CpkEngine;
+import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
 import pt.webdetails.cpk.elements.Element;
+import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
 
@@ -66,6 +68,11 @@ public class KettleJobElement extends Element {
 
     // init was successful
     return true;
+  }
+
+  public IMetadata getMetadata()
+  {
+    return new CpkDataSourceMetadata().setEndpointName( this.getName() );
   }
 
   // TODO: refactor / see what's common between transformations and jobs

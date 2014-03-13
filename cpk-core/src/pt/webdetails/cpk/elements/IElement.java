@@ -39,5 +39,8 @@ public interface IElement {
   public boolean isRenderable();
 
   @JsonIgnore
+  public IMetadata getMetadata();
+
+  @JsonIgnore
   public void processRequest( Map<String, Map<String, Object>> bloatedMap );
 }

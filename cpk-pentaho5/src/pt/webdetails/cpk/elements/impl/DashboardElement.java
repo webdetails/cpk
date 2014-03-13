@@ -21,9 +21,8 @@ import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.InterPluginBroker;
 import pt.webdetails.cpk.elements.Element;
+import pt.webdetails.cpk.elements.IMetadata;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,8 +36,12 @@ import java.util.Map;
 
 public class DashboardElement extends Element {
 
-
   public DashboardElement() {
+  }
+
+  public IMetadata getMetadata() {
+    this.logger.warn( "DashboardElements do not return metadata at the moment." );
+    return null;
   }
 
   @Override

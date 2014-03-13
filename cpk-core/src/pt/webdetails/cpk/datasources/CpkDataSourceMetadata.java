@@ -48,7 +48,7 @@ public class CpkDataSourceMetadata extends DataSourceMetadata {
   /**
    * @param endpointName the endpointName to set
    */
-  protected CpkDataSourceMetadata setEndpointName( String endpointName ) {
+  public CpkDataSourceMetadata setEndpointName( String endpointName ) {
     this.endpointName = endpointName;
     this.setName( String.format( "%s Endpoint", endpointName ) );
     return this;
