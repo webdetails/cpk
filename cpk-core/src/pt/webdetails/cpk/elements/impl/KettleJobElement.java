@@ -18,7 +18,10 @@ import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobEntryResult;
 import org.pentaho.di.job.JobMeta;
+import pt.webdetails.cpk.datasources.DataSource;
+import pt.webdetails.cpk.datasources.DataSourceDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
+import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 
@@ -27,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class KettleJobElement extends KettleElement {
+public class KettleJobElement extends KettleElement implements IDataSourceProvider {
 
   private JobMeta jobMeta = null;
 
@@ -64,10 +67,14 @@ public class KettleJobElement extends KettleElement {
   }
 
   public IMetadata getMetadata() {
-    return new KettleElementMetadata().setEndpointName( this.getName() );
+    return new KettleElementMetadata().setEndpointName( "[Job] " + this.getName() );
   }
 
-  public boolean isDatasource() { return true; }
+  public DataSource getDataSource() {
+    return new DataSource(  )
+      .setMetadata( this.getMetadata() )
+      .setDefinition( new DataSourceDefinition() );
+  }
 
   @Override
   protected IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {

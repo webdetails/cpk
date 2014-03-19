@@ -55,9 +55,8 @@ import pt.webdetails.cpf.utils.CharsetHelper;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpf.utils.PluginUtils;
 import pt.webdetails.cpk.datasources.DataSource;
-import pt.webdetails.cpk.datasources.DataSourceDefinition;
+import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
-import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
 import pt.webdetails.cpk.utils.CpkUtils;
@@ -265,29 +264,26 @@ public class CpkApi {
     StringBuilder dsDeclarations = new StringBuilder( "{" );
     Collection<IElement> endpoints = coreService.getElements();
 
+    String pluginId = cpkEnv.getPluginName();
+    //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
+    String safePluginId = this.sanitizePluginId( pluginId );
+
     if ( endpoints != null ) {
       for ( IElement endpoint : endpoints ) {
 
         // filter endpoints that aren't data sources
-        if ( !endpoint.isDatasource() ) {
+        if ( !( endpoint instanceof IDataSourceProvider ) ) {
           continue;
         }
 
         logger.info( String.format( "DataSource Endpoint found: %s)", endpoint ) );
+        IDataSourceProvider dataSourceProvider = (IDataSourceProvider) endpoint;
 
-        String pluginId = cpkEnv.getPluginName();
         String endpointName = endpoint.getName();
 
-        //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
-        String safePluginId = this.sanitizePluginId( pluginId );
+        DataSource dataSource = dataSourceProvider.getDataSource();
+        dataSource.getMetadata().setPluginId( pluginId );
 
-        IMetadata metadata = endpoint.getMetadata();
-        metadata.setPluginId( pluginId );
-
-        DataSourceDefinition definition = new DataSourceDefinition();
-
-        DataSource dataSource = new DataSource().setMetadata( metadata )
-                                                .setDefinition( definition );
         dataSources.add( dataSource );
 
         dsDeclarations.append( String.format( "\"%s_%s_CPKENDPOINT\": ", safePluginId, endpointName ) );

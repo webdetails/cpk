@@ -38,12 +38,6 @@ public interface IElement {
   @JsonProperty( "isRenderable" )
   public boolean isRenderable();
 
-  @JsonProperty( "isDataSource" )
-  public boolean isDatasource();
-
-  @JsonIgnore
-  public IMetadata getMetadata();
-
   @JsonIgnore
   public void processRequest( Map<String, Map<String, Object>> bloatedMap );
 }

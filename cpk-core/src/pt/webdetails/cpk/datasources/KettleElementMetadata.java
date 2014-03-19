@@ -15,11 +15,11 @@ public class KettleElementMetadata extends CpkDataSourceMetadata {
   static {
     ArrayList<String> list = new ArrayList<String>();
     list.add( "Inferred" );
-    list.add(  "Json" );
+    list.add( "Json" );
     list.add( "ResultFiles" );
     list.add( "ResultOnly" );
     list.add( "SingleCell" );
-    kettleOutputTypes = Collections.unmodifiableCollection(list);
+    kettleOutputTypes = Collections.unmodifiableCollection( list );
   }
 
   @JsonProperty( "kettleOutputTypes" )

@@ -20,7 +20,10 @@ import org.dom4j.DocumentException;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
 import pt.webdetails.cpf.utils.IPluginUtils;
+import pt.webdetails.cpk.datasources.DataSource;
+import pt.webdetails.cpk.datasources.DataSourceDefinition;
 import pt.webdetails.cpk.elements.IElement;
+import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.security.IAccessControl;
 import pt.webdetails.cpk.utils.CpkUtils;
 
@@ -28,7 +31,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class CpkCoreService {
 
@@ -162,7 +167,7 @@ public class CpkCoreService {
     //}
   }
 
-
+//  public Iterable<DataSource> getDataSources( ) { }
 
   public IElement getDefaultElement() {
     return CpkEngine.getInstance().getDefaultElement();
