@@ -24,9 +24,8 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
-import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
 import pt.webdetails.cpk.datasources.DataSource;
-import pt.webdetails.cpk.datasources.DataSourceDefinition;
+import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IMetadata;
@@ -81,35 +80,14 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     }
 
     return new KettleElementMetadata()
-      .setKettleStepNames( Collections.unmodifiableCollection(stepNames) )
-      .setEndpointName( "[Transform] " + this.getName() );
+      .setKettleStepNames( Collections.unmodifiableCollection( stepNames ) )
+      .setEndpointName( this.getName() )
+      .setName( "[Transform] " + this.getName() );
   }
 
   public DataSource getDataSource() {
-    DataSourceDefinition definition = new DataSourceDefinition();
-    DataSourceDefinition.DataAccessParameter param1 = new DataSourceDefinition.DataAccessParameter();
-    param1.type = "STRING";
-    param1.placement = "ATTRIB";
-
-    DataSourceDefinition.DataAccessParameter param2 = new DataSourceDefinition.DataAccessParameter();
-    param2.type = "STRING";
-    param2.placement = "CHILD";
-
-    DataSourceDefinition.DataAccessParameter param3 = new DataSourceDefinition.DataAccessParameter();
-    param3.type = "STRING";
-    param3.placement = "ATTRIB";
-
-
-    definition.dataAccessParameters2.put( "testAttrib", param1 );
-    //definition.dataAccessParameters2.put( "testChild", param2 );
-    definition.dataAccessParameters2.put( "access", param3 );
-
-
-    //definition.getDataAccessParameters().put( "Test1", "String" );
-    //definition.getDataAccessParameters().put( "Test2", "String" );
-
     DataSource dataSource = new DataSource();
-    dataSource.setDefinition( definition )
+    dataSource.setDefinition( new KettleElementDefinition() )
               .setMetadata( this.getMetadata() );
 
     return dataSource;

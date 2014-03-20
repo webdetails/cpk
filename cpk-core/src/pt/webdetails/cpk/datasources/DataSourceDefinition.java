@@ -21,34 +21,41 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
-
 public class DataSourceDefinition {
 
-  public static class DataAccessParameter {
-    public String type;
-    public String placement;
+  public static final class Parameter {
+
+    /**
+     *
+     * @param type
+     * @param placement
+     */
+    public Parameter( String type, String placement ) {
+      this.type = type;
+      this.placement = placement;
+    }
+
+    public final String type;
+    public final String placement;
   }
 
-  @JsonProperty( "dataaccess" )
-  public Map<String, DataAccessParameter> dataAccessParameters2 = new LinkedHashMap<String, DataAccessParameter>( );
+  protected Map<String, Parameter> dataAccessParameters = new LinkedHashMap<String, Parameter>( );
 
-  protected Map<String, String> connectionParameters = new LinkedHashMap<String, String>();
-
-  public Map<String, String> dataAccessParameters = new LinkedHashMap<String, String>( );
+  protected Map<String, Parameter> connectionParameters = new LinkedHashMap<String, Parameter>();
 
 
   public DataSourceDefinition() {
   }
 
   @JsonProperty( "connection" )
-  public Map<String, String> getConnectionParameters() {
+  public Map<String, Parameter> getConnectionParameters() {
     return this.connectionParameters;
   }
 
-  /*@JsonProperty( "dataaccess" )
-  public Map<String, String> getDataAccessParameters() {
+  @JsonProperty( "dataaccess" )
+  public Map<String, Parameter> getDataAccessParameters() {
     return this.dataAccessParameters;
-  }*/
+  }
 
 
   /* (non-Javadoc)
