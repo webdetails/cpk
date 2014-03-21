@@ -18,42 +18,42 @@ import pt.webdetails.cpk.elements.IMetadata;
 
 public class DataSource {
 
-    private DataSourceDefinition definition;
-    private IMetadata metadata;
+  private DataSourceDefinition definition;
+  private IMetadata metadata;
 
-    public DataSource() {
-    }
+  public DataSource() {
+  }
 
-    /**
-     * @return the definition
-     */
-    @JsonProperty("definition")
-    public DataSourceDefinition getDefinition() {
-        return definition;
-    }
+  /**
+   * @return the definition
+   */
+  @JsonProperty( "definition" )
+  public DataSourceDefinition getDefinition() {
+    return definition;
+  }
 
-    /**
-     * @return the metadata
-     */
-    @JsonProperty("metadata")
-    public IMetadata getMetadata() {
-        return metadata;
-    }
+  /**
+   * @return the metadata
+   */
+  @JsonProperty( "metadata" )
+  public IMetadata getMetadata() {
+    return metadata;
+  }
 
-    /**
-     * @param definition the definition to set
-     */
-    public DataSource setDefinition(DataSourceDefinition definition) {
-        this.definition = definition;
-        return this;
-    }
+  /**
+   * @param definition the definition to set
+   */
+  public DataSource setDefinition( DataSourceDefinition definition ) {
+    this.definition = definition;
+    return this;
+  }
 
-    /**
-     * @param metadata the metadata to set
-     */
-    public DataSource setMetadata(IMetadata metadata) {
-        this.metadata = metadata;
-        return this;
-    }
+  /**
+   * @param metadata the metadata to set
+   */
+  public DataSource setMetadata( IMetadata metadata ) {
+    this.metadata = metadata;
+    return this;
+  }
 
 }
