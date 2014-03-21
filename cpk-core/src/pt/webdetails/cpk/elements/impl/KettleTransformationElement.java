@@ -25,10 +25,10 @@ import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import pt.webdetails.cpk.datasources.DataSource;
+import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
-import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
@@ -73,7 +73,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     return true;
   }
 
-  protected IMetadata getMetadata() {
+  protected DataSourceMetadata getMetadata() {
     Iterable<StepMeta> steps = this.transMeta.getSteps();
     Collection<String> stepNames = new ArrayList<String>();
     for ( StepMeta step : steps ) {

@@ -20,9 +20,9 @@ import org.pentaho.di.job.JobEntryResult;
 import org.pentaho.di.job.JobMeta;
 import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceDefinition;
+import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
-import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
     return true;
   }
 
-  protected IMetadata getMetadata() {
+  protected DataSourceMetadata getMetadata() {
     return new KettleElementMetadata()
       .setEndpointName( this.getName() );
   }

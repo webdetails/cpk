@@ -14,12 +14,11 @@
 package pt.webdetails.cpk.datasources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import pt.webdetails.cpk.elements.IMetadata;
 
 public class DataSource {
 
   private DataSourceDefinition definition;
-  private IMetadata metadata;
+  private DataSourceMetadata metadata;
 
   public DataSource() {
   }
@@ -36,7 +35,7 @@ public class DataSource {
    * @return the metadata
    */
   @JsonProperty( "metadata" )
-  public IMetadata getMetadata() {
+  public DataSourceMetadata getMetadata() {
     return metadata;
   }
 
@@ -51,7 +50,7 @@ public class DataSource {
   /**
    * @param metadata the metadata to set
    */
-  public DataSource setMetadata( IMetadata metadata ) {
+  public DataSource setMetadata( DataSourceMetadata metadata ) {
     this.metadata = metadata;
     return this;
   }

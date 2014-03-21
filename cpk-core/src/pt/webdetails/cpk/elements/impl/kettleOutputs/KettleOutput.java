@@ -35,7 +35,6 @@ public abstract class KettleOutput implements IKettleOutput {
   private String outputStepName = "OUTPUT";
   private KettleType kettleType;
 
-
   private OutputStream out;
   private HttpServletResponse response;
 

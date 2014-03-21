@@ -14,9 +14,8 @@
 package pt.webdetails.cpk.datasources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import pt.webdetails.cpk.elements.IMetadata;
 
-public class DataSourceMetadata implements IMetadata {
+public class DataSourceMetadata {
 
   private String pluginId;
   protected String dataType;
