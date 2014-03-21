@@ -72,7 +72,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     return true;
   }
 
-  private IMetadata getMetadata() {
+  protected IMetadata getMetadata() {
     Iterable<StepMeta> steps = this.transMeta.getSteps();
     Collection<String> stepNames = new ArrayList<String>();
     for ( StepMeta step : steps ) {
@@ -81,8 +81,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
     return new KettleElementMetadata()
       .setKettleStepNames( Collections.unmodifiableCollection( stepNames ) )
-      .setEndpointName( this.getName() )
-      .setName( "[Transform] " + this.getName() );
+      .setEndpointName( this.getName() );
   }
 
   public DataSource getDataSource() {
