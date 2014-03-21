@@ -21,6 +21,7 @@ import org.pentaho.di.job.JobMeta;
 import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceDefinition;
 import pt.webdetails.cpk.datasources.DataSourceMetadata;
+import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
@@ -74,7 +75,7 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
   public DataSource getDataSource() {
     return new DataSource()
       .setMetadata( this.getMetadata() )
-      .setDefinition( new DataSourceDefinition() );
+      .setDefinition( new KettleElementDefinition() );
   }
 
   @Override

@@ -23,8 +23,8 @@ public class KettleElementDefinition extends DataSourceDefinition {
     this.outputStepName = new Parameter( "STRING", "ATTRIB" );
     this.outputType = new Parameter( "STRING", "ATTRIB" );
 
-    this.dataAccessParameters.put( "outputStepName", this.outputStepName );
-    this.dataAccessParameters.put( "outputType", this.outputType );
+    this.dataAccessParameters.put( "stepName", this.outputStepName );
+    this.dataAccessParameters.put( "kettleOutput", this.outputType );
   }
 
 }
