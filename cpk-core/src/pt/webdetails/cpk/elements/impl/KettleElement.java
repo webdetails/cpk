@@ -17,6 +17,7 @@ package pt.webdetails.cpk.elements.impl;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleOutputs.InferedKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
@@ -64,10 +65,11 @@ public abstract class KettleElement extends Element {
     //These conditions will treat the different types of kettle operations
 
     // Get info from bloatedmap
-    String kettleOutputType = (String) bloatedMap.get( "request" ).get( "kettleOutput" );
+    Map<String, Object> request = bloatedMap.get( "request" );
+    String kettleOutputType = (String) request.get( "kettleOutput" );
     // Are we specifying a stepname?
-    String stepName = (String) bloatedMap.get( "request" ).get( "stepName" );
-    String downloadStr = (String) bloatedMap.get( "request" ).get( "download" );
+    String stepName = (String) request.get( "stepName" );
+    String downloadStr = (String) request.get( "download" );
     boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
     HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
 
@@ -96,9 +98,9 @@ public abstract class KettleElement extends Element {
       kettleOutput = (IKettleOutput) constructor.newInstance( httpResponse, download );
 
     } catch ( Exception ex ) {
-      logger.error( "Error initializing Kettle output type " + clazz + ", reverting to KettleOutput: " + Util
+      logger.error( "Error initializing Kettle output type " + clazz + ", reverting to InferedKettleOutput: " + Util
         .getExceptionDescription( ex ) );
-      kettleOutput = new KettleOutput( httpResponse, download );
+      kettleOutput = new InferedKettleOutput( httpResponse, download );
     }
 
     kettleOutput.setOutputStepName( stepName );

@@ -68,8 +68,7 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
 
   protected IMetadata getMetadata() {
     return new KettleElementMetadata()
-      .setEndpointName( this.getName() )
-      .setName( "[Job] " + this.getName() );
+      .setEndpointName( this.getName() );
   }
 
   public DataSource getDataSource() {

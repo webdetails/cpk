@@ -31,6 +31,7 @@ import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IMetadata;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -100,6 +101,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
       }
     } );
   }
+
   private void processResult( StepInterface step, IKettleOutput output ) {
     Result result = step.getTrans().getResult();
     output.setResult( result );
@@ -114,67 +116,60 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     return kettleOutput;
   }
 
-  @Override
   public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
+
+    Map<String, Object> request = bloatedMap.get( "request" );
+    String stepName = (String) request.get( "stepName" );
+    String kettleOutputType = (String) request.get( "kettleOutput" );
+
+    String downloadStr = (String) request.get( "download" );
+    boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
+
+    HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+
+    this.processRequest( request, kettleOutputType , stepName, download, httpResponse );
+  }
+
+  public void processRequest( Map<String, Object> request, String outputType, String outputStepName,
+                              boolean download, HttpServletResponse httpResponse ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
 
     try {
       // clean?
-      transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
-      transMeta.setResultFiles( new ArrayList<ResultFile>() );
+      this.transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
+      this.transMeta.setResultFiles( new ArrayList<ResultFile>() );
 
       // update parameters
       KettleElementHelper.updateParameters( this.transMeta );
 
       // add request parameters
       Collection<String> requestParameters = null;
-      if ( bloatedMap != null ) {
-        requestParameters = KettleElementHelper.addRequestParameters( this.transMeta, bloatedMap.get( "request" ) );
+      if ( request != null ) {
+        requestParameters = KettleElementHelper.addRequestParameters( this.transMeta, request );
       }
 
       // create a new transformation
-      Trans transformation = new Trans( transMeta );
-
-      // not necessary
-      //transformation.copyParametersFrom( transMeta );
-      //transformation.initializeVariablesFrom( null );
-      //transformation.getTransMeta().setInternalKettleVariables( transformation );
-      //transformation.copyVariablesFrom( transMeta );
-
-      // prepare execution does this!
-      // transformation.activateParameters();
+      Trans transformation = new Trans( this.transMeta );
 
       transformation.prepareExecution( null ); // get the step threads after this line
 
-      String stepName = DEFAULT_STEP;
-      if ( bloatedMap != null ) {
-        String requestStepName = (String) bloatedMap.get( "request" ).get( "stepName" );
-        if ( requestStepName != null ) {
-          stepName = requestStepName;
-        }
-      }
+      // If no step name is defined use default step name.
+      String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
       StepInterface step = transformation.findRunThread( stepName );
-
       if ( step != null ) {
+        IKettleOutput kettleOutput = this.inferResult( outputType, stepName, download, httpResponse  );
 
-        if ( bloatedMap != null ) {
-          IKettleOutput kettleOutput = inferResult( bloatedMap );
-          if ( kettleOutput.needsRowListener() ) {
-            prepareOutput( step, kettleOutput );
-
-            // start transformation threads and wait until they finish
-            transformation.startThreads(); // all the operations to get step names need to be placed above this line
-            transformation.waitUntilFinished();
-
-            processResult( step, kettleOutput );
-          }
-        } else {
-          // start transformation threads and wait until they finish
-          transformation.startThreads(); // all the operations to get step names need to be placed above this line
-          transformation.waitUntilFinished();
+        if ( kettleOutput.needsRowListener() ) {
+          prepareOutput( step, kettleOutput );
         }
+
+        // start transformation threads and wait until they finish
+        transformation.startThreads(); // all the operations to get step names need to be placed above this line
+        transformation.waitUntilFinished();
+
+        processResult( step, kettleOutput );
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );
       }
@@ -190,6 +185,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     logger.info( "Finished transformation '" + this.getName()
       + "' (" + this.transMeta.getName() + ") in " + ( end - start ) + " ms" );
   }
+
 
   public static void execute( String kettleTransformationPath ) {
     try {
