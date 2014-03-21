@@ -15,6 +15,9 @@ package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
@@ -29,6 +32,24 @@ public class SingleCellKettleOutput extends KettleOutput {
 
   @Override
   public void processResult() {
-    super.processSingleCell();
+    this.logger.debug( "Process Single Cell - print it" );
+
+    // TODO - make sure this is correct
+
+    try {
+
+      Object result = getRows().get( 0 )[ 0 ];
+      if ( result != null ) {
+        OutputStream out = this.getOut();
+        out.write( result.toString().getBytes( ENCODING ) );
+        out.flush();
+      }
+
+    } catch ( UnsupportedEncodingException ex ) {
+      this.logger.error( "Unsupported encoding.", ex );
+    } catch ( IOException ex ) {
+      this.logger.error( "IO Error processing single cell kettle output.", ex );
+    }
+
   }
 }

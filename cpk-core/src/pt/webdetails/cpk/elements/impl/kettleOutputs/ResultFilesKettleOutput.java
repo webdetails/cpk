@@ -13,9 +13,19 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs.FileSystemException;
+import org.apache.commons.vfs.FileType;
+import org.pentaho.di.core.ResultFile;
+import org.pentaho.di.core.vfs.KettleVFS;
+import pt.webdetails.cpf.Util;
+import pt.webdetails.cpf.utils.MimeTypes;
+import pt.webdetails.cpk.utils.CpkUtils;
+import pt.webdetails.cpk.utils.ZipUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,9 +43,60 @@ public class ResultFilesKettleOutput extends KettleOutput {
   @Override
   public void processResult() {
     try {
-      super.processResultFiles();
+      logger.debug( "Process Result Files" );
+
+      // Singe file? Just write it to the outputstream
+      List<ResultFile> filesList = getResult().getResultFilesList();
+
+      HttpServletResponse response = this.getResponse();
+
+      if ( filesList.isEmpty() ) {
+        logger.warn( "Processing result files but no files found" );
+        return;
+      } else if ( filesList.size() == 1 && filesList.get( 0 ).getFile().getType() == FileType.FILE ) {
+        ResultFile file = filesList.get( 0 );
+
+        // Do we know the mime type?
+        String mimeType = MimeTypes.getMimeType( file.getFile().getName().getExtension() );
+        if ( this.getDownload() ) {
+          try {
+            long attachmentSize = file.getFile().getContent().getInputStream().available();
+            CpkUtils.setResponseHeaders( response, mimeType, file.getFile().getName().getBaseName(),
+              attachmentSize );
+          } catch ( Exception e ) {
+            logger.error( "Problem setting the attachment size: " + e );
+          }
+        } else {
+          // set Mimetype only
+          CpkUtils.setResponseHeaders( response, mimeType );
+        }
+
+
+        try {
+          IOUtils.copy( KettleVFS.getInputStream( file.getFile() ), response.getOutputStream() );
+        } catch ( Exception ex ) {
+          logger.warn( "Failed to copy file to outputstream: " + Util.getExceptionDescription( ex ) );
+        }
+
+      } else {
+        // Build a zip / tar and ship it over!
+
+        ZipUtil zip = new ZipUtil();
+        zip.buildZip( filesList );
+
+        CpkUtils.setResponseHeaders( response, MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
+        try {
+          IOUtils.copy( zip.getZipInputStream(), this.getOut() );
+          zip.closeInputStream();
+        } catch ( IOException ex ) {
+          this.logger.error( "Failed to copy file to outputstream.", ex );
+        }
+
+
+      }
     } catch ( FileSystemException ex ) {
       Logger.getLogger( ResultFilesKettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
     }
   }
+
 }

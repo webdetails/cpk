@@ -13,7 +13,12 @@
 
 package pt.webdetails.cpk.elements.impl.kettleOutputs;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.pentaho.di.core.Result;
+
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 public class ResultOnlyKettleOutput extends KettleOutput {
 
@@ -28,6 +33,47 @@ public class ResultOnlyKettleOutput extends KettleOutput {
 
   @Override
   public void processResult() {
-    super.processResultOnly();
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    class ResultStruct {
+      boolean result;
+      int exitStatus, nrRows, nrErrors;
+
+      public ResultStruct( Result result ) {
+        this.result = result.getResult();
+        this.exitStatus = result.getExitStatus();
+        this.nrRows = ( result.getRows() == null ) ? 0 : result.getRows().size();
+        this.nrErrors = (int) result.getNrErrors();
+      }
+
+      @JsonProperty( "result" )
+      public boolean isResult() {
+        return result;
+      }
+
+      @JsonProperty( "exitStatus" )
+      public int getExitStatus() {
+        return exitStatus;
+      }
+
+      @JsonProperty( "nrRows" )
+      public int getNrRows() {
+        return nrRows;
+      }
+
+      @JsonProperty( "nrErrors" )
+      public int getNrErrors() {
+        return nrErrors;
+      }
+    }
+
+    ResultStruct resultStruct = new ResultStruct( this.getResult() );
+
+    try {
+      mapper.writeValue( this.getOut(), resultStruct );
+    } catch ( IOException ex ) {
+      this.logger.fatal( null, ex );
+    }
   }
 }
