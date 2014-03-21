@@ -26,7 +26,6 @@ import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.MimeTypes;
-import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper.KettleType;
 import pt.webdetails.cpk.utils.CpkUtils;
 import pt.webdetails.cpk.utils.ZipUtil;
@@ -37,8 +36,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class KettleOutput implements IKettleOutput {
 
@@ -68,7 +65,7 @@ public class KettleOutput implements IKettleOutput {
     try {
       this.out = response.getOutputStream();
     } catch ( IOException ex ) {
-      Logger.getLogger( "Something went wrong on the KettleOutput class initialization." );
+      this.logger.error( "Something went wrong on the KettleOutput class initialization.", ex );
     }
   }
 
@@ -108,9 +105,6 @@ public class KettleOutput implements IKettleOutput {
   @Override
   public void setKettleType( KettleType kettleType ) {
     this.kettleType = kettleType;
-  }
-
-  public void resultJson() {
   }
 
   /*
@@ -165,7 +159,7 @@ public class KettleOutput implements IKettleOutput {
     try {
       mapper.writeValue( out, resultStruct );
     } catch ( IOException ex ) {
-      Logger.getLogger( Element.class.getName() ).log( Level.SEVERE, null, ex );
+      this.logger.fatal( null, ex );
     }
   }
 
@@ -215,7 +209,7 @@ public class KettleOutput implements IKettleOutput {
         IOUtils.copy( zip.getZipInputStream(), out );
         zip.closeInputStream();
       } catch ( IOException ex ) {
-        Logger.getLogger( KettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
+        this.logger.error( "Failed to copy file to outputstream.", ex );
       }
 
 
@@ -224,9 +218,7 @@ public class KettleOutput implements IKettleOutput {
 
   public void processSingleCell() {
 
-
     logger.debug( "Process Single Cell - print it" );
-
 
     // TODO - make sure this is correct
 
@@ -239,9 +231,9 @@ public class KettleOutput implements IKettleOutput {
       }
 
     } catch ( UnsupportedEncodingException ex ) {
-      Logger.getLogger( KettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
+      this.logger.error( "Unsupported encoding.", ex );
     } catch ( IOException ex ) {
-      Logger.getLogger( KettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
+      this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
 
   }
@@ -254,7 +246,7 @@ public class KettleOutput implements IKettleOutput {
     try {
       mapper.writeValue( out, rowsJson );
     } catch ( IOException ex ) {
-      Logger.getLogger( KettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
+      this.logger.error( "IO Error processing Json kettle output.", ex );
     }
   }
 
@@ -312,7 +304,7 @@ public class KettleOutput implements IKettleOutput {
         out.write(
           ( "The result is null, please check the server logs for a more detailed message." ).getBytes( ENCODING ) );
       } catch ( IOException ex ) {
-        Logger.getLogger( KettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
+        this.logger.error( "Error writing to output strem in process result.", ex );
       }
     }
   }
