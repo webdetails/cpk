@@ -15,9 +15,6 @@ package pt.webdetails.cpk.datasources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 public class KettleElementMetadata extends CpkDataSourceMetadata {
 
   private Iterable<String> kettleStepNames;

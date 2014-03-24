@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -160,8 +160,6 @@ public class CpkCoreService {
       }
     //}
   }
-
-//  public Iterable<DataSource> getDataSources( ) { }
 
   public IElement getDefaultElement() {
     return CpkEngine.getInstance().getDefaultElement();

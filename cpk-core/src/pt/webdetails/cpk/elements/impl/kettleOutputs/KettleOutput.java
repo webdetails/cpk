@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -103,19 +103,6 @@ public abstract class KettleOutput implements IKettleOutput {
 
   @Override
   public abstract void processResult();
-
-  /*{
-    if ( this.result != null ) {
-      processInfered();
-    } else {
-      try {
-        out.write(
-          ( "The result is null, please check the server logs for a more detailed message." ).getBytes( ENCODING ) );
-      } catch ( IOException ex ) {
-        this.logger.error( "Error writing to output strem in process result.", ex );
-      }
-    }
-  }*/
 
   // is this needed?
   @Override

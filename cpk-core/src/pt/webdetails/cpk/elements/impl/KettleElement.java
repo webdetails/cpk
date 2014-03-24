@@ -18,7 +18,6 @@ import pt.webdetails.cpf.Util;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleOutputs.InferedKettleOutput;
-import pt.webdetails.cpk.elements.impl.kettleOutputs.KettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Constructor;
