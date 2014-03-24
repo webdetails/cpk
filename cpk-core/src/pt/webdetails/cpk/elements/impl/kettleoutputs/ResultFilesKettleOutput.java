@@ -11,7 +11,7 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleOutputs;
+package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs.FileSystemException;

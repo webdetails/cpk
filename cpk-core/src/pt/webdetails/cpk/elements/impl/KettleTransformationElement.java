@@ -29,7 +29,7 @@ import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
-import pt.webdetails.cpk.elements.impl.kettleOutputs.IKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;

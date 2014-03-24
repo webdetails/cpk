@@ -11,7 +11,7 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleOutputs;
+package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.row.RowMetaInterface;

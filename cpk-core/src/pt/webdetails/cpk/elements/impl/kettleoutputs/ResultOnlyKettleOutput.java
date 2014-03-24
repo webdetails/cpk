@@ -11,7 +11,7 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleOutputs;
+package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
