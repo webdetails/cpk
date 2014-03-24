@@ -52,6 +52,7 @@ public class ResultFilesKettleOutput extends KettleOutput {
 
       if ( filesList.isEmpty() ) {
         logger.warn( "Processing result files but no files found" );
+        this.getResponse().setStatus(HttpServletResponse.SC_NO_CONTENT  );
         return;
       } else if ( filesList.size() == 1 && filesList.get( 0 ).getFile().getType() == FileType.FILE ) {
         ResultFile file = filesList.get( 0 );
