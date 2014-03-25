@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -11,17 +11,20 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleOutputs;
+package pt.webdetails.cpk.datasources;
 
-import pt.webdetails.cpf.utils.IPluginUtils;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Map;
+public class KettleElementMetadata extends CpkDataSourceMetadata {
 
-public class InferedKettleOutput extends KettleOutput {
+  private Iterable<String> kettleStepNames;
 
+  @JsonProperty( "kettleStepNames" )
+  public Iterable<String> getKettleStepNames() { return this.kettleStepNames; }
 
-  public InferedKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    super( bloatedMap, plug );
+  public KettleElementMetadata setKettleStepNames( Iterable<String> kettleStepNames ) {
+    this.kettleStepNames = kettleStepNames;
+    return this;
   }
 
 }

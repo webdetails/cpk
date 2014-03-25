@@ -54,13 +54,9 @@ import pt.webdetails.cpf.plugins.PluginsAnalyzer;
 import pt.webdetails.cpf.utils.CharsetHelper;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpf.utils.PluginUtils;
-import pt.webdetails.cpk.datasources.CpkDataSourceMetadata;
 import pt.webdetails.cpk.datasources.DataSource;
-import pt.webdetails.cpk.datasources.DataSourceDefinition;
-import pt.webdetails.cpk.datasources.DataSourceMetadata;
+import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
-import pt.webdetails.cpk.elements.impl.KettleJobElement;
-import pt.webdetails.cpk.elements.impl.KettleTransformationElement;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
 import pt.webdetails.cpk.utils.CpkUtils;
@@ -268,36 +264,26 @@ public class CpkApi {
     StringBuilder dsDeclarations = new StringBuilder( "{" );
     Collection<IElement> endpoints = coreService.getElements();
 
+    String pluginId = cpkEnv.getPluginName();
+    //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
+    String safePluginId = this.sanitizePluginId( pluginId );
+
     if ( endpoints != null ) {
       for ( IElement endpoint : endpoints ) {
 
-        // filter endpoints that aren't of kettle type
-        if ( !( endpoint instanceof KettleJobElement || endpoint instanceof KettleTransformationElement ) ) {
+        // filter endpoints that aren't data sources
+        if ( !( endpoint instanceof IDataSourceProvider ) ) {
           continue;
         }
 
-        logger.info( String.format( "CPK Kettle Endpoint found: %s)", endpoint ) );
+        logger.info( String.format( "DataSource Endpoint found: %s)", endpoint ) );
+        IDataSourceProvider dataSourceProvider = (IDataSourceProvider) endpoint;
 
-
-        String pluginId = cpkEnv.getPluginName();
         String endpointName = endpoint.getName();
 
-        //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
-        StringBuilder sb = new StringBuilder();
-        for ( int i = 0; i < pluginId.length(); i++ ) {
-          char c = pluginId.charAt( i );
-          if ( ( Character.isJavaIdentifierStart( c ) && i == 0 ) ||
-            ( Character.isJavaIdentifierPart( c ) && i > 0 ) ) {
-            sb.append( c );
-          }
-        }
-        String safePluginId = sb.toString();
+        DataSource dataSource = dataSourceProvider.getDataSource();
+        dataSource.getMetadata().setPluginId( pluginId );
 
-
-        DataSourceMetadata metadata = new CpkDataSourceMetadata( pluginId, endpointName );
-        DataSourceDefinition definition = new DataSourceDefinition();
-
-        DataSource dataSource = new DataSource().setMetadata( metadata ).setDefinition( definition );
         dataSources.add( dataSource );
 
         dsDeclarations.append( String.format( "\"%s_%s_CPKENDPOINT\": ", safePluginId, endpointName ) );
@@ -313,6 +299,18 @@ public class CpkApi {
     dsDeclarations.append( "}" );
     IOUtils.write( dsDeclarations.toString(), response.getOutputStream() );
     response.getOutputStream().flush();
+  }
+
+  private String sanitizePluginId( String pluginId ) {
+    StringBuilder sb = new StringBuilder();
+    for ( int i = 0; i < pluginId.length(); i++ ) {
+      char c = pluginId.charAt( i );
+      if ( ( Character.isJavaIdentifierStart( c ) && i == 0 )
+        || ( Character.isJavaIdentifierPart( c ) && i > 0 ) ) {
+        sb.append( c );
+      }
+    }
+    return sb.toString();
   }
 
   @GET
@@ -341,8 +339,7 @@ public class CpkApi {
     Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
 
     mainMap.put( "request", buildRequestMap( request, headers ) );
-    mainMap.put( "path" +
-      "", buildPathMap( request, response, headers ) );
+    mainMap.put( "path" + "", buildPathMap( request, response, headers ) );
 
     return mainMap;
 

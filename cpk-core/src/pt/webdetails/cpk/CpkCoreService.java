@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -19,7 +19,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.dom4j.DocumentException;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
-import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.security.IAccessControl;
 import pt.webdetails.cpk.utils.CpkUtils;
@@ -161,8 +160,6 @@ public class CpkCoreService {
       }
     //}
   }
-
-
 
   public IElement getDefaultElement() {
     return CpkEngine.getInstance().getDefaultElement();

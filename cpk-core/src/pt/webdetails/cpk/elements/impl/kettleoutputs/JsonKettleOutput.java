@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -11,16 +11,18 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleOutputs;
+package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
-import pt.webdetails.cpf.utils.IPluginUtils;
 
-import java.util.Map;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 public class JsonKettleOutput extends KettleOutput {
 
-  public JsonKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    super( bloatedMap, plug );
+  public JsonKettleOutput( HttpServletResponse response, boolean download ) {
+    super( response, download );
   }
 
   @Override
@@ -30,6 +32,15 @@ public class JsonKettleOutput extends KettleOutput {
 
   @Override
   public void processResult() {
-    super.processJson();
+    ObjectMapper mapper = new ObjectMapper();
+
+    RowsJson rowsJson = new RowsJson( this.getRows(), this.getRowMeta() );
+
+    try {
+      mapper.writeValue( this.getOut(), rowsJson );
+    } catch ( IOException ex ) {
+      this.logger.error( "IO Error processing Json kettle output.", ex );
+    }
   }
+
 }

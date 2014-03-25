@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -11,25 +11,20 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleOutputs;
+package pt.webdetails.cpk.datasources;
 
-import pt.webdetails.cpf.utils.IPluginUtils;
 
-import java.util.Map;
+public class KettleElementDefinition extends DataSourceDefinition {
 
-public class ResultOnlyKettleOutput extends KettleOutput {
+  protected Parameter outputStepName;
+  protected Parameter outputType;
 
-  public ResultOnlyKettleOutput( Map<String, Map<String, Object>> bloatedMap, IPluginUtils plug ) {
-    super( bloatedMap, plug );
+  public KettleElementDefinition() {
+    this.outputStepName = new Parameter( "STRING", "ATTRIB" );
+    this.outputType = new Parameter( "STRING", "ATTRIB" );
+
+    this.dataAccessParameters.put( "stepName", this.outputStepName );
+    this.dataAccessParameters.put( "kettleOutput", this.outputType );
   }
 
-  @Override
-  public boolean needsRowListener() {
-    return false;
-  }
-
-  @Override
-  public void processResult() {
-    super.processResultOnly();
-  }
 }
