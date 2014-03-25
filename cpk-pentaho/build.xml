@@ -4,7 +4,13 @@
     This build file is used to create the CPF project
     and works with the subfloor.xml file.
   </description>
-  <!-- Import the subfloor.xml file which contains all the default tasks -->
+  
+ <property file="../override.properties"
+            description="Top level Properties customized for your development environment belong in this file.  This file will never be checked into the SCM." />
+  <property file="../build.properties"
+            description="Top level Properties customized for your particular project belong in this file." />  
+  
+  <!-- Import the subfloor.xml file which contains all the default tasks -->  
   <import file="../build-res/subfloor.xml"/>
 
     <target name="compile.compile" depends="init" description="Performs the actual javac compile">
@@ -102,21 +108,13 @@
     <!-- create the version file -->
 	<tstamp/>			
 	<property name="sequential.build.id" value="manual-${DSTAMP}"/>
-	<echo file="${stage.dir}/${plugin.name}/version.xml" message="&lt;version branch='TRUNK' buildId='${sequential.build.id}'>${distribution.version}&lt;/version>"/>		       
+	<echo file="${stage.dir}/${plugin.name}/version.xml" message="&lt;version branch='${project.stage}' buildId='${sequential.build.id}'>${distribution.version}&lt;/version>"/>		       
     <!-- create a zip file -->
     <zip zipfile="${dist.dir}/${plugin.zipfile}"
          basedir="${stage.dir}"
          includes="${plugin.name}/**/*"
          excludes="**/Thumbs.db"/>
 
-	<echo file="${dist.dir}/marketplace.xml">&lt;version>
-	    &lt;branch>TRUNK&lt;/branch>
-		&lt;version>${distribution.version}&lt;/version>
-		&lt;name>Trunk&lt;/name>
-		&lt;package_url>not defined&lt;/package_url>
-		&lt;description>@PLUGIN_PACKAGE_DESCRIPTION&lt;/description>
-		&lt;build_id>${sequential.build.id}&lt;/build_id>
-		&lt;/version>	</echo>         
     <move tofile="${dist.dir}/${ivy.artifact.id}-${project.revision}.zip" file="${dist.dir}/${plugin.zipfile}"/>
 
 
