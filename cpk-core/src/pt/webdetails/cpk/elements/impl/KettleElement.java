@@ -14,13 +14,15 @@
 package pt.webdetails.cpk.elements.impl;
 
 
-import pt.webdetails.cpf.Util;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.InferedKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleoutputs.JsonKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultFilesKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultOnlyKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleoutputs.SingleCellKettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Constructor;
 import java.util.Map;
 
 public abstract class KettleElement extends Element {
@@ -87,18 +89,16 @@ public abstract class KettleElement extends Element {
       stepName = DEFAULT_STEP;
     }
 
-    String clazz = kettleOutputType + "KettleOutput";
-
     IKettleOutput kettleOutput;
-    try {
-      // Get defined kettleOutput class name
-      Constructor constructor = Class.forName( KETTLEOUTPUT_CLASSES_NAMESPACE + "." + clazz )
-        .getConstructor( HttpServletResponse.class, boolean.class );
-      kettleOutput = (IKettleOutput) constructor.newInstance( httpResponse, download );
-
-    } catch ( Exception ex ) {
-      logger.error( "Error initializing Kettle output type " + clazz + ", reverting to InferedKettleOutput: " + Util
-        .getExceptionDescription( ex ) );
+    if ( kettleOutputType.equalsIgnoreCase( "Json" ) ) {
+      kettleOutput = new JsonKettleOutput( httpResponse, download );
+    } else if ( kettleOutputType.equalsIgnoreCase( "ResultFiles" ) ) {
+      kettleOutput = new ResultFilesKettleOutput( httpResponse, download );
+    } else if ( kettleOutputType.equalsIgnoreCase( "ResultOnly" ) ) {
+      kettleOutput = new ResultOnlyKettleOutput( httpResponse, download );
+    } else if ( kettleOutputType.equalsIgnoreCase( "SingleCell" ) ) {
+      kettleOutput = new SingleCellKettleOutput( httpResponse, download );
+    } else {
       kettleOutput = new InferedKettleOutput( httpResponse, download );
     }
 
@@ -106,5 +106,4 @@ public abstract class KettleElement extends Element {
 
     return kettleOutput;
   }
-
 }
