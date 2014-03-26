@@ -70,9 +70,44 @@ public class InferedKettleOutput extends KettleOutput {
 
   @Override
   public void storeRow( Object[] row, RowMetaInterface rowMeta ) {
+    super.storeRow( row, rowMeta );
     // add rows to kettle outputs that required rowListener
     this.jsonKettleOutput.storeRow( row, rowMeta );
     this.singleCellKettleOutput.storeRow( row, rowMeta );
   }
+
+  @Override
+  public void setResult( Result result ) {
+    super.setResult( result );
+    this.jsonKettleOutput.setResult( result );
+    this.resultFilesKettleOutput.setResult( result );
+    this.resultOnlyKettleOutput.setResult( result );
+    this.singleCellKettleOutput.setResult( result );
+  }
+
+  public void setKettleType( KettleElementHelper.KettleType kettleType ) {
+    super.setKettleType( kettleType );
+    this.jsonKettleOutput.setKettleType( kettleType );
+    this.resultFilesKettleOutput.setKettleType( kettleType );
+    this.singleCellKettleOutput.setKettleType( kettleType );
+    this.resultOnlyKettleOutput.setKettleType( kettleType );
+  }
+
+  public void setOutputStepName( String stepName ) {
+    super.setOutputStepName( stepName );
+    this.jsonKettleOutput.setOutputStepName( stepName );
+    this.resultFilesKettleOutput.setOutputStepName( stepName );
+    this.singleCellKettleOutput.setOutputStepName( stepName );
+    this.resultOnlyKettleOutput.setOutputStepName( stepName );
+  }
+
+  public void setRowMeta( RowMetaInterface rowMeta ) {
+    super.setRowMeta( rowMeta );
+    this.jsonKettleOutput.setRowMeta( rowMeta );
+    this.resultFilesKettleOutput.setRowMeta( rowMeta );
+    this.singleCellKettleOutput.setRowMeta( rowMeta );
+    this.resultOnlyKettleOutput.setRowMeta( rowMeta );
+  }
+
 
 }
