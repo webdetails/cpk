@@ -66,7 +66,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.transMeta ) ) {
-      processRequest( null );
+      KettleTransformationElement.execute( filePath );
     }
 
     // init was successful
@@ -185,7 +185,6 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     logger.info( "Finished transformation '" + this.getName()
       + "' (" + this.transMeta.getName() + ") in " + ( end - start ) + " ms" );
   }
-
 
   public static void execute( String kettleTransformationPath ) {
     try {
