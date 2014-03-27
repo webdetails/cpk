@@ -35,9 +35,39 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement implements IDataSourceProvider {
+
+  private static class TransformationResult {
+
+    public Result result;
+    public List<TransformationRow> rows;
+
+    public List<ResultFile> getFiles() {
+      if ( this.result == null ) {
+        return Collections.emptyList();
+      }
+
+      return this.result.getResultFilesList();
+    }
+
+    public TransformationResult() {
+      this.rows = new ArrayList<TransformationRow>();
+    }
+  }
+
+  private static class TransformationRow {
+
+    public Object[] row;
+    public RowMetaInterface rowMeta;
+
+    public TransformationRow( RowMetaInterface rowMeta, Object[] row ) {
+      this.rowMeta = rowMeta;
+      this.row = row;
+    }
+  }
 
   private TransMeta transMeta = null;
 
@@ -102,8 +132,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     } );
   }
 
-  private void processResult( StepInterface step, IKettleOutput output ) {
-    Result result = step.getTrans().getResult();
+  private void processResult( Result result, IKettleOutput output ) {
     output.setResult( result );
     output.processResult();
     logger.info( "[ " + output.getResult() + " ]" );
@@ -132,8 +161,29 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
   public void processRequest( Map<String, Object> request, String outputType, String outputStepName,
                               boolean download, HttpServletResponse httpResponse ) {
+
+    TransformationResult result = this.processRequestGetResult( request, outputStepName );
+
+    if ( result.result != null ) {
+      IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
+
+      kettleOutput.setResult( result.result );
+
+      // TODO change for to set
+      for ( TransformationRow row : result.rows ) {
+        kettleOutput.storeRow( row.row, row.rowMeta );
+      }
+
+      kettleOutput.processResult();
+      logger.info( "[ " + result.result + " ]" );
+    }
+  }
+
+
+  private TransformationResult processRequestGetResult( Map<String, Object> request, String outputStepName ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
+    final TransformationResult result = new TransformationResult();
 
     try {
       // clean?
@@ -159,17 +209,19 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
       StepInterface step = transformation.findRunThread( stepName );
       if ( step != null ) {
-        IKettleOutput kettleOutput = this.inferResult( outputType, stepName, download, httpResponse  );
-
-        if ( kettleOutput.needsRowListener() ) {
-          prepareOutput( step, kettleOutput );
-        }
+        step.addRowListener( new RowAdapter() {
+          @Override
+          public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] row ) throws KettleStepException {
+            result.rows.add( new TransformationRow( rowMeta, row ) );
+          }
+        } );
 
         // start transformation threads and wait until they finish
         transformation.startThreads(); // all the operations to get step names need to be placed above this line
         transformation.waitUntilFinished();
 
-        processResult( step, kettleOutput );
+        result.result = transformation.getResult();
+
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );
       }
@@ -184,7 +236,10 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     long end = System.currentTimeMillis();
     logger.info( "Finished transformation '" + this.getName()
       + "' (" + this.transMeta.getName() + ") in " + ( end - start ) + " ms" );
+
+    return result;
   }
+
 
   public static void execute( String kettleTransformationPath ) {
     try {
