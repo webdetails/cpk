@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
+// TODO: implement serializable to allow disk caching
 public final class KettleResult {
   private Result result;
   private List<Row> rows;

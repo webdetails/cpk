@@ -38,8 +38,6 @@ import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement implements IDataSourceProvider {
 
-
-
   private TransMeta transMeta = null;
 
   public KettleTransformationElement() {
@@ -137,6 +135,17 @@ public class KettleTransformationElement extends KettleElement implements IDataS
   private KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
+
+    try {
+      KettleResult cachedResult = this.getCache().get( this.new ResultKey( kettleParameters, outputStepName ) );
+      if ( cachedResult != null ) {
+        return cachedResult;
+      }
+    } catch ( Exception e ) {
+      this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
+    }
+
+
     final KettleResult result = new KettleResult();
 
     try {
@@ -176,6 +185,12 @@ public class KettleTransformationElement extends KettleElement implements IDataS
         transformation.waitUntilFinished();
 
         result.setResult( transformation.getResult() );
+
+        try {
+          this.getCache().put( this.new ResultKey( kettleParameters, outputStepName ), result );
+        } catch ( Exception e ) {
+          this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
+        }
 
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );
