@@ -14,6 +14,8 @@
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
+import pt.webdetails.cpk.elements.impl.KettleResult;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -51,5 +53,11 @@ public class SingleCellKettleOutput extends KettleOutput {
       this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
 
+  }
+
+  @Override
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
+    this.processResult();
   }
 }

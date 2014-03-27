@@ -20,6 +20,7 @@ import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.MimeTypes;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
 import pt.webdetails.cpk.utils.ZipUtil;
 
@@ -98,6 +99,12 @@ public class ResultFilesKettleOutput extends KettleOutput {
     } catch ( FileSystemException ex ) {
       Logger.getLogger( ResultFilesKettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
     }
+  }
+
+  @Override
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
+    this.processResult();
   }
 
 }

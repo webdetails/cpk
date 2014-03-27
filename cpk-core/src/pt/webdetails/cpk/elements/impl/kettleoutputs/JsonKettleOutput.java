@@ -15,6 +15,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
 import org.codehaus.jackson.map.ObjectMapper;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -41,6 +42,12 @@ public class JsonKettleOutput extends KettleOutput {
     } catch ( IOException ex ) {
       this.logger.error( "IO Error processing Json kettle output.", ex );
     }
+  }
+
+  @Override
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
+    this.processResult();
   }
 
 }

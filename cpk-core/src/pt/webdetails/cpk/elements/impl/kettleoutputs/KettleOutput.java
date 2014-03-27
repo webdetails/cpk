@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.row.RowMetaInterface;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper.KettleType;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -103,6 +104,18 @@ public abstract class KettleOutput implements IKettleOutput {
 
   @Override
   public abstract void processResult();
+
+  @Override
+  public void processResult( KettleResult result ) {
+    if ( result != null ) {
+      this.setResult( result.getResult() );
+
+      // TODO change for to set
+      for ( KettleResult.Row row : result.getRows() ) {
+        this.storeRow( row.row, row.rowMeta );
+      }
+    }
+  }
 
   // is this needed?
   @Override

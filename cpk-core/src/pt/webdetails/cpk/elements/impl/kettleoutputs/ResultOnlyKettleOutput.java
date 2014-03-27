@@ -16,6 +16,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.pentaho.di.core.Result;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -75,5 +76,11 @@ public class ResultOnlyKettleOutput extends KettleOutput {
     } catch ( IOException ex ) {
       this.logger.fatal( null, ex );
     }
+  }
+
+  @Override
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
+    this.processResult();
   }
 }

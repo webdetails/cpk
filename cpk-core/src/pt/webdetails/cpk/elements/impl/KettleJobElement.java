@@ -145,7 +145,7 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
     }
 
     // clear request parameters
-    KettleElementHelper.clearRequestParameters( jobMeta, requestParameters );
+    KettleElementHelper.clearParameters( jobMeta, requestParameters );
 
     long end = System.currentTimeMillis();
     this.logger.info( "Finished job '" + this.getName()

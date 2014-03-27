@@ -13,7 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl;
 
-import org.pentaho.di.core.Result;
 import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.exception.KettleException;
@@ -35,39 +34,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement implements IDataSourceProvider {
 
-  private static class TransformationResult {
 
-    public Result result;
-    public List<TransformationRow> rows;
-
-    public List<ResultFile> getFiles() {
-      if ( this.result == null ) {
-        return Collections.emptyList();
-      }
-
-      return this.result.getResultFilesList();
-    }
-
-    public TransformationResult() {
-      this.rows = new ArrayList<TransformationRow>();
-    }
-  }
-
-  private static class TransformationRow {
-
-    public Object[] row;
-    public RowMetaInterface rowMeta;
-
-    public TransformationRow( RowMetaInterface rowMeta, Object[] row ) {
-      this.rowMeta = rowMeta;
-      this.row = row;
-    }
-  }
 
   private TransMeta transMeta = null;
 
@@ -123,20 +94,6 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     return dataSource;
   }
 
-  private void prepareOutput( StepInterface step, final IKettleOutput output ) {
-    step.addRowListener( new RowAdapter() {
-      @Override
-      public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] row ) throws KettleStepException {
-        output.storeRow( row, rowMeta );
-      }
-    } );
-  }
-
-  private void processResult( Result result, IKettleOutput output ) {
-    output.setResult( result );
-    output.processResult();
-    logger.info( "[ " + output.getResult() + " ]" );
-  }
 
   @Override
   protected IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
@@ -145,6 +102,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     return kettleOutput;
   }
 
+  // TODO this should be in the REST service layer
   public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
 
     Map<String, Object> request = bloatedMap.get( "request" );
@@ -156,34 +114,30 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
     HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
 
-    this.processRequest( request, kettleOutputType , stepName, download, httpResponse );
+    Map<String, String> kettleParameters = KettleElementHelper.getKettleParameters( request );
+
+    this.processRequest( kettleParameters, kettleOutputType , stepName, download, httpResponse );
   }
 
-  public void processRequest( Map<String, Object> request, String outputType, String outputStepName,
+  // TODO: when refactoring substitute this method with processRequestGetResult
+  public void processRequest( Map<String, String> kettleParams, String outputType, String outputStepName,
                               boolean download, HttpServletResponse httpResponse ) {
 
-    TransformationResult result = this.processRequestGetResult( request, outputStepName );
+    KettleResult result = this.processRequestGetResult( kettleParams, outputStepName );
 
-    if ( result.result != null ) {
+    // Infer kettle output type and process result with it
+    if ( result.getResult() != null ) {
       IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
-
-      kettleOutput.setResult( result.result );
-
-      // TODO change for to set
-      for ( TransformationRow row : result.rows ) {
-        kettleOutput.storeRow( row.row, row.rowMeta );
-      }
-
-      kettleOutput.processResult();
-      logger.info( "[ " + result.result + " ]" );
+      kettleOutput.processResult( result );
+      logger.info( "[ " + result.getResult() + " ]" );
     }
   }
 
-
-  private TransformationResult processRequestGetResult( Map<String, Object> request, String outputStepName ) {
+  // TODO: this method should replace processRequest eventually
+  private KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
-    final TransformationResult result = new TransformationResult();
+    final KettleResult result = new KettleResult();
 
     try {
       // clean?
@@ -194,9 +148,9 @@ public class KettleTransformationElement extends KettleElement implements IDataS
       KettleElementHelper.updateParameters( this.transMeta );
 
       // add request parameters
-      Collection<String> requestParameters = null;
-      if ( request != null ) {
-        requestParameters = KettleElementHelper.addRequestParameters( this.transMeta, request );
+      Collection<String> addedParameters = null;
+      if ( kettleParameters != null ) {
+        addedParameters = KettleElementHelper.addKettleParameters( this.transMeta, kettleParameters );
       }
 
       // create a new transformation
@@ -209,10 +163,11 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
       StepInterface step = transformation.findRunThread( stepName );
       if ( step != null ) {
+        // Store the written rows for later processing
         step.addRowListener( new RowAdapter() {
           @Override
           public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] row ) throws KettleStepException {
-            result.rows.add( new TransformationRow( rowMeta, row ) );
+            result.getRows().add( new KettleResult.Row( rowMeta, row ) );
           }
         } );
 
@@ -220,14 +175,14 @@ public class KettleTransformationElement extends KettleElement implements IDataS
         transformation.startThreads(); // all the operations to get step names need to be placed above this line
         transformation.waitUntilFinished();
 
-        result.result = transformation.getResult();
+        result.setResult( transformation.getResult() );
 
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );
       }
 
       // clear request parameters
-      KettleElementHelper.clearRequestParameters( transMeta, requestParameters );
+      KettleElementHelper.clearParameters( transMeta, addedParameters );
 
     } catch ( KettleException e ) {
       logger.debug( "KETTLE EXCEPTION: " + e );

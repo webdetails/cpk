@@ -16,6 +16,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.row.RowMetaInterface;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -63,6 +64,12 @@ public class InferedKettleOutput extends KettleOutput {
     } else {
       this.jsonKettleOutput.processResult();
     }
+  }
+
+  @Override
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
+    this.processResult();
   }
 
   @Override
