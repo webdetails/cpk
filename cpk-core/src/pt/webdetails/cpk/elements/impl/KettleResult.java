@@ -18,14 +18,16 @@ import org.pentaho.di.core.Result;
 import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.row.RowMetaInterface;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 // TODO: implement serializable to allow disk caching
-public final class KettleResult {
+public final class KettleResult implements Serializable {
   private Result result;
   private List<Row> rows;
+  private KettleElementHelper.KettleType kettleType;
 
   public static class Row {
 

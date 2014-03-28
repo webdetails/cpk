@@ -17,7 +17,7 @@
   </publications>
 
   <dependencies defaultconf="default->default">
-    <dependency org="net.sf.ehcache" name="ehcache" rev="1.4.1"/>
+    <dependency org="net.sf.ehcache" name="ehcache-core" rev="2.5.1" transitive="false" changing="false" />
     <dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
     <dependency org="commons-lang" name="commons-lang" rev="2.6"/>
     <dependency org="commons-io" name="commons-io" rev="2.4"/>

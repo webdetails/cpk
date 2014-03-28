@@ -32,39 +32,18 @@ public abstract class KettleElement extends Element {
   protected static final String DEFAULT_STEP = "OUTPUT";
   protected static final String KETTLEOUTPUT_CLASSES_NAMESPACE = "pt.webdetails.cpk.elements.impl.kettleOutputs";
 
-  private ICache<ResultKey, KettleResult> cache;
+  private ICache<KettleResultKey, KettleResult> cache;
 
-  // TODO: implement serializable to allow disk caching
-  protected final class ResultKey {
-    private final Map<String, String> kettleParameters;
-    private final String outputStepName;
 
-    public String getElementName() {
-      return KettleElement.this.getName();
-    }
-
-    public String getOutputStepName() {
-      return this.outputStepName;
-    }
-
-    public Map<String, String> getKettleParameters() {
-      return this.kettleParameters;
-    }
-
-    public ResultKey( Map<String, String> kettleParameters, String outputStepName ) {
-      this.kettleParameters = kettleParameters;
-      this.outputStepName = outputStepName;
-    }
-  }
 
   // TODO: implement single cache per plugin!
-  protected ICache<ResultKey, KettleResult> getCache() throws Exception {
+  protected ICache<KettleResultKey, KettleResult> getCache() throws Exception {
     if ( this.cache == null ) {
       if ( this.getId() == null || this.getId().isEmpty() ) {
         throw new Exception( "Tried to create a cache for kettle element without Id set." );
       }
 
-      this.cache = new EHCache<ResultKey, KettleResult>( "KettleResultsCache_" + this.getId() );
+      this.cache = new EHCache<KettleResultKey, KettleResult>( "KettleResultsCache_" + this.getId() );
     }
     return this.cache;
   }

@@ -22,6 +22,9 @@ import net.sf.ehcache.Status;
 //import net.sf.ehcache.config.CacheConfiguration;
 //import org.apache.commons.io.IOUtils;
 //import org.apache.commons.lang.StringUtils;
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.config.Configuration;
+import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 //import pt.webdetails.cpk.CpkEngine;
@@ -38,12 +41,29 @@ import org.apache.commons.logging.LogFactory;
 // TODO: Add extends Serializable constraint to K and V?
 public class EHCache<K, V> implements ICache<K, V> {
   private static final Log logger = LogFactory.getLog( EHCache.class );
-  private static CacheManager cacheManager = new CacheManager();
+  private static CacheManager cacheManager;
 
   private Cache cache = null;
 
   private int timeToLiveSeconds = 60; //TODO
 
+  static {
+    try {
+      CacheConfiguration cacheConfiguration = new CacheConfiguration();
+      cacheConfiguration.setMaxElementsInMemory( 50 );
+      cacheConfiguration.setMaxElementsOnDisk( 500 );
+      cacheConfiguration.setEternal( true );
+      cacheConfiguration.setDiskPersistent( false );
+      cacheConfiguration.setMemoryStoreEvictionPolicyFromObject( MemoryStoreEvictionPolicy.LFU );
+
+      Configuration cacheManagerConfiguration = new Configuration();
+      cacheManagerConfiguration.setDefaultCacheConfiguration( cacheConfiguration );
+
+      cacheManager = CacheManager.create();
+    } catch ( CacheException e ) {
+      logger.fatal( "Failed to create cache manager.", e );
+    }
+  }
 
 
   private static synchronized CacheManager getCacheManager( ) {
@@ -77,9 +97,11 @@ public class EHCache<K, V> implements ICache<K, V> {
   @Override
   public void put( K key, V value ) {
     final Element storeElement = new Element( key, value );
-    storeElement.setTimeToLive( this.timeToLiveSeconds );
+    //storeElement.setTimeToLive( this.timeToLiveSeconds );
+    //storeElement.setTimeToIdle( this.timeToLiveSeconds );
+    storeElement.setEternal( true );
     this.cache.put( storeElement );
-    this.cache.flush();
+    //this.cache.flush();
 
     // Print cache status size
     logger.debug( "Cache status: " + this.cache.getMemoryStoreSize() + " in memory, "

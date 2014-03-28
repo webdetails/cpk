@@ -6,7 +6,7 @@
 * this file except in compliance with the license. If you need a copy of the license,
 * please go to  http://mozilla.org/MPL/2.0/. The Initial Developer is Webdetails.
 *
-* Software distributed unde r the Mozilla Public License is distributed on an "AS IS"
+* Software distributed under the Mozilla Public License is distributed on an "AS IS"
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
 * the license for the specific language governing your rights and limitations.
 */
@@ -23,6 +23,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
+import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementDefinition;
@@ -103,6 +104,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
   // TODO this should be in the REST service layer
   public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
 
+    // "Parse" bloated map
     Map<String, Object> request = bloatedMap.get( "request" );
     String stepName = (String) request.get( "stepName" );
     String kettleOutputType = (String) request.get( "kettleOutput" );
@@ -117,7 +119,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     this.processRequest( kettleParameters, kettleOutputType , stepName, download, httpResponse );
   }
 
-  // TODO: when refactoring substitute this method with processRequestGetResult
+  // TODO: kettleoutput processing should be in the REST service layer?
   public void processRequest( Map<String, String> kettleParams, String outputType, String outputStepName,
                               boolean download, HttpServletResponse httpResponse ) {
 
@@ -136,15 +138,19 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
 
+    // If no step name is defined use default step name.
+    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
+
+    KettleResultKey cacheKey = new KettleResultKey( this.getId(), stepName, kettleParameters );
+
     try {
-      KettleResult cachedResult = this.getCache().get( this.new ResultKey( kettleParameters, outputStepName ) );
+      KettleResult cachedResult = this.getCache().get( cacheKey );
       if ( cachedResult != null ) {
         return cachedResult;
       }
     } catch ( Exception e ) {
       this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
     }
-
 
     final KettleResult result = new KettleResult();
 
@@ -167,9 +173,6 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
       transformation.prepareExecution( null ); // get the step threads after this line
 
-      // If no step name is defined use default step name.
-      String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
-
       StepInterface step = transformation.findRunThread( stepName );
       if ( step != null ) {
         // Store the written rows for later processing
@@ -187,7 +190,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
         result.setResult( transformation.getResult() );
 
         try {
-          this.getCache().put( this.new ResultKey( kettleParameters, outputStepName ), result );
+          this.getCache().put( cacheKey, result );
         } catch ( Exception e ) {
           this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
         }
