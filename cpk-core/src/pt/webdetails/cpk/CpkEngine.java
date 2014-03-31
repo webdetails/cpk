@@ -20,8 +20,13 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import pt.webdetails.cpk.cache.EHCache;
+import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
+import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
+import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.elements.impl.KettleResultKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +45,14 @@ public class CpkEngine {
   private String settingsFilename;
   private TreeMap<String, IElement> elementsMap;
   private IElement defaultElement;
+
+  private ICache<KettleResultKey, KettleResult> kettleResultCache;
+
+  private String getCacheName() { return CpkEngine.class.getPackage().getName() + ":" + this.getEnvironment().getPluginName(); }
+
+  protected ICache<KettleResultKey, KettleResult> getKettleResultCache() {
+    return this.kettleResultCache;
+  }
 
   private CpkEngine() {
     this.elementsMap = new TreeMap<String, IElement>();
@@ -66,6 +79,7 @@ public class CpkEngine {
     // initialize engine
     this.environment = environment;
     this.settingsFilename = DEFAULT_SETTINGS_FILENAME;
+    this.kettleResultCache = new EHCache<KettleResultKey, KettleResult>( this.getCacheName() );
     this.reload();
   }
 
@@ -205,10 +219,16 @@ public class CpkEngine {
     try {
       // create element wrapper
       Element element = (Element) Class.forName( typeClass ).newInstance();
-      if ( element.init( id, type, filePath, adminOnly ) ) {
+      // TODO: using plugin name as id. Should a plugin also have an Id and not just a name?
+      String pluginId = this.getEnvironment().getPluginName();
+      if ( element.init( pluginId, id, type, filePath, adminOnly ) ) {
         // add element to elements map
         this.elementsMap.put( id, element );
         logger.info( "Done " + element.toString() );
+      }
+      // TODO: check if setting the cache should be done in init, passing the cache as an argument.
+      if( element instanceof IDataSourceProvider) {
+        ( (IDataSourceProvider) element ).setCache( this.getKettleResultCache()  );
       }
     } catch ( Exception e ) {
       logger.error( "Failed: missing '" + typeClass + "'" );

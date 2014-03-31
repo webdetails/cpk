@@ -36,11 +36,12 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
   }
 
   @Override
-  public boolean init( final String id, final String type, final String filePath, boolean adminOnly ) {
+  public boolean init( final String pluginId, final String id,
+                       final String type, final String filePath, boolean adminOnly ) {
     logger.debug( "Creating Kettle Job from '" + filePath + "'" );
 
     // call base init
-    if ( !super.init( id, type, filePath, adminOnly ) ) {
+    if ( !super.init( pluginId, id, type, filePath, adminOnly ) ) {
       return false;
     }
 

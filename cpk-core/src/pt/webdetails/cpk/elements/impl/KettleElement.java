@@ -14,9 +14,9 @@
 package pt.webdetails.cpk.elements.impl;
 
 
-import pt.webdetails.cpk.cache.EHCache;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
+import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.InferedKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.JsonKettleOutput;
@@ -27,31 +27,23 @@ import pt.webdetails.cpk.elements.impl.kettleoutputs.SingleCellKettleOutput;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
-public abstract class KettleElement extends Element {
+public abstract class KettleElement extends Element implements IDataSourceProvider {
 
   protected static final String DEFAULT_STEP = "OUTPUT";
   protected static final String KETTLEOUTPUT_CLASSES_NAMESPACE = "pt.webdetails.cpk.elements.impl.kettleOutputs";
 
   private ICache<KettleResultKey, KettleResult> cache;
 
-
-  // TODO: implement single cache per plugin!
-  protected ICache<KettleResultKey, KettleResult> getCache() throws Exception {
-    if ( this.cache == null ) {
-      if ( this.getId() == null || this.getId().isEmpty() ) {
-        throw new Exception( "Tried to create a cache for kettle element without Id set." );
-      }
-
-      this.cache = new EHCache<KettleResultKey, KettleResult>( "KettleResultsCache_" + this.getId() );
-    }
+  @Override
+  public ICache<KettleResultKey, KettleResult> getCache() {
     return this.cache;
   }
 
+  @Override
   public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
     this.cache = cache;
     return this;
   }
-
 
 
   protected IKettleOutput inferResult( String kettleOutputType, String stepName, boolean download
@@ -127,10 +119,11 @@ public abstract class KettleElement extends Element {
 
 
   // TODO: kettleoutput processing should be in the REST service layer?
-  protected void processRequest( Map<String, String> kettleParams, String outputType, String outputStepName,
+  protected void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
                               boolean download, HttpServletResponse httpResponse ) {
 
-    KettleResult result = this.processRequestGetResult( kettleParams, outputStepName );
+    // TODO: do cache selection logic
+    KettleResult result = this.processRequestCached( kettleParameters, outputStepName );
 
     // Infer kettle output type and process result with it
     if ( result.getResult() != null ) {
@@ -140,6 +133,22 @@ public abstract class KettleElement extends Element {
     }
   }
 
+  protected KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName ) {
+    // If no step name is defined use default step name.
+    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
+
+    KettleResultKey cacheKey = new KettleResultKey( this.getPluginId(), this.getId(), stepName, kettleParameters );
+
+    KettleResult result = this.getCache().get( cacheKey );
+    if ( result != null ) {
+      return result;
+    } else {
+      result = this.processRequestGetResult( kettleParameters, stepName );
+      this.getCache().put( cacheKey, result );
+    }
+
+    return result;
+  }
 
   protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParams, String outputStepName);
 

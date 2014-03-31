@@ -23,6 +23,9 @@ public interface IElement {
   @JsonProperty( "type" )
   public String getType();
 
+  @JsonProperty( "pluginId" )
+  public String getPluginId();
+
   @JsonProperty( "id" )
   public String getId();
 

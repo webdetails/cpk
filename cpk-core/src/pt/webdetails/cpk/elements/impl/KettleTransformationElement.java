@@ -42,11 +42,12 @@ public class KettleTransformationElement extends KettleElement implements IDataS
   }
 
   @Override
-  public boolean init( final String id, final String type, final String filePath, boolean adminOnly ) {
+  public boolean init( final String pluginId, final String id,
+                       final String type, final String filePath, boolean adminOnly ) {
     logger.debug( "Creating Kettle Transformation from '" + filePath + "'" );
 
     // base init
-    if ( !super.init( id, type, filePath, adminOnly ) ) {
+    if ( !super.init( pluginId, id, type, filePath, adminOnly ) ) {
       return false;
     }
 
@@ -100,17 +101,6 @@ public class KettleTransformationElement extends KettleElement implements IDataS
     // If no step name is defined use default step name.
     String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
-    KettleResultKey cacheKey = new KettleResultKey( this.getId(), stepName, kettleParameters );
-
-//    try {
-//      KettleResult cachedResult = this.getCache().get( cacheKey );
-//      if ( cachedResult != null ) {
-//        return cachedResult;
-//      }
-//    } catch ( Exception e ) {
-//      this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
-//    }
-
     final KettleResult result = new KettleResult();
 
     try {
@@ -148,12 +138,6 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
         result.setResult( transformation.getResult() );
         result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
-
-//        try {
-//          this.getCache().put( cacheKey, result );
-//        } catch ( Exception e ) {
-//          this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
-//        }
 
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );

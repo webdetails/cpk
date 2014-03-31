@@ -20,22 +20,31 @@ import org.apache.commons.logging.LogFactory;
 public abstract class Element implements IElement {
 
   protected Log logger = LogFactory.getLog( this.getClass() );
+  private String pluginId;
   private String id;
   private String type;
   private String name;
   private String filePath;
   private boolean adminOnly;
 
+
   protected Element() {
   }
 
-  public boolean init( final String id, final String type, final String filePath, boolean adminOnly ) {
+  public boolean init( final String pluginId, final String id,
+                       final String type, final String filePath, boolean adminOnly ) {
+    this.pluginId = pluginId;
     this.id = id;
     this.type = type;
     this.name = FilenameUtils.getBaseName( filePath );
     this.filePath = filePath;
     this.adminOnly = adminOnly;
     return true;
+  }
+
+  @Override
+  public String getPluginId() {
+    return this.pluginId;
   }
 
   @Override
@@ -70,7 +79,7 @@ public abstract class Element implements IElement {
 
   @Override
   public String toString() {
-    return "{" + "id=" + getId() + ", type=" + getType() + ", name=" + getName()
+    return "{" + "pluginId=" + this.getPluginId() + ", id=" + getId() + ", type=" + getType() + ", name=" + getName()
       + ", filePath=" + getLocation() + ", adminOnly=" + isAdminOnly() + "}";
   }
 
