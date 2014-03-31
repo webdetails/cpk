@@ -1,7 +1,6 @@
 package pt.webdetails.cpk.elements.impl;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,8 +51,7 @@ public final class KettleResultKey implements Serializable {
   }
 
   @Override
-  public int hashCode()
-  {
+  public int hashCode() {
     int result = stringHashCode( this.elementName );
     result = 31 * result + stringHashCode( this.outputStepName );
     result = 31 * result + this.parameters.hashCode();

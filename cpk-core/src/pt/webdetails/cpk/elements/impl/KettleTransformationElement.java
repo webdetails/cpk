@@ -23,15 +23,12 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
-import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
-import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -94,47 +91,9 @@ public class KettleTransformationElement extends KettleElement implements IDataS
   }
 
 
-  @Override
-  protected IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
-    IKettleOutput kettleOutput = super.inferResult( bloatedMap );
-    kettleOutput.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
-    return kettleOutput;
-  }
-
-  // TODO this should be in the REST service layer
-  public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
-
-    // "Parse" bloated map
-    Map<String, Object> request = bloatedMap.get( "request" );
-    String stepName = (String) request.get( "stepName" );
-    String kettleOutputType = (String) request.get( "kettleOutput" );
-
-    String downloadStr = (String) request.get( "download" );
-    boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
-
-    HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
-
-    Map<String, String> kettleParameters = KettleElementHelper.getKettleParameters( request );
-
-    this.processRequest( kettleParameters, kettleOutputType , stepName, download, httpResponse );
-  }
-
-  // TODO: kettleoutput processing should be in the REST service layer?
-  public void processRequest( Map<String, String> kettleParams, String outputType, String outputStepName,
-                              boolean download, HttpServletResponse httpResponse ) {
-
-    KettleResult result = this.processRequestGetResult( kettleParams, outputStepName );
-
-    // Infer kettle output type and process result with it
-    if ( result.getResult() != null ) {
-      IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
-      kettleOutput.processResult( result );
-      logger.info( "[ " + result.getResult() + " ]" );
-    }
-  }
-
   // TODO: this method should replace processRequest eventually
-  private KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
+  @Override
+  protected KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
     long start = System.currentTimeMillis();
 
@@ -143,14 +102,14 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
     KettleResultKey cacheKey = new KettleResultKey( this.getId(), stepName, kettleParameters );
 
-    try {
-      KettleResult cachedResult = this.getCache().get( cacheKey );
-      if ( cachedResult != null ) {
-        return cachedResult;
-      }
-    } catch ( Exception e ) {
-      this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
-    }
+//    try {
+//      KettleResult cachedResult = this.getCache().get( cacheKey );
+//      if ( cachedResult != null ) {
+//        return cachedResult;
+//      }
+//    } catch ( Exception e ) {
+//      this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
+//    }
 
     final KettleResult result = new KettleResult();
 
@@ -163,7 +122,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
       KettleElementHelper.updateParameters( this.transMeta );
 
       // add request parameters
-      Collection<String> addedParameters = null;
+      Collection<String> addedParameters = Collections.emptyList();
       if ( kettleParameters != null ) {
         addedParameters = KettleElementHelper.addKettleParameters( this.transMeta, kettleParameters );
       }
@@ -188,12 +147,13 @@ public class KettleTransformationElement extends KettleElement implements IDataS
         transformation.waitUntilFinished();
 
         result.setResult( transformation.getResult() );
+        result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
 
-        try {
-          this.getCache().put( cacheKey, result );
-        } catch ( Exception e ) {
-          this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
-        }
+//        try {
+//          this.getCache().put( cacheKey, result );
+//        } catch ( Exception e ) {
+//          this.logger.error( "Error getting cache for kettle transform with id " + this.getId(), e );
+//        }
 
       } else {
         logger.error( "Couldn't find step '" + stepName + "'" );
@@ -226,7 +186,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
       Trans transformation = new Trans( transMeta );
       // prepare execution
       transformation.prepareExecution( null );
-      StepInterface step = transformation.findRunThread( "OUTPUT" );
+      StepInterface step = transformation.findRunThread( DEFAULT_STEP );
       if ( step != null ) {
         // start transformation threads and wait until they finish
         transformation.startThreads();

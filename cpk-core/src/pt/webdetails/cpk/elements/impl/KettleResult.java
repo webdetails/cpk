@@ -60,6 +60,15 @@ public final class KettleResult implements Serializable {
     return this.result.getResultFilesList();
   }
 
+  public KettleElementHelper.KettleType getKettleType() {
+    return this.kettleType;
+  }
+
+  public KettleResult setKettleType( KettleElementHelper.KettleType kettleType ) {
+    this.kettleType = kettleType;
+    return this;
+  }
+
   // Constructors
 
   public KettleResult() {

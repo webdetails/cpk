@@ -109,6 +109,7 @@ public abstract class KettleOutput implements IKettleOutput {
   public void processResult( KettleResult result ) {
     if ( result != null ) {
       this.setResult( result.getResult() );
+      this.setKettleType( result.getKettleType() );
 
       // TODO change for to set
       for ( KettleResult.Row row : result.getRows() ) {

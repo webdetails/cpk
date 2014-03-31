@@ -14,7 +14,6 @@
 package pt.webdetails.cpk.elements.impl;
 
 import org.pentaho.di.core.Result;
-import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobEntryResult;
 import org.pentaho.di.job.JobMeta;
@@ -23,10 +22,9 @@ import pt.webdetails.cpk.datasources.DataSourceMetadata;
 import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
-import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +57,7 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
 
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.jobMeta ) ) {
-      processRequest( null );
+      KettleJobElement.execute( filePath );
     }
 
     // init was successful
@@ -77,14 +75,8 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
       .setDefinition( new KettleElementDefinition() );
   }
 
-  @Override
-  protected IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
-    IKettleOutput kettleOutput = super.inferResult( bloatedMap );
-    kettleOutput.setKettleType( KettleElementHelper.KettleType.JOB );
-    return kettleOutput;
-  }
 
-  private void processResult( Job job, IKettleOutput output ) {
+  private Result getResult( Job job, String outputStepName ) {
     // TODO: refactor / optimize results processing
     Result result = job.getResult();
 
@@ -95,61 +87,53 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
       for ( int i = 0; i < jobEntryResultList.size(); i++ ) {
         entryResult = jobEntryResultList.get( i );
         if ( entryResult != null ) {
-          if ( entryResult.getJobEntryName().equals( output.getOutputStepName() ) ) {
+          if ( entryResult.getJobEntryName().equals( outputStepName ) ) {
             result = entryResult.getResult();
             break;
           }
         }
       }
     }
-
-    // what is this for?
-    result.setRows( new ArrayList<RowMetaAndData>() );
-
-    output.setResult( result );
-
-    output.processResult();
-    logger.info( "[ " + output.getResult() + " ]" );
+    return result;
   }
 
-  @Override public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
+
+  @Override
+  public KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting job '" + this.getName() + "' (" + this.jobMeta.getName() + ")" );
     long start = System.currentTimeMillis();
+
+    // If no step name is defined use default step name.
+    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
     // update parameters
     KettleElementHelper.updateParameters( this.jobMeta );
 
     // add request parameters
-    Collection<String> requestParameters = null;
-    if ( bloatedMap != null ) {
-      requestParameters = KettleElementHelper.addRequestParameters( this.jobMeta, bloatedMap.get( "request" ) );
+    Collection<String> addedParameters = Collections.emptyList();
+    if ( kettleParameters != null ) {
+      addedParameters = KettleElementHelper.addKettleParameters( this.jobMeta, kettleParameters );
     }
 
     // create a new job
     Job job = new Job( null, jobMeta );
 
-    // nothing of this is needed:
-    //job.initializeVariablesFrom( null );
-    //job.getJobMeta().setInternalKettleVariables( job );
-    //job.copyParametersFrom( job.getJobMeta() );
-    //job.copyVariablesFrom( job.getJobMeta() );
-    //job.activateParameters();
-
     // start job thread and wait until it finishes
     job.start();
     job.waitUntilFinished();
 
-    // process result
-    if ( bloatedMap != null ) {
-      processResult( job, inferResult( bloatedMap ) );
-    }
+    KettleResult result = new KettleResult();
+    result.setResult( this.getResult( job, stepName ) );
+    result.setKettleType( KettleElementHelper.KettleType.JOB );
 
     // clear request parameters
-    KettleElementHelper.clearParameters( jobMeta, requestParameters );
+    KettleElementHelper.clearParameters( jobMeta, addedParameters );
 
     long end = System.currentTimeMillis();
     this.logger.info( "Finished job '" + this.getName()
       + "' (" + this.jobMeta.getName() + ") in " + ( end - start ) + " ms" );
+
+    return result;
   }
 
   public static void execute( String kettleJobPath ) {

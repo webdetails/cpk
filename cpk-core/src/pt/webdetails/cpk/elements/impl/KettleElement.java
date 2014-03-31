@@ -35,7 +35,6 @@ public abstract class KettleElement extends Element {
   private ICache<KettleResultKey, KettleResult> cache;
 
 
-
   // TODO: implement single cache per plugin!
   protected ICache<KettleResultKey, KettleResult> getCache() throws Exception {
     if ( this.cache == null ) {
@@ -48,56 +47,38 @@ public abstract class KettleElement extends Element {
     return this.cache;
   }
 
-  protected IKettleOutput inferResult( Map<String, Map<String, Object>> bloatedMap ) {
-
-        /*
-         *  There are a few different types of kettle output processing.
-         *  They can be infered or specified from a request parameter: kettleOutput
-         *
-         *  1. ResultOnly - we'll discard the output and print statistics only
-         *  2. ResultFiles - Download the files we have as result filenames
-         *  3. Json - Json output of the resultset
-         *  4. csv - CSV output of the resultset
-         *  5. SingleCell - We'll get the first line, first row
-         *  6. Infered - Infering
-         *
-         *  If nothing specified, the behavior will be:
-         *  * Jobs and Transformations with result filenames: ResultFiles
-         *  * Without filenames:
-         *      * Jobs: ResultOnly
-         *      * Transformations:
-         *          * Just one cell: SingleCell
-         *          * Regular resultset: Json
-         *
-         *  By complexity:
-         *      These don't require rowListener:
-         *  1. ResultOnly
-         *  2. ResultFiles
-         *
-         *      These do:
-         *  3. SingleCell
-         *  4. Json
-         *  5. CSV
-         *  6. Infered
-         */
-
-    //These conditions will treat the different types of kettle operations
-
-    // Get info from bloatedmap
-    Map<String, Object> request = bloatedMap.get( "request" );
-    String kettleOutputType = (String) request.get( "kettleOutput" );
-    // Are we specifying a stepname?
-    String stepName = (String) request.get( "stepName" );
-    String downloadStr = (String) request.get( "download" );
-    boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
-    HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
-
-    // Get kettleOutput
-    return this.inferResult( kettleOutputType, stepName, download, httpResponse );
+  public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
+    this.cache = cache;
+    return this;
   }
+
+
 
   protected IKettleOutput inferResult( String kettleOutputType, String stepName, boolean download
     , HttpServletResponse httpResponse ) {
+
+     /*
+     *  There are a few different types of kettle output processing.
+     *  They can be infered or specified from a request parameter: kettleOutput
+     *
+     *  1. ResultOnly - we'll discard the output and print statistics only
+     *  2. ResultFiles - Download the files we have as result filenames
+     *  3. Json - Json output of the resultset
+     *  4. csv - CSV output of the resultset
+     *  5. SingleCell - We'll get the first line, first row
+     *  6. Infered - Infering
+     *
+     *  By complexity:
+     *      These don't require rowListener:
+     *  1. ResultOnly
+     *  2. ResultFiles
+     *
+     *      These do:
+     *  3. SingleCell
+     *  4. Json
+     *  5. CSV
+     *  6. Infered
+     */
 
     if ( kettleOutputType == null || kettleOutputType.isEmpty() ) {
       kettleOutputType = "Infered";
@@ -125,5 +106,41 @@ public abstract class KettleElement extends Element {
     return kettleOutput;
   }
 
+  // TODO this should be in the REST service layer. This method basically "parses" the bloated map.
+  @Override
+  public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
+
+    // "Parse" bloated map
+    Map<String, Object> request = bloatedMap.get( "request" );
+    String stepName = (String) request.get( "stepName" );
+    String kettleOutputType = (String) request.get( "kettleOutput" );
+
+    String downloadStr = (String) request.get( "download" );
+    boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
+
+    HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+
+    Map<String, String> kettleParameters = KettleElementHelper.getKettleParameters( request );
+
+    this.processRequest( kettleParameters, kettleOutputType , stepName, download, httpResponse );
+  }
+
+
+  // TODO: kettleoutput processing should be in the REST service layer?
+  protected void processRequest( Map<String, String> kettleParams, String outputType, String outputStepName,
+                              boolean download, HttpServletResponse httpResponse ) {
+
+    KettleResult result = this.processRequestGetResult( kettleParams, outputStepName );
+
+    // Infer kettle output type and process result with it
+    if ( result.getResult() != null ) {
+      IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
+      kettleOutput.processResult( result );
+      logger.info( "[ " + result.getResult() + " ]" );
+    }
+  }
+
+
+  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParams, String outputStepName);
 
 }
