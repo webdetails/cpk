@@ -138,7 +138,8 @@ public class EHCache<K, V> implements ICache<K, V> {
     }
   }
 
-  public void clearCache() {
+  @Override
+  public void clear() {
     this.cache.removeAll();
   }
 

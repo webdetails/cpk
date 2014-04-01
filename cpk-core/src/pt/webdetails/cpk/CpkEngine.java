@@ -50,7 +50,7 @@ public class CpkEngine {
 
   private String getCacheName() { return CpkEngine.class.getPackage().getName() + ":" + this.getEnvironment().getPluginName(); }
 
-  protected ICache<KettleResultKey, KettleResult> getKettleResultCache() {
+  public ICache<KettleResultKey, KettleResult> getKettleResultCache() {
     return this.kettleResultCache;
   }
 

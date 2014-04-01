@@ -333,6 +333,12 @@ public class CpkApi {
 
   }
 
+  @GET
+  @Path( "/clearCache" )
+  public void clearKettleResultsCache() {
+    this.coreService.clearKettleResultsCache();
+  }
+
 
   private Map<String, Map<String, Object>> buildBloatedMap( HttpServletRequest request, HttpServletResponse response,
                                                             HttpHeaders headers ) {

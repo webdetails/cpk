@@ -20,4 +20,9 @@ public interface ICache<K, V> {
 
   V get( K key );
 
+  /**
+   * Removes all elements from cache.
+   */
+  void clear();
+
 }
