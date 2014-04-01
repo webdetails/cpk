@@ -14,6 +14,7 @@
 package pt.webdetails.cpk.elements.impl;
 
 
+import org.codehaus.jackson.annotate.JsonIgnore;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
@@ -35,6 +36,7 @@ public abstract class KettleElement extends Element implements IDataSourceProvid
   private ICache<KettleResultKey, KettleResult> cache;
 
   @Override
+  @JsonIgnore // TODO: this is required due to direct serialization in cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
   public ICache<KettleResultKey, KettleResult> getCache() {
     return this.cache;
   }

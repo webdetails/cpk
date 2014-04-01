@@ -50,8 +50,6 @@ public class EHCache<K, V> implements ICache<K, V> {
   static {
     try {
       CacheConfiguration cacheConfiguration = new CacheConfiguration();
-      cacheConfiguration.setMaxElementsInMemory( 50 );
-      cacheConfiguration.setMaxElementsOnDisk( 500 );
       cacheConfiguration.setEternal( true );
       cacheConfiguration.setDiskPersistent( false );
       cacheConfiguration.setMemoryStoreEvictionPolicyFromObject( MemoryStoreEvictionPolicy.LFU );

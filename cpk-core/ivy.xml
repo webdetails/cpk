@@ -17,7 +17,7 @@
   </publications>
 
   <dependencies defaultconf="default->default">
-    <dependency org="net.sf.ehcache" name="ehcache-core" rev="2.5.1" transitive="false" changing="false" />
+    <dependency org="net.sf.ehcache" name="ehcache-core" rev="2.5.1" transitive="false" />
     <dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
     <dependency org="commons-lang" name="commons-lang" rev="2.6"/>
     <dependency org="commons-io" name="commons-io" rev="2.4"/>
@@ -56,6 +56,9 @@
       <artifact name="jug" type="jar" ext="jar" conf="" m:classifier="asl"/>
     </dependency>
     <dependency org="spring" name="spring-mock" rev="1.0.2" conf="test->default"/>
+
+    <dependency org="org.slf4j"     name="slf4j-log4j12"    rev="1.6.1"     conf="test->default"/>
+
 
   </dependencies>
 </ivy-module>

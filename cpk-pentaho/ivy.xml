@@ -17,7 +17,6 @@
 	</publications>
 	<dependencies defaultconf="default->default">
 
-
 		<dependency org="pentaho" name="cpk-core" rev="${project.revision}" conf='default,runtime->default' transitive="false" changing="true"/>
 
  		<dependency org="pentaho"       name="cpf-core"
@@ -37,6 +36,9 @@
 		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.2.2" />
 		<dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.2.2" />
 
+        <dependency org="net.sf.ehcache"            name="ehcache-core"         rev="2.5.1" transitive="false"      conf="test->default"/>
+        <dependency org="org.slf4j"                 name="slf4j-log4j12"        rev="1.6.1"                         conf="test->default"/>
+        
 		<dependency org="junit" name="junit" conf="test->default" rev='4.10'/>
 		<dependency org="spring" name="spring-mock" rev="1.0.2" conf="test->default"/>
 		
