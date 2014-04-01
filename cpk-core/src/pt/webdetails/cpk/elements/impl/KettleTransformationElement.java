@@ -34,45 +34,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class KettleTransformationElement extends KettleElement implements IDataSourceProvider {
-
-  private TransMeta transMeta = null;
+public class KettleTransformationElement extends KettleElement<TransMeta> implements IDataSourceProvider {
 
   public KettleTransformationElement() {
   }
 
   @Override
-  public boolean init( final String pluginId, final String id,
-                       final String type, final String filePath, boolean adminOnly ) {
-    logger.debug( "Creating Kettle Transformation from '" + filePath + "'" );
-
-    // base init
-    if ( !super.init( pluginId, id, type, filePath, adminOnly ) ) {
-      return false;
-    }
-
+  protected TransMeta loadMeta( String filePath ) {
     // load transformation meta info
     try {
-      this.transMeta = new TransMeta( this.getLocation() );
+      return new TransMeta( this.getLocation() );
     } catch ( Exception e ) {
-      logger.error( "Failed to retrieve '" + this.getLocation() + "'" );
-      return false;
+      return null;
     }
-
-    // add base parameters to ensure they exist
-    KettleElementHelper.addBaseParameters( this.transMeta );
-
-    // execute at start?
-    if ( KettleElementHelper.isExecuteAtStart( this.transMeta ) ) {
-      KettleTransformationElement.execute( filePath );
-    }
-
-    // init was successful
-    return true;
   }
 
   protected DataSourceMetadata getMetadata() {
-    Iterable<StepMeta> steps = this.transMeta.getSteps();
+    Iterable<StepMeta> steps = this.meta.getSteps();
     Collection<String> stepNames = new ArrayList<String>();
     for ( StepMeta step : steps ) {
       stepNames.add( step.getName() );
@@ -95,7 +73,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
   // TODO: this method should replace processRequest eventually
   @Override
   protected KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
-    logger.info( "Starting transformation '" + this.getName() + "' (" + this.transMeta.getName() + ")" );
+    logger.info( "Starting transformation '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 
     // If no step name is defined use default step name.
@@ -105,20 +83,20 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
     try {
       // clean?
-      this.transMeta.setResultRows( new ArrayList<RowMetaAndData>() );
-      this.transMeta.setResultFiles( new ArrayList<ResultFile>() );
+      this.meta.setResultRows( new ArrayList<RowMetaAndData>() );
+      this.meta.setResultFiles( new ArrayList<ResultFile>() );
 
       // update parameters
-      KettleElementHelper.updateParameters( this.transMeta );
+      KettleElementHelper.updateParameters( this.meta );
 
       // add request parameters
       Collection<String> addedParameters = Collections.emptyList();
       if ( kettleParameters != null ) {
-        addedParameters = KettleElementHelper.addKettleParameters( this.transMeta, kettleParameters );
+        addedParameters = KettleElementHelper.addKettleParameters( this.meta, kettleParameters );
       }
 
       // create a new transformation
-      Trans transformation = new Trans( this.transMeta );
+      Trans transformation = new Trans( this.meta );
 
       transformation.prepareExecution( null ); // get the step threads after this line
 
@@ -144,7 +122,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
       }
 
       // clear request parameters
-      KettleElementHelper.clearParameters( transMeta, addedParameters );
+      KettleElementHelper.clearParameters( meta, addedParameters );
 
     } catch ( KettleException e ) {
       logger.debug( "KETTLE EXCEPTION: " + e );
@@ -152,7 +130,7 @@ public class KettleTransformationElement extends KettleElement implements IDataS
 
     long end = System.currentTimeMillis();
     logger.info( "Finished transformation '" + this.getName()
-      + "' (" + this.transMeta.getName() + ") in " + ( end - start ) + " ms" );
+      + "' (" + this.meta.getName() + ") in " + ( end - start ) + " ms" );
 
     return result;
   }

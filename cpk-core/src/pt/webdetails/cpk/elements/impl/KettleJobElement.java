@@ -28,41 +28,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class KettleJobElement extends KettleElement implements IDataSourceProvider {
-
-  private JobMeta jobMeta = null;
+public class KettleJobElement extends KettleElement<JobMeta> implements IDataSourceProvider {
 
   public KettleJobElement() {
   }
 
   @Override
-  public boolean init( final String pluginId, final String id,
-                       final String type, final String filePath, boolean adminOnly ) {
-    logger.debug( "Creating Kettle Job from '" + filePath + "'" );
-
-    // call base init
-    if ( !super.init( pluginId, id, type, filePath, adminOnly ) ) {
-      return false;
-    }
-
+  protected JobMeta loadMeta( String filePath ) {
     // load transformation meta info
     try {
-      this.jobMeta = new JobMeta( this.getLocation(), null );
+      return new JobMeta( this.getLocation(), null );
     } catch ( Exception e ) {
-      logger.error( "Failed to retrieve '" + this.getLocation() + "'" );
-      return false;
+      return null;
     }
-
-    // add base parameters to ensure they exist
-    KettleElementHelper.addBaseParameters( this.jobMeta );
-
-    // execute at start?
-    if ( KettleElementHelper.isExecuteAtStart( this.jobMeta ) ) {
-      KettleJobElement.execute( filePath );
-    }
-
-    // init was successful
-    return true;
   }
 
   protected DataSourceMetadata getMetadata() {
@@ -101,23 +79,23 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
 
   @Override
   public KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
-    logger.info( "Starting job '" + this.getName() + "' (" + this.jobMeta.getName() + ")" );
+    logger.info( "Starting job '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 
     // If no step name is defined use default step name.
     String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
     // update parameters
-    KettleElementHelper.updateParameters( this.jobMeta );
+    KettleElementHelper.updateParameters( this.meta );
 
     // add request parameters
     Collection<String> addedParameters = Collections.emptyList();
     if ( kettleParameters != null ) {
-      addedParameters = KettleElementHelper.addKettleParameters( this.jobMeta, kettleParameters );
+      addedParameters = KettleElementHelper.addKettleParameters( this.meta, kettleParameters );
     }
 
     // create a new job
-    Job job = new Job( null, jobMeta );
+    Job job = new Job( null, this.meta );
 
     // start job thread and wait until it finishes
     job.start();
@@ -128,11 +106,11 @@ public class KettleJobElement extends KettleElement implements IDataSourceProvid
     result.setKettleType( KettleElementHelper.KettleType.JOB );
 
     // clear request parameters
-    KettleElementHelper.clearParameters( jobMeta, addedParameters );
+    KettleElementHelper.clearParameters( this.meta, addedParameters );
 
     long end = System.currentTimeMillis();
     this.logger.info( "Finished job '" + this.getName()
-      + "' (" + this.jobMeta.getName() + ") in " + ( end - start ) + " ms" );
+      + "' (" + this.meta.getName() + ") in " + ( end - start ) + " ms" );
 
     return result;
   }

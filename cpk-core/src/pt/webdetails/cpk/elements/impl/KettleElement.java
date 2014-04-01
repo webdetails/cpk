@@ -15,6 +15,7 @@ package pt.webdetails.cpk.elements.impl;
 
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.pentaho.di.core.parameters.NamedParams;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
@@ -26,14 +27,55 @@ import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultOnlyKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.SingleCellKettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.Map;
 
-public abstract class KettleElement extends Element implements IDataSourceProvider {
+public abstract class KettleElement<TMeta extends NamedParams> extends Element implements IDataSourceProvider {
 
   protected static final String DEFAULT_STEP = "OUTPUT";
   protected static final String KETTLEOUTPUT_CLASSES_NAMESPACE = "pt.webdetails.cpk.elements.impl.kettleOutputs";
+  
 
   private ICache<KettleResultKey, KettleResult> cache;
+  protected TMeta meta;
+
+  private boolean isCacheEnabled;
+
+  public boolean isCacheEnabled() {
+    return this.isCacheEnabled;
+  }
+
+  @Override
+  public boolean init( final String pluginId, final String id,
+                       final String type, final String filePath, boolean adminOnly ) {
+    logger.debug( "Creating Kettle Element from '" + filePath + "'" );
+
+    // call base init
+    if ( !super.init( pluginId, id, type, filePath, adminOnly ) ) {
+      return false;
+    }
+
+    // load  meta info
+    this.meta = this.loadMeta( filePath );
+    if ( this.meta == null ) {
+      logger.error( "Failed to retrieve '" + this.getLocation() + "'" );
+      return false;
+    }
+
+    // add base parameters to ensure they exist
+    KettleElementHelper.addBaseParameters( this.meta );
+
+    // execute at start?
+    if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
+      this.processRequestGetResult( Collections.<String, String>emptyMap(), DEFAULT_STEP );
+    }
+
+    // init was successful
+    return true;
+  }
+
+  protected abstract TMeta loadMeta( String filePath );
+
 
   @Override
   @JsonIgnore // TODO: this is required due to direct serialization in cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
@@ -152,6 +194,6 @@ public abstract class KettleElement extends Element implements IDataSourceProvid
     return result;
   }
 
-  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParams, String outputStepName);
+  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParams, String outputStepName );
 
 }
