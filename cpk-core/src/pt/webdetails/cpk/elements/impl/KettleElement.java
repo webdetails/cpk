@@ -34,15 +34,26 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
   protected static final String DEFAULT_STEP = "OUTPUT";
   protected static final String KETTLEOUTPUT_CLASSES_NAMESPACE = "pt.webdetails.cpk.elements.impl.kettleOutputs";
-  
+
+  private static final String CPK_CACHE_RESULTS = "cpk.cacheResults";
+  private static final boolean CPK_CACHE_RESULTS_DEFAULT_VALUE = false;
+
+  // TODO: this class should be in the REST layer
+  private static class RequestParameterName {
+    public static final String STEP_NAME = "stepName";
+    public static final String KETTLE_OUTPUT = "kettleOutput";
+    public static final String DOWNLOAD = "download";
+    public static final String BYPASS_CACHE = "bypassCache";
+  }
+
 
   private ICache<KettleResultKey, KettleResult> cache;
   protected TMeta meta;
 
-  private boolean isCacheEnabled;
+  private boolean cacheResults;
 
-  public boolean isCacheEnabled() {
-    return this.isCacheEnabled;
+  public boolean isCacheResultsEnabled() {
+    return this.cacheResults;
   }
 
   @Override
@@ -70,6 +81,9 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
       this.processRequestGetResult( Collections.<String, String>emptyMap(), DEFAULT_STEP );
     }
 
+    String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
+    this.cacheResults = cacheResultsStr == null ?  CPK_CACHE_RESULTS_DEFAULT_VALUE : Boolean.parseBoolean( cacheResultsStr );
+
     // init was successful
     return true;
   }
@@ -90,7 +104,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
   }
 
 
-  protected IKettleOutput inferResult( String kettleOutputType, String stepName, boolean download
+  protected final IKettleOutput inferResult( String kettleOutputType, String stepName, boolean download
     , HttpServletResponse httpResponse ) {
 
      /*
@@ -144,32 +158,41 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
   // TODO this should be in the REST service layer. This method basically "parses" the bloated map.
   @Override
-  public void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
+  public final void processRequest( Map<String, Map<String, Object>> bloatedMap ) {
 
     // "Parse" bloated map
     Map<String, Object> request = bloatedMap.get( "request" );
-    String stepName = (String) request.get( "stepName" );
-    String kettleOutputType = (String) request.get( "kettleOutput" );
+    String stepName = (String) request.get( RequestParameterName.STEP_NAME );
+    String kettleOutputType = (String) request.get( RequestParameterName.KETTLE_OUTPUT );
 
-    String downloadStr = (String) request.get( "download" );
+    String downloadStr = (String) request.get( RequestParameterName.DOWNLOAD );
     boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
+
+    String bypassCacheStr = (String) request.get( RequestParameterName.BYPASS_CACHE );
+    boolean bypassCache = Boolean.parseBoolean( bypassCacheStr != null ? bypassCacheStr : "false" );
+
 
     HttpServletResponse httpResponse = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
 
     Map<String, String> kettleParameters = KettleElementHelper.getKettleParameters( request );
 
-    this.processRequest( kettleParameters, kettleOutputType , stepName, download, httpResponse );
+    this.processRequest( kettleParameters, kettleOutputType , stepName, download, bypassCache, httpResponse );
   }
 
 
   // TODO: kettleoutput processing should be in the REST service layer?
-  protected void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
-                              boolean download, HttpServletResponse httpResponse ) {
+  protected final void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
+                                 boolean download, boolean bypassCache, HttpServletResponse httpResponse ) {
 
-    // TODO: do cache selection logic
-    KettleResult result = this.processRequestCached( kettleParameters, outputStepName );
+    // Process request and get result
+    KettleResult  result;
+    if ( this.isCacheResultsEnabled() ) {
+      result = this.processRequestCached( kettleParameters, outputStepName, bypassCache );
+    } else {
+      result = this.processRequestGetResult( kettleParameters, outputStepName );
+    }
 
-    // Infer kettle output type and process result with it
+    // Choose kettle output type and process result with it
     if ( result.getResult() != null ) {
       IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
       kettleOutput.processResult( result );
@@ -177,23 +200,40 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
     }
   }
 
-  protected KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName ) {
+  /**
+   * Executes the kettle transformation / job if no cached valued is found or cache bypass is specified.
+   * @param kettleParameters Parameters to be passed into the kettle transformation/job.
+   * @param outputStepName The step name from where the result will be fetched.
+   * @param bypassCache If true, forces the request to be processed even if a value for it already exists in the cache.
+   *                    Bypassing the cache also updates the cache with the new obtained result.
+   * @return The result of executing the kettle transformation / job.
+   */
+  private KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName, boolean bypassCache ) {
     // If no step name is defined use default step name.
     String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
     KettleResultKey cacheKey = new KettleResultKey( this.getPluginId(), this.getId(), stepName, kettleParameters );
 
-    KettleResult result = this.getCache().get( cacheKey );
-    if ( result != null ) {
-      return result;
-    } else {
-      result = this.processRequestGetResult( kettleParameters, stepName );
-      this.getCache().put( cacheKey, result );
+    KettleResult result;
+    if ( !bypassCache ) {
+      result = this.getCache().get( cacheKey );
+      if ( result != null ) {
+        return result; // Cached value found, return it.
+      }
     }
 
+    result = this.processRequestGetResult( kettleParameters, stepName );
+    // put new, or update current, result in cache.
+    this.getCache().put( cacheKey, result );
     return result;
   }
 
-  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParams, String outputStepName );
+  /**
+   * Executes the kettle transformation / job.
+   * @param kettleParameters Parameters to be passed into the kettle transformation/job.
+   * @param outputStepName The step name from where the result will be fetched.
+   * @return The result of executing the kettle transformation / job.
+   */
+  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName );
 
 }
