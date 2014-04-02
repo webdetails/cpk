@@ -48,7 +48,8 @@ public class CpkEngine {
 
   private ICache<KettleResultKey, KettleResult> kettleResultCache;
 
-  private String getCacheName() { return CpkEngine.class.getPackage().getName() + ":" + this.getEnvironment().getPluginName(); }
+  private String getCacheName() { return CpkEngine.class.getPackage().getName() + ":"
+    + this.getEnvironment().getPluginName(); }
 
   public ICache<KettleResultKey, KettleResult> getKettleResultCache() {
     return this.kettleResultCache;
@@ -91,7 +92,11 @@ public class CpkEngine {
     this.environment.reload();
 
     // load elements
-    loadElements();
+    this.loadElements();
+
+    if ( this.getKettleResultCache() != null ) {
+      this.getKettleResultCache().clear();
+    }
 
     long end = System.currentTimeMillis();
     logger.info( "Finished initialization of CPK PLugin '" + this.environment.getPluginName() + "' in "
@@ -128,7 +133,7 @@ public class CpkEngine {
 
   // TODO: refactor
   public Status getStatus() {
-    if (this.defaultElement != null ) {
+    if ( this.defaultElement != null ) {
       return new Status( this.elementsMap, this.defaultElement.getName(), this.environment );
     } else {
       return new Status( this.elementsMap, "", this.environment );
@@ -227,7 +232,7 @@ public class CpkEngine {
         logger.info( "Done " + element.toString() );
       }
       // TODO: check if setting the cache should be done in init, passing the cache as an argument.
-      if( element instanceof IDataSourceProvider) {
+      if ( element instanceof IDataSourceProvider ) {
         ( (IDataSourceProvider) element ).setCache( this.getKettleResultCache()  );
       }
     } catch ( Exception e ) {

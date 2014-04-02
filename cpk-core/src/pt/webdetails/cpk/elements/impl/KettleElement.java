@@ -82,7 +82,8 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
     }
 
     String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
-    this.cacheResults = cacheResultsStr == null ?  CPK_CACHE_RESULTS_DEFAULT_VALUE : Boolean.parseBoolean( cacheResultsStr );
+    this.cacheResults = cacheResultsStr == null ?  CPK_CACHE_RESULTS_DEFAULT_VALUE
+      : Boolean.parseBoolean( cacheResultsStr );
 
     // init was successful
     return true;
@@ -193,11 +194,9 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
     }
 
     // Choose kettle output type and process result with it
-    if ( result.getResult() != null ) {
-      IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
-      kettleOutput.processResult( result );
-      logger.info( "[ " + result.getResult() + " ]" );
-    }
+    IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
+    kettleOutput.processResult( result );
+    logger.info( "[ " + result + " ]" );
   }
 
   /**
@@ -208,7 +207,8 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
    *                    Bypassing the cache also updates the cache with the new obtained result.
    * @return The result of executing the kettle transformation / job.
    */
-  private KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName, boolean bypassCache ) {
+  private KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName,
+                                             boolean bypassCache ) {
     // If no step name is defined use default step name.
     String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
@@ -234,6 +234,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
    * @param outputStepName The step name from where the result will be fetched.
    * @return The result of executing the kettle transformation / job.
    */
-  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName );
+  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParameters,
+                                                           String outputStepName );
 
 }

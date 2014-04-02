@@ -102,7 +102,12 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     job.waitUntilFinished();
 
     KettleResult result = new KettleResult();
-    result.setResult( this.getResult( job, stepName ) );
+    Result stepResult = this.getResult( job, stepName );
+    // TODO: do copy values from org.pentaho.di.core.Result
+    result.setWasExecutedSuccessfully( stepResult.getResult() );
+    result.setExitStatus( stepResult.getExitStatus() );
+    result.setFiles( stepResult.getResultFilesList() );
+    result.setNumberOfErrors( stepResult.getNrErrors() );
     result.setKettleType( KettleElementHelper.KettleType.JOB );
 
     // clear request parameters

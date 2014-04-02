@@ -13,8 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
-import org.pentaho.di.core.Result;
-import org.pentaho.di.core.row.RowMetaInterface;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 
@@ -37,61 +35,37 @@ public class InferedKettleOutput extends KettleOutput {
   }
 
   @Override
-  public void processResult() {
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
 
     logger.debug( "Process Infered" );
 
-        /*
-         *  If nothing specified, the behavior will be:
-         *  Jobs and Transformations with result filenames: ResultFiles
-         *   Without filenames:
-         *    * Jobs: ResultOnly
-         *    * Transformations:
-         *      * Just one cell: SingleCell
-         *      * Regular resultset: Json
-         */
-    Result result = getResult();
+    /*
+     *  If nothing specified, the behavior will be:
+     *  Jobs and Transformations with result filenames: ResultFiles
+     *   Without filenames:
+     *    * Jobs: ResultOnly
+     *    * Transformations:
+     *      * Just one cell: SingleCell
+     *      * Regular resultset: Json
+     */
 
-    if ( result.getResultFilesList().size() > 0 ) {
-      this.resultFilesKettleOutput.processResult();
+    if ( result.getFiles().size() > 0 ) {
+      this.resultFilesKettleOutput.processResult( result );
 
     } else if ( getKettleType() == KettleElementHelper.KettleType.JOB ) {
-      this.resultOnlyKettleOutput.processResult();
+      this.resultOnlyKettleOutput.processResult( result );
 
-    } else if ( getRows().size() == 1 && getRowMeta().getValueMetaList().size() == 1 ) {
-      this.singleCellKettleOutput.processResult();
+    } else if ( result.getRows().size() == 1
+      && result.getRows().get( 0 ).getRowMeta().getValueMetaList().size() == 1 ) {
+      this.singleCellKettleOutput.processResult( result );
 
     } else {
-      this.jsonKettleOutput.processResult();
+      this.jsonKettleOutput.processResult( result );
     }
   }
 
   @Override
-  public void processResult( KettleResult result ) {
-    super.processResult( result );
-    this.processResult();
-  }
-
-  @Override
-  public boolean needsRowListener() { return true; }
-
-  @Override
-  public void storeRow( Object[] row, RowMetaInterface rowMeta ) {
-    super.storeRow( row, rowMeta );
-    // add rows to kettle outputs that required rowListener
-    this.jsonKettleOutput.storeRow( row, rowMeta );
-    this.singleCellKettleOutput.storeRow( row, rowMeta );
-  }
-
-  @Override
-  public void setResult( Result result ) {
-    super.setResult( result );
-    this.jsonKettleOutput.setResult( result );
-    this.resultFilesKettleOutput.setResult( result );
-    this.resultOnlyKettleOutput.setResult( result );
-    this.singleCellKettleOutput.setResult( result );
-  }
-
   public void setKettleType( KettleElementHelper.KettleType kettleType ) {
     super.setKettleType( kettleType );
     this.jsonKettleOutput.setKettleType( kettleType );
@@ -100,6 +74,7 @@ public class InferedKettleOutput extends KettleOutput {
     this.resultOnlyKettleOutput.setKettleType( kettleType );
   }
 
+  @Override
   public void setOutputStepName( String stepName ) {
     super.setOutputStepName( stepName );
     this.jsonKettleOutput.setOutputStepName( stepName );
@@ -107,14 +82,5 @@ public class InferedKettleOutput extends KettleOutput {
     this.singleCellKettleOutput.setOutputStepName( stepName );
     this.resultOnlyKettleOutput.setOutputStepName( stepName );
   }
-
-  public void setRowMeta( RowMetaInterface rowMeta ) {
-    super.setRowMeta( rowMeta );
-    this.jsonKettleOutput.setRowMeta( rowMeta );
-    this.resultFilesKettleOutput.setRowMeta( rowMeta );
-    this.singleCellKettleOutput.setRowMeta( rowMeta );
-    this.resultOnlyKettleOutput.setRowMeta( rowMeta );
-  }
-
 
 }

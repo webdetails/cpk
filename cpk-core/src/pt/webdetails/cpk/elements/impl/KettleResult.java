@@ -14,62 +14,82 @@
 package pt.webdetails.cpk.elements.impl;
 
 
-import org.pentaho.di.core.Result;
 import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.row.RowMetaInterface;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 // TODO: implement serializable to allow disk caching
 public final class KettleResult implements Serializable {
-  private Result result;
+
+  boolean executedSuccessfully;
+  int exitStatus;
+  long nrErrors;
+
+  List<ResultFile> files;
+
+  // TODO: these rows could be organized in a Map with rowMeta as keys
   private List<Row> rows;
-  private KettleElementHelper.KettleType kettleType;
 
-  public static class Row {
-
-    public Object[] row;
-    public RowMetaInterface rowMeta;
+  public static final class Row {
+    private final Object[] row;
+    private final RowMetaInterface rowMeta;
 
     public Row( RowMetaInterface rowMeta, Object[] row ) {
-      this.rowMeta = rowMeta;
       this.row = row;
+      this.rowMeta = rowMeta;
     }
+
+    public Object[] getRow() { return this.row; }
+    public RowMetaInterface getRowMeta() { return this.rowMeta; }
+  }
+
+  // TODO: Is this needed?
+  private KettleElementHelper.KettleType kettleType;
+
+  // TODO: this could be fecthed from this.nrErrors == 0?
+  public boolean wasExecutedSuccessfully() { return this.executedSuccessfully; }
+  public KettleResult setWasExecutedSuccessfully( boolean executedSuccessfully ) {
+    this.executedSuccessfully = executedSuccessfully;
+    return this;
+  }
+
+  public int getExitStatus() { return this.exitStatus; }
+  public KettleResult setExitStatus( int exitStatus ) {
+    this.exitStatus = exitStatus;
+    return this;
+  }
+
+  public long getNumberOfErrors() { return this.nrErrors; }
+  public KettleResult setNumberOfErrors( long nrErrors ) {
+    this.nrErrors = nrErrors;
+    return this;
+  }
+
+  // TODO: use org.apache.commons.vfs.FileObject instead? is the remaining info necessary?
+  public List<ResultFile> getFiles() { return this.files; }
+  public KettleResult setFiles( List<ResultFile> files ) {
+    this.files = files;
+    return this;
   }
 
   // Getters / Setters
 
-  // TODO: rename this method or class name. It should be easy to differentiate this class from org.pentaho.di.core.Result
-  public Result getResult() { return this.result; }
-
-  public KettleResult setResult( Result result ) {
-    this.result = result;
-    return this;
-  }
-
   public List<Row> getRows() { return this.rows; }
 
-  public List<ResultFile> getFiles() {
-    if ( this.result == null ) {
-      return Collections.emptyList();
-    }
-
-    return this.result.getResultFilesList();
-  }
-
-  public KettleElementHelper.KettleType getKettleType() {
-    return this.kettleType;
-  }
-
+  public KettleElementHelper.KettleType getKettleType() { return this.kettleType; }
   public KettleResult setKettleType( KettleElementHelper.KettleType kettleType ) {
     this.kettleType = kettleType;
     return this;
   }
 
+
+
   // Constructors
+
+  // TODO: do copy constructor from org.pentaho.di.core.Result?
 
   public KettleResult() {
     this.rows = new ArrayList<Row>();

@@ -13,26 +13,12 @@
 
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
-import org.pentaho.di.core.Result;
-import org.pentaho.di.core.row.RowMetaInterface;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 
 public interface IKettleOutput {
 
-  // TODO: remove this on reafactor and use processResult( KettleResult )
-  public void processResult();
-
   public void processResult( KettleResult result );
-
-  public boolean needsRowListener();
-
-  public void storeRow( Object[] row, RowMetaInterface rowMeta );
-
-
-  // can be probably replaced
-  public void setResult( Result r );
-  public Result getResult();
 
   // can be probably replaced
   public KettleElementHelper.KettleType getKettleType();

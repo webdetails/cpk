@@ -27,19 +27,17 @@ import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.io.Serializable;
 //import pt.webdetails.cpk.CpkEngine;
-//import pt.webdetails.cda.CdaEngine;
-//import pt.webdetails.cda.cache.monitor.CacheElementInfo;
-//import pt.webdetails.cda.cache.monitor.ExtraCacheInfo;
 
 //import javax.naming.OperationNotSupportedException;
-//import javax.swing.table.TableModel;
 //import java.io.IOException;
 //import java.io.InputStream;
 //import java.io.Serializable;
 
 // TODO: Add extends Serializable constraint to K and V?
-public class EHCache<K, V> implements ICache<K, V> {
+public class EHCache<K extends Serializable, V> implements ICache<K, V> {
   private static final Log logger = LogFactory.getLog( EHCache.class );
   private static CacheManager cacheManager;
 

@@ -27,60 +27,52 @@ public class ResultOnlyKettleOutput extends KettleOutput {
     super( response, download );
   }
 
-  @Override
-  public boolean needsRowListener() {
-    return false;
-  }
 
-  @Override
-  public void processResult() {
+  public static final class ResultStruct {
+    boolean result;
+    int exitStatus;
+    int nrRows;
+    long nrErrors;
 
-    ObjectMapper mapper = new ObjectMapper();
-
-    class ResultStruct {
-      boolean result;
-      int exitStatus, nrRows, nrErrors;
-
-      public ResultStruct( Result result ) {
-        this.result = result.getResult();
-        this.exitStatus = result.getExitStatus();
-        this.nrRows = ( result.getRows() == null ) ? 0 : result.getRows().size();
-        this.nrErrors = (int) result.getNrErrors();
-      }
-
-      @JsonProperty( "result" )
-      public boolean isResult() {
-        return result;
-      }
-
-      @JsonProperty( "exitStatus" )
-      public int getExitStatus() {
-        return exitStatus;
-      }
-
-      @JsonProperty( "nrRows" )
-      public int getNrRows() {
-        return nrRows;
-      }
-
-      @JsonProperty( "nrErrors" )
-      public int getNrErrors() {
-        return nrErrors;
-      }
+    public ResultStruct( KettleResult result ) {
+      this.result = result.wasExecutedSuccessfully();
+      this.exitStatus = result.getExitStatus();
+      this.nrRows = ( result.getRows() == null ) ? 0 : result.getRows().size();
+      this.nrErrors = result.getNumberOfErrors();
     }
 
-    ResultStruct resultStruct = new ResultStruct( this.getResult() );
+    @JsonProperty( "result" )
+    public boolean isResult() {
+      return result;
+    }
 
-    try {
-      mapper.writeValue( this.getOut(), resultStruct );
-    } catch ( IOException ex ) {
-      this.logger.fatal( null, ex );
+    @JsonProperty( "exitStatus" )
+    public int getExitStatus() {
+      return exitStatus;
+    }
+
+    @JsonProperty( "nrRows" )
+    public int getNrRows() {
+      return nrRows;
+    }
+
+    @JsonProperty( "nrErrors" )
+    public long getNrErrors() {
+      return nrErrors;
     }
   }
 
   @Override
   public void processResult( KettleResult result ) {
     super.processResult( result );
-    this.processResult();
+
+    ResultStruct resultStruct = new ResultStruct( result );
+
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      mapper.writeValue( this.getOut(), resultStruct );
+    } catch ( IOException ex ) {
+      this.logger.fatal( null, ex );
+    }
   }
 }

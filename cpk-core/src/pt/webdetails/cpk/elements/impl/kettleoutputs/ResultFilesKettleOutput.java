@@ -14,6 +14,7 @@
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.vfs.FileObject;
 import org.apache.commons.vfs.FileSystemException;
 import org.apache.commons.vfs.FileType;
 import org.pentaho.di.core.ResultFile;
@@ -26,6 +27,7 @@ import pt.webdetails.cpk.utils.ZipUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,33 +39,32 @@ public class ResultFilesKettleOutput extends KettleOutput {
   }
 
   @Override
-  public boolean needsRowListener() {
-    return false;
-  }
-
-  @Override
-  public void processResult() {
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
     try {
       logger.debug( "Process Result Files" );
 
-      // Singe file? Just write it to the outputstream
-      List<ResultFile> filesList = getResult().getResultFilesList();
+      List<FileObject> files = new ArrayList<FileObject>(  );
+      for ( ResultFile resultFile : result.getFiles() ) {
+        files.add( resultFile.getFile() );
+      }
 
       HttpServletResponse response = this.getResponse();
 
-      if ( filesList.isEmpty() ) {
+      if ( files.isEmpty() ) {
         logger.warn( "Processing result files but no files found" );
         this.getResponse().setStatus(HttpServletResponse.SC_NO_CONTENT  );
         return;
-      } else if ( filesList.size() == 1 && filesList.get( 0 ).getFile().getType() == FileType.FILE ) {
-        ResultFile file = filesList.get( 0 );
+      } else if ( files.size() == 1 && files.get( 0 ).getType() == FileType.FILE ) {
+        // Singe file? Just write it to the outputstream
+        FileObject file = files.get( 0 );
 
         // Do we know the mime type?
-        String mimeType = MimeTypes.getMimeType( file.getFile().getName().getExtension() );
+        String mimeType = MimeTypes.getMimeType( file.getName().getExtension() );
         if ( this.getDownload() ) {
           try {
-            long attachmentSize = file.getFile().getContent().getInputStream().available();
-            CpkUtils.setResponseHeaders( response, mimeType, file.getFile().getName().getBaseName(),
+            long attachmentSize = file.getContent().getInputStream().available();
+            CpkUtils.setResponseHeaders( response, mimeType, file.getName().getBaseName(),
               attachmentSize );
           } catch ( Exception e ) {
             logger.error( "Problem setting the attachment size: " + e );
@@ -75,7 +76,7 @@ public class ResultFilesKettleOutput extends KettleOutput {
 
 
         try {
-          IOUtils.copy( KettleVFS.getInputStream( file.getFile() ), response.getOutputStream() );
+          IOUtils.copy( KettleVFS.getInputStream( file ), response.getOutputStream() );
         } catch ( Exception ex ) {
           logger.warn( "Failed to copy file to outputstream: " + Util.getExceptionDescription( ex ) );
         }
@@ -84,7 +85,7 @@ public class ResultFilesKettleOutput extends KettleOutput {
         // Build a zip / tar and ship it over!
 
         ZipUtil zip = new ZipUtil();
-        zip.buildZip( filesList );
+        zip.buildZipFromFileObjectList( files );
 
         CpkUtils.setResponseHeaders( response, MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
         try {
@@ -99,12 +100,6 @@ public class ResultFilesKettleOutput extends KettleOutput {
     } catch ( FileSystemException ex ) {
       Logger.getLogger( ResultFilesKettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
     }
-  }
-
-  @Override
-  public void processResult( KettleResult result ) {
-    super.processResult( result );
-    this.processResult();
   }
 
 }

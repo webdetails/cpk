@@ -28,22 +28,20 @@ public class SingleCellKettleOutput extends KettleOutput {
   }
 
   @Override
-  public boolean needsRowListener() {
-    return true;
-  }
+  public void processResult( KettleResult result ) {
+    super.processResult( result );
 
-  @Override
-  public void processResult() {
     this.logger.debug( "Process Single Cell - print it" );
 
     // TODO - make sure this is correct
 
     try {
 
-      Object result = getRows().get( 0 )[ 0 ];
-      if ( result != null ) {
+      // TODO: check rows stored in kettleResults
+      Object cell = result.getRows().get( 0 ).getRow()[ 0 ];
+      if ( cell != null ) {
         OutputStream out = this.getOut();
-        out.write( result.toString().getBytes( ENCODING ) );
+        out.write( cell.toString().getBytes( ENCODING ) );
         out.flush();
       }
 
@@ -52,12 +50,5 @@ public class SingleCellKettleOutput extends KettleOutput {
     } catch ( IOException ex ) {
       this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
-
-  }
-
-  @Override
-  public void processResult( KettleResult result ) {
-    super.processResult( result );
-    this.processResult();
   }
 }

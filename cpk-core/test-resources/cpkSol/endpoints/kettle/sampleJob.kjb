@@ -12,6 +12,11 @@
   <modified_date>2013&#x2f;07&#x2f;04 18&#x3a;48&#x3a;22.641</modified_date>
     <parameters>
         <parameter>
+            <name>cpk.cacheResults</name>
+            <default_value>false</default_value>
+            <description/>
+        </parameter>
+        <parameter>
             <name>cpk.executeAtStart</name>
             <default_value>true</default_value>
             <description/>

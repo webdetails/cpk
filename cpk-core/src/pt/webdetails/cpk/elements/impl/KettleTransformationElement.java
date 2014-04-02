@@ -13,6 +13,7 @@
 
 package pt.webdetails.cpk.elements.impl;
 
+import org.pentaho.di.core.Result;
 import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.exception.KettleException;
@@ -114,7 +115,12 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
         transformation.startThreads(); // all the operations to get step names need to be placed above this line
         transformation.waitUntilFinished();
 
-        result.setResult( transformation.getResult() );
+        Result stepResult = transformation.getResult();
+        // TODO: do copy values from org.pentaho.di.core.Result
+        result.setWasExecutedSuccessfully( stepResult.getResult() );
+        result.setExitStatus( stepResult.getExitStatus() );
+        result.setFiles( stepResult.getResultFilesList() );
+        result.setNumberOfErrors( stepResult.getNrErrors() );
         result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
 
       } else {
