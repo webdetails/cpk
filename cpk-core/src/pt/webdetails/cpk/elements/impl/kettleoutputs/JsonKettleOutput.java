@@ -15,12 +15,14 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.row.RowMetaInterface;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class JsonKettleOutput extends KettleOutput {
@@ -35,9 +37,10 @@ public class JsonKettleOutput extends KettleOutput {
 
     // TODO: This is assuming that all rows have the same metadata! This could lead to an error.
     RowMetaInterface rowMeta = result.getRows().size() > 0 ? result.getRows().get( 0 ).getRowMeta() : null;
+    int rowSize = rowMeta.size();
     Collection<Object[]> rows = new ArrayList<Object[]>();
-    for ( KettleResult.Row row : result.getRows() ) {
-      rows.add( row.getRow() );
+    for ( RowMetaAndData row : result.getRows() ) {
+      rows.add( Arrays.copyOfRange( row.getData(), 0, rowSize ) );
     }
 
     RowsJson rowsJson = new RowsJson( rows, rowMeta );

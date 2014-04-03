@@ -13,91 +13,38 @@
 
 package pt.webdetails.cpk.cache;
 
-//import mondrian.olap.InvalidArgumentException;
 import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-import net.sf.ehcache.Status;
-//import net.sf.ehcache.config.CacheConfiguration;
-//import org.apache.commons.io.IOUtils;
-//import org.apache.commons.lang.StringUtils;
 import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.Configuration;
-import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.Serializable;
-//import pt.webdetails.cpk.CpkEngine;
 
-//import javax.naming.OperationNotSupportedException;
-//import java.io.IOException;
-//import java.io.InputStream;
-//import java.io.Serializable;
-
-// TODO: Add extends Serializable constraint to K and V?
-public class EHCache<K extends Serializable, V> implements ICache<K, V> {
+public class EHCache<K extends Serializable, V extends Serializable> implements ICache<K, V> {
   private static final Log logger = LogFactory.getLog( EHCache.class );
-  private static CacheManager cacheManager;
-
   private Cache cache = null;
 
-  private int timeToLiveSeconds = 60; //TODO
-
-  static {
-    try {
-      CacheConfiguration cacheConfiguration = new CacheConfiguration();
-      cacheConfiguration.setEternal( true );
-      cacheConfiguration.setDiskPersistent( false );
-      cacheConfiguration.setMemoryStoreEvictionPolicyFromObject( MemoryStoreEvictionPolicy.LFU );
-
-      Configuration cacheManagerConfiguration = new Configuration();
-      cacheManagerConfiguration.setDefaultCacheConfiguration( cacheConfiguration );
-
-      cacheManager = CacheManager.create();
-    } catch ( CacheException e ) {
-      logger.fatal( "Failed to create cache manager.", e );
-    }
+  private synchronized CacheManager getCacheManager( ) {
+    return CacheManager.create();
   }
 
-
-  private static synchronized CacheManager getCacheManager( ) {
-    return cacheManager;
-  }
-
-  protected static synchronized Cache getCacheFromManager( String cacheName ) throws CacheException {
-    CacheManager cacheManager = getCacheManager();
-    if ( !cacheManager.cacheExists( cacheName ) ) {
-      cacheManager.addCache( cacheName );
+  public EHCache( CacheConfiguration cacheConfiguration ) {
+    Cache cache = this.getCacheManager().getCache( cacheConfiguration.getName() );
+    if ( cache == null ) {
+      cache = new Cache( cacheConfiguration );
+      this.getCacheManager().addCache( cache );
     }
 
-    return cacheManager.getCache( cacheName );
-  }
-
-
-  //Constructors
-  // TODO add ttlSec to constructors
-
-  public EHCache( final Cache cache ) {
     this.cache = cache;
   }
-
-  public EHCache( String cacheName ) {
-    this( getCacheFromManager( cacheName ) );
-  }
-
-
 
   // TODO
   @Override
   public void put( K key, V value ) {
     final Element storeElement = new Element( key, value );
-    //storeElement.setTimeToLive( this.timeToLiveSeconds );
-    //storeElement.setTimeToIdle( this.timeToLiveSeconds );
-    storeElement.setEternal( true );
     this.cache.put( storeElement );
-    //this.cache.flush();
 
     // Print cache status size
     logger.debug( "Cache status: " + this.cache.getMemoryStoreSize() + " in memory, "
@@ -152,19 +99,6 @@ public class EHCache<K extends Serializable, V> implements ICache<K, V> {
   @SuppressWarnings( "unchecked" )
   public Iterable<K> getKeys() {
     return this.cache.getKeys();
-  }
-
-  public void shutdownIfRunning() {
-    if ( cacheManager != null ) {
-      if ( cache != null ) {
-        cache.flush();
-      }
-      if ( cacheManager.getStatus() == Status.STATUS_ALIVE ) {
-        logger.debug( "Shutting down cache manager." );
-        cacheManager.shutdown();
-        cacheManager = null;
-      }
-    }
   }
 
 }

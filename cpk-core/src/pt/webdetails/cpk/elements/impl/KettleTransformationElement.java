@@ -33,6 +33,7 @@ import pt.webdetails.cpk.elements.IDataSourceProvider;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement<TransMeta> implements IDataSourceProvider {
@@ -80,7 +81,8 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
     // If no step name is defined use default step name.
     String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
-    final KettleResult result = new KettleResult();
+    KettleResult result = null;
+    final List<RowMetaAndData> rows = new ArrayList<RowMetaAndData>(  );
 
     try {
       // clean?
@@ -106,8 +108,8 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
         // Store the written rows for later processing
         step.addRowListener( new RowAdapter() {
           @Override
-          public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] row ) throws KettleStepException {
-            result.getRows().add( new KettleResult.Row( rowMeta, row ) );
+          public void rowWrittenEvent( RowMetaInterface rowMeta, Object[] data ) throws KettleStepException {
+            rows.add( new RowMetaAndData( rowMeta, data ) );
           }
         } );
 
@@ -115,12 +117,9 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
         transformation.startThreads(); // all the operations to get step names need to be placed above this line
         transformation.waitUntilFinished();
 
-        Result stepResult = transformation.getResult();
-        // TODO: do copy values from org.pentaho.di.core.Result
-        result.setWasExecutedSuccessfully( stepResult.getResult() );
-        result.setExitStatus( stepResult.getExitStatus() );
-        result.setFiles( stepResult.getResultFilesList() );
-        result.setNumberOfErrors( stepResult.getNrErrors() );
+        Result transformationResult = transformation.getResult();
+        transformationResult.setRows( rows );
+        result = new KettleResult( transformationResult );
         result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
 
       } else {
@@ -131,7 +130,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       KettleElementHelper.clearParameters( meta, addedParameters );
 
     } catch ( KettleException e ) {
-      logger.debug( "KETTLE EXCEPTION: " + e );
+      logger.debug( "KETTLE EXCEPTION: " + e, e );
     }
 
     long end = System.currentTimeMillis();

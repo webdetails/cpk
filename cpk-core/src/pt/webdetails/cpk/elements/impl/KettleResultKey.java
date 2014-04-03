@@ -1,10 +1,14 @@
 package pt.webdetails.cpk.elements.impl;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.Map;
 
 public final class KettleResultKey implements Serializable {
+  private static final long serialVersionUID = 928475298475L;
+
   private final String pluginId;
   private final String elementId;
   private final String outputStepName;
@@ -19,9 +23,7 @@ public final class KettleResultKey implements Serializable {
   public String getOutputStepName() {
     return this.outputStepName;
   }
-  public Map<String, String> getParameters() {
-    return this.parameters;
-  }
+  public Map<String, String> getParameters() { return Collections.unmodifiableMap( this.parameters ); }
 
 
   // Constructors
@@ -30,7 +32,7 @@ public final class KettleResultKey implements Serializable {
     this.pluginId = pluginId;
     this.elementId = elementId;
     this.outputStepName = outputStepName;
-    this.parameters = Collections.unmodifiableMap( parameters );
+    this.parameters = new Hashtable<String, String>( parameters );
   }
 
   @Override
@@ -68,6 +70,7 @@ public final class KettleResultKey implements Serializable {
   }
 
   // Serialization
+
 
 
 }

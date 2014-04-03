@@ -13,6 +13,8 @@
 
 package pt.webdetails.cpk;
 
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,6 +43,7 @@ public class CpkEngine {
 
   private static Log logger = LogFactory.getLog( CpkEngine.class );
   private static final String DEFAULT_SETTINGS_FILENAME = "cpk.xml";
+  private static final String DEFAULT_CACHE_SETTINGS_FILENAME = "ehcache-cpk.xml";
   private ICpkEnvironment environment;
   private String settingsFilename;
   private TreeMap<String, IElement> elementsMap;
@@ -48,8 +51,24 @@ public class CpkEngine {
 
   private ICache<KettleResultKey, KettleResult> kettleResultCache;
 
-  private String getCacheName() { return CpkEngine.class.getPackage().getName() + ":"
-    + this.getEnvironment().getPluginName(); }
+  private String getCacheName() {
+    return CpkEngine.class.getPackage().getName() + ":" + this.getEnvironment().getPluginName();
+  }
+
+  private CacheConfiguration getDefaultCacheConfiguration() {
+    CacheConfiguration cacheConfiguration = new CacheConfiguration();
+    cacheConfiguration.setName( this.getCacheName() );
+    cacheConfiguration.setMaxEntriesLocalHeap( 2 );
+    cacheConfiguration.setMaxEntriesLocalDisk( 10000 );
+    cacheConfiguration.setTimeToIdleSeconds( 0 );
+    cacheConfiguration.setTimeToLiveSeconds( 0 );
+    cacheConfiguration.overflowToDisk( true );
+    cacheConfiguration.diskPersistent( false );
+    cacheConfiguration.setDiskExpiryThreadIntervalSeconds( 60 );
+    cacheConfiguration.setMemoryStoreEvictionPolicyFromObject( MemoryStoreEvictionPolicy.LFU );
+
+    return cacheConfiguration;
+  }
 
   public ICache<KettleResultKey, KettleResult> getKettleResultCache() {
     return this.kettleResultCache;
@@ -80,7 +99,7 @@ public class CpkEngine {
     // initialize engine
     this.environment = environment;
     this.settingsFilename = DEFAULT_SETTINGS_FILENAME;
-    this.kettleResultCache = new EHCache<KettleResultKey, KettleResult>( this.getCacheName() );
+    this.kettleResultCache = new EHCache<KettleResultKey, KettleResult>( this.getDefaultCacheConfiguration() );
     this.reload();
   }
 
@@ -233,7 +252,7 @@ public class CpkEngine {
       }
       // TODO: check if setting the cache should be done in init, passing the cache as an argument.
       if ( element instanceof IDataSourceProvider ) {
-        ( (IDataSourceProvider) element ).setCache( this.getKettleResultCache()  );
+        ( (IDataSourceProvider) element ).setCache( this.getKettleResultCache() );
       }
     } catch ( Exception e ) {
       logger.error( "Failed: missing '" + typeClass + "'" );

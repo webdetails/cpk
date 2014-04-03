@@ -38,7 +38,7 @@ public class SingleCellKettleOutput extends KettleOutput {
     try {
 
       // TODO: check rows stored in kettleResults
-      Object cell = result.getRows().get( 0 ).getRow()[ 0 ];
+      Object cell = result.getRows().get( 0 ).getData()[ 0 ];
       if ( cell != null ) {
         OutputStream out = this.getOut();
         out.write( cell.toString().getBytes( ENCODING ) );
