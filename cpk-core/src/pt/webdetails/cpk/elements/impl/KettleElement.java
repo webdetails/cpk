@@ -78,7 +78,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
-      this.processRequestGetResult( Collections.<String, String>emptyMap(), DEFAULT_STEP );
+      this.processRequest( Collections.<String, String>emptyMap(), DEFAULT_STEP );
     }
 
     String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
@@ -93,7 +93,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
 
   @Override
-  @JsonIgnore // TODO: this is required due to direct serialization in cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
+  @JsonIgnore // TODO: this JsonIgnore annotation is required due to direct serialization in cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
   public ICache<KettleResultKey, KettleResult> getCache() {
     return this.cache;
   }
@@ -105,7 +105,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
   }
 
 
-  protected final IKettleOutput inferResult( String kettleOutputType, String stepName, boolean download
+  protected final IKettleOutput inferResult( String kettleOutputType, boolean download
     , HttpServletResponse httpResponse ) {
 
      /*
@@ -135,9 +135,6 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
       kettleOutputType = "Infered";
     }
 
-    if ( stepName == null || stepName.isEmpty() ) {
-      stepName = DEFAULT_STEP;
-    }
 
     IKettleOutput kettleOutput;
     if ( kettleOutputType.equalsIgnoreCase( "Json" ) ) {
@@ -151,8 +148,6 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
     } else {
       kettleOutput = new InferedKettleOutput( httpResponse, download );
     }
-
-    kettleOutput.setOutputStepName( stepName );
 
     return kettleOutput;
   }
@@ -182,22 +177,28 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
 
   // TODO: kettleoutput processing should be in the REST service layer?
-  protected final void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
-                                 boolean download, boolean bypassCache, HttpServletResponse httpResponse ) {
+  private void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
+                               boolean download, boolean bypassCache, HttpServletResponse httpResponse ) {
+    KettleResult result = this.processRequest( kettleParameters, outputStepName, bypassCache );
+    if ( result != null ) {
+      // Choose kettle output type and process result with it
+      IKettleOutput kettleOutput = this.inferResult( outputType, download, httpResponse );
+      kettleOutput.processResult( result );
+      logger.info( "[ " + result + " ]" );
+    }
+  }
 
-    // Process request and get result
+  private KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
+                                       boolean bypassCache ) {
     KettleResult  result;
     if ( this.isCacheResultsEnabled() ) {
       result = this.processRequestCached( kettleParameters, outputStepName, bypassCache );
     } else {
-      result = this.processRequestGetResult( kettleParameters, outputStepName );
+      result = this.processRequest( kettleParameters, outputStepName );
     }
-
-    // Choose kettle output type and process result with it
-    IKettleOutput kettleOutput = this.inferResult( outputType, outputStepName, download, httpResponse );
-    kettleOutput.processResult( result );
-    logger.info( "[ " + result + " ]" );
+    return result;
   }
+
 
   /**
    * Executes the kettle transformation / job if no cached valued is found or cache bypass is specified.
@@ -222,7 +223,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
       }
     }
 
-    result = this.processRequestGetResult( kettleParameters, stepName );
+    result = this.processRequest( kettleParameters, stepName );
     // put new, or update current, result in cache.
     this.getCache().put( cacheKey, result );
     return result;
@@ -234,7 +235,6 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
    * @param outputStepName The step name from where the result will be fetched.
    * @return The result of executing the kettle transformation / job.
    */
-  protected abstract KettleResult processRequestGetResult( Map<String, String> kettleParameters,
-                                                           String outputStepName );
+  protected abstract KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName );
 
 }

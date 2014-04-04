@@ -78,7 +78,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
 
 
   @Override
-  public KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
+  public KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting job '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 

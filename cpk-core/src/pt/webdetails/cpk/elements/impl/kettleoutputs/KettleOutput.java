@@ -15,8 +15,6 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import pt.webdetails.cpk.elements.impl.KettleElementHelper.KettleType;
-import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -26,9 +24,6 @@ public abstract class KettleOutput implements IKettleOutput {
 
   protected Log logger = LogFactory.getLog( this.getClass() );
   protected final String ENCODING = "UTF-8";
-
-  private String outputStepName = "OUTPUT";
-  private KettleType kettleType;
 
   private OutputStream out;
   private HttpServletResponse response;
@@ -48,43 +43,9 @@ public abstract class KettleOutput implements IKettleOutput {
     }
   }
 
-  @Override
-  public KettleType getKettleType() {
-    return kettleType;
-  }
-
-  @Override
-  public void setKettleType( KettleType kettleType ) {
-    this.kettleType = kettleType;
-  }
-
   protected boolean getDownload() { return this.download; }
 
   protected HttpServletResponse getResponse() { return this.response; }
 
-
-  @Override
-  public void processResult( KettleResult result ) {
-    if ( result != null ) {
-      this.setKettleType( result.getKettleType() );
-
-      // TODO change for to set
-      //for ( KettleResult.Row row : result.getRows() ) {
-      //  this.storeRow( row.row, row.rowMeta );
-      //}
-    }
-  }
-
-  // is this needed?
-  @Override
-  public String getOutputStepName() {
-    return outputStepName;
-  }
-
-  // is this needed?
-  @Override
-  public void setOutputStepName( String outputStepName ) {
-    this.outputStepName = outputStepName;
-  }
 
 }

@@ -13,18 +13,10 @@
 
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
-import pt.webdetails.cpk.elements.impl.KettleElementHelper;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 
 public interface IKettleOutput {
 
   public void processResult( KettleResult result );
 
-  // can be probably replaced
-  public KettleElementHelper.KettleType getKettleType();
-  public void setKettleType( KettleElementHelper.KettleType kettleType );
-
-  // not needed
-  public void setOutputStepName( String stepName );
-  public String getOutputStepName();
 }

@@ -74,7 +74,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
 
   // TODO: this method should replace processRequest eventually
   @Override
-  protected KettleResult processRequestGetResult( Map<String, String> kettleParameters, String outputStepName ) {
+  protected KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 

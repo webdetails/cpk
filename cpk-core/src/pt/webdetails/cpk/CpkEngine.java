@@ -58,7 +58,7 @@ public class CpkEngine {
   private CacheConfiguration getDefaultCacheConfiguration() {
     CacheConfiguration cacheConfiguration = new CacheConfiguration();
     cacheConfiguration.setName( this.getCacheName() );
-    cacheConfiguration.setMaxEntriesLocalHeap( 2 );
+    cacheConfiguration.setMaxEntriesLocalHeap( 10 );
     cacheConfiguration.setMaxEntriesLocalDisk( 10000 );
     cacheConfiguration.setTimeToIdleSeconds( 0 );
     cacheConfiguration.setTimeToLiveSeconds( 0 );

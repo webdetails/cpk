@@ -20,67 +20,39 @@ import javax.servlet.http.HttpServletResponse;
 
 public class InferedKettleOutput extends KettleOutput {
 
-  private JsonKettleOutput jsonKettleOutput;
-  private ResultFilesKettleOutput resultFilesKettleOutput;
-  private ResultOnlyKettleOutput resultOnlyKettleOutput;
-  private SingleCellKettleOutput singleCellKettleOutput;
-
   public InferedKettleOutput( HttpServletResponse response, boolean download ) {
     super( response, download );
-
-    this.jsonKettleOutput = new JsonKettleOutput( response, download );
-    this.resultFilesKettleOutput = new ResultFilesKettleOutput( response, download );
-    this.resultOnlyKettleOutput = new ResultOnlyKettleOutput( response, download );
-    this.singleCellKettleOutput = new SingleCellKettleOutput( response, download );
   }
 
+  /**
+   * Chooses one processing method according to the information in the Result.
+   * Results from a job / transformation with filenames: use ResultFilesKettleOuput
+   *   Without filenames:
+   *    * If it is a Job result: use ResultOnlyKettleOutput
+   *    * If it is a Transformation result:
+   *      * If result has just one cell: us SingleCellKettleOutput
+   * Otherwise: use JsonKettleOutput
+   * @param result The kettle job/transformation Result to process.
+   */
   @Override
   public void processResult( KettleResult result ) {
-    super.processResult( result );
+    logger.debug( "Process Inferred" );
 
-    logger.debug( "Process Infered" );
-
-    /*
-     *  If nothing specified, the behavior will be:
-     *  Jobs and Transformations with result filenames: ResultFiles
-     *   Without filenames:
-     *    * Jobs: ResultOnly
-     *    * Transformations:
-     *      * Just one cell: SingleCell
-     *      * Regular resultset: Json
-     */
-
+    IKettleOutput kettleOutput;
     if ( result.getFiles().size() > 0 ) {
-      this.resultFilesKettleOutput.processResult( result );
+      kettleOutput = new ResultFilesKettleOutput( this.getResponse(), this.getDownload() );
 
-    } else if ( getKettleType() == KettleElementHelper.KettleType.JOB ) {
-      this.resultOnlyKettleOutput.processResult( result );
+    } else if ( result.getKettleType() == KettleElementHelper.KettleType.JOB ) {
+      kettleOutput = new ResultOnlyKettleOutput( this.getResponse(), this.getDownload() );
 
     } else if ( result.getRows().size() == 1
       && result.getRows().get( 0 ).getRowMeta().getValueMetaList().size() == 1 ) {
-      this.singleCellKettleOutput.processResult( result );
+      kettleOutput = new SingleCellKettleOutput( this.getResponse(), this.getDownload() );
 
     } else {
-      this.jsonKettleOutput.processResult( result );
+      kettleOutput = new JsonKettleOutput( this.getResponse(), this.getDownload() );
     }
-  }
 
-  @Override
-  public void setKettleType( KettleElementHelper.KettleType kettleType ) {
-    super.setKettleType( kettleType );
-    this.jsonKettleOutput.setKettleType( kettleType );
-    this.resultFilesKettleOutput.setKettleType( kettleType );
-    this.singleCellKettleOutput.setKettleType( kettleType );
-    this.resultOnlyKettleOutput.setKettleType( kettleType );
+    kettleOutput.processResult( result );
   }
-
-  @Override
-  public void setOutputStepName( String stepName ) {
-    super.setOutputStepName( stepName );
-    this.jsonKettleOutput.setOutputStepName( stepName );
-    this.resultFilesKettleOutput.setOutputStepName( stepName );
-    this.singleCellKettleOutput.setOutputStepName( stepName );
-    this.resultOnlyKettleOutput.setOutputStepName( stepName );
-  }
-
 }

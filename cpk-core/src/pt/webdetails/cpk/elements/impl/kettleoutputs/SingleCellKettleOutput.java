@@ -29,8 +29,6 @@ public class SingleCellKettleOutput extends KettleOutput {
 
   @Override
   public void processResult( KettleResult result ) {
-    super.processResult( result );
-
     this.logger.debug( "Process Single Cell - print it" );
 
     // TODO - make sure this is correct

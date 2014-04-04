@@ -86,6 +86,7 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   @Override
   public void clear() {
     this.cache.removeAll();
+    logger.info( "Cache " + this.cache.getName() + " was cleared." );
   }
 
   public Cache getCache() {

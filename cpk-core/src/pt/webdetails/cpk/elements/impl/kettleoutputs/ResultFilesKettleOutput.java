@@ -40,9 +40,8 @@ public class ResultFilesKettleOutput extends KettleOutput {
 
   @Override
   public void processResult( KettleResult result ) {
-    super.processResult( result );
+    logger.debug( "Process Result Files" );
     try {
-      logger.debug( "Process Result Files" );
 
       List<FileObject> files = new ArrayList<FileObject>(  );
       for ( ResultFile resultFile : result.getFiles() ) {

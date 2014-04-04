@@ -33,14 +33,17 @@ public class JsonKettleOutput extends KettleOutput {
 
   @Override
   public void processResult( KettleResult result ) {
-    super.processResult( result );
+    logger.debug( "Process Json" );
 
     // TODO: This is assuming that all rows have the same metadata! This could lead to an error.
     RowMetaInterface rowMeta = result.getRows().size() > 0 ? result.getRows().get( 0 ).getRowMeta() : null;
-    int rowSize = rowMeta.size();
     Collection<Object[]> rows = new ArrayList<Object[]>();
-    for ( RowMetaAndData row : result.getRows() ) {
-      rows.add( Arrays.copyOfRange( row.getData(), 0, rowSize ) );
+    if ( rowMeta != null ) {
+      int rowSize = rowMeta.size();
+      for ( RowMetaAndData row : result.getRows() ) {
+        // array needs copy to truncate null elements
+        rows.add( Arrays.copyOfRange( row.getData(), 0, rowSize ) );
+      }
     }
 
     RowsJson rowsJson = new RowsJson( rows, rowMeta );
