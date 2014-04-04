@@ -36,7 +36,6 @@ public final class KettleResult implements Serializable {
   protected transient Log logger = LogFactory.getLog( this.getClass() );
   private transient Result result;
 
-  // TODO: Is this needed?
   private KettleElementHelper.KettleType kettleType;
 
   // Getters / Setters

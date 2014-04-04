@@ -52,7 +52,7 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   }
 
   // TODO
-  @SuppressWarnings( "unchecked" )
+  //@SuppressWarnings( "unchecked" )
   @Override
   public V get( K key ) {
     ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
