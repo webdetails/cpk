@@ -38,6 +38,8 @@ import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement<TransMeta> implements IDataSourceProvider {
 
+  protected static final String DEFAULT_OUTPUT_STEP_NAME = "OUTPUT";
+
   public KettleTransformationElement() {
   }
 
@@ -97,9 +99,9 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
 
       // create a new transformation
       Trans transformation = new Trans( this.meta );
-
       transformation.prepareExecution( null ); // get the step threads after this line
 
+      // get step to listen to written rows
       StepInterface step = this.getRunThread(transformation, outputStepName );
       if ( step != null ) {
         // Store the written rows for later processing
@@ -109,19 +111,21 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
             rows.add( new RowMetaAndData( rowMeta, data ) );
           }
         } );
-
-        // start transformation threads and wait until they finish
-        transformation.startThreads(); // all the operations to get step names need to be placed above this line
-        transformation.waitUntilFinished();
-
-        Result transformationResult = transformation.getResult();
-        transformationResult.setRows( rows );
-        result = new KettleResult( transformationResult );
-        result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
-
       } else {
-        logger.error( "Couldn't find step '" + outputStepName + "' nor default output step '" + DEFAULT_OUTPUT_STEP_NAME + "'." );
+        logger.error( "Couldn't find step '" + outputStepName
+          + "' nor default output step '" + DEFAULT_OUTPUT_STEP_NAME + "'." );
       }
+
+      // start transformation threads and wait until they finish
+      transformation.startThreads(); // all the operations to get step names need to be placed above this line
+      transformation.waitUntilFinished();
+
+      // assemble kettle result
+      Result transformationResult = transformation.getResult();
+      rows.addAll( transformationResult.getRows() );
+      transformationResult.setRows( rows );
+      result = new KettleResult( transformationResult );
+      result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
 
       // clear request parameters
       KettleElementHelper.clearParameters( meta, addedParameters );
@@ -156,10 +160,14 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
     return step;
   }
 
+  /**
+   * Gets the names of the transformation steps which can be used for output.
+   * @return
+   */
   protected Collection<String> getOutputStepNames() {
     List<String> validOutputStepNames = new ArrayList<String>();
     for ( String name : this.meta.getStepNames() ) {
-      if ( this.isValidOutputStepName( name ) ) {
+      if ( this.isValidOutputName( name ) ) {
         validOutputStepNames.add( name );
       }
     }

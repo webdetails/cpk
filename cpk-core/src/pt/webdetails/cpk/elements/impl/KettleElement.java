@@ -32,9 +32,7 @@ import java.util.Map;
 
 public abstract class KettleElement<TMeta extends NamedParams> extends Element implements IDataSourceProvider {
 
-  protected static final String DEFAULT_OUTPUT_STEP_NAME = "OUTPUT";
-  protected static final String OUTPUT_STEP_NAME_PREFIX = "OUTPUT";
-  protected static final String KETTLEOUTPUT_CLASSES_NAMESPACE = "pt.webdetails.cpk.elements.impl.kettleOutputs";
+  protected static final String OUTPUT_NAME_PREFIX = "OUTPUT";
 
   private static final String CPK_CACHE_RESULTS = "cpk.cacheResults";
   private static final boolean CPK_CACHE_RESULTS_DEFAULT_VALUE = false;
@@ -79,7 +77,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
-      this.processRequest( Collections.<String, String>emptyMap(), DEFAULT_OUTPUT_STEP_NAME );
+      this.processRequest( Collections.<String, String>emptyMap(), null );
     }
 
     String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
@@ -119,11 +117,6 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
      *  4. csv - CSV output of the resultset
      *  5. SingleCell - We'll get the first line, first row
      *  6. Infered - Infering
-     *
-     *  By complexity:
-     *      These don't require rowListener:
-     *  1. ResultOnly
-     *  2. ResultFiles
      *
      *      These do:
      *  3. SingleCell
@@ -189,7 +182,8 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
     }
   }
 
-  private KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
+
+  public KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
                                        boolean bypassCache ) {
     KettleResult  result;
     if ( this.isCacheResultsEnabled() ) {
@@ -237,8 +231,8 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
    */
   protected abstract KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName );
 
-  protected boolean isValidOutputStepName( String stepName ) {
-    return stepName != null && stepName.startsWith( OUTPUT_STEP_NAME_PREFIX );
+  protected boolean isValidOutputName( String Name ) {
+    return Name != null && Name.startsWith( OUTPUT_NAME_PREFIX );
   }
 
 }

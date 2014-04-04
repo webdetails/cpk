@@ -85,7 +85,7 @@ public final class KettleResult implements Serializable {
       Document document = XMLHandler.loadXMLString( resultXmlString );
       Node resultNode = XMLHandler.getSubNode( document, Result.XML_TAG );
       this.result = new Result( resultNode );
-    } catch ( KettleException e) {
+    } catch ( KettleException e ) {
       this.logger.error( "Unable to deserialize KettleResult.", e );
     }
   }

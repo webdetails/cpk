@@ -1,6 +1,5 @@
 package pt.webdetails.cpk.elements.impl;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Hashtable;

@@ -23,12 +23,15 @@ import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class KettleJobElement extends KettleElement<JobMeta> implements IDataSourceProvider {
+
+  protected static final String DEFAULT_OUTPUT_JOB_ENTRY_NAME = "OUTPUT";
 
   public KettleJobElement() {
   }
@@ -55,35 +58,48 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
   }
 
 
-  private Result getResult( Job job, String outputStepName ) {
-    // TODO: refactor / optimize results processing
+  private Result getResult( Job job, String jobEntryName ) {
+    // by default return the result from the job
     Result result = job.getResult();
 
-    // TODO: refactor as part of kettleOutput variable
-    JobEntryResult entryResult = null;
-    List<JobEntryResult> jobEntryResultList = job.getJobEntryResults();
-    if ( jobEntryResultList.size() > 0 ) {
-      for ( int i = 0; i < jobEntryResultList.size(); i++ ) {
-        entryResult = jobEntryResultList.get( i );
-        if ( entryResult != null ) {
-          if ( entryResult.getJobEntryName().equals( outputStepName ) ) {
-            result = entryResult.getResult();
-            break;
-          }
+    // If no jobEntry name is defined use default jobEntry name.
+    jobEntryName = !( jobEntryName == null || jobEntryName.isEmpty() ) ? jobEntryName : DEFAULT_OUTPUT_JOB_ENTRY_NAME;
+
+    List<String> outputJobEntryNames = this.getOutputJobEntryNames( job.getJobMeta() );
+
+    if ( outputJobEntryNames.contains( jobEntryName ) ) {
+      List<JobEntryResult> jobEntryResultList = job.getJobEntryResults();
+      for ( JobEntryResult jobEntryResult : jobEntryResultList ) {
+        if ( jobEntryResult != null && jobEntryResult.getJobEntryName().equals( jobEntryName ) ) {
+          result = jobEntryResult.getResult();
+          break;
         }
       }
     }
+
     return result;
   }
 
+  /**
+   * Gets the names of the job entries where the result can be fetched to return in a cpk endpoint.
+   * @return
+   */
+  private List<String> getOutputJobEntryNames( JobMeta meta ) {
+    List<String> validOutputJobEntryNames = new ArrayList<String>();
+    for ( int iJobEntry = 0; iJobEntry < meta.nrJobEntries(); iJobEntry++ ) {
+      String jobEntryName = meta.getJobEntry( iJobEntry ).getName();
+      if ( this.isValidOutputName( jobEntryName ) ) {
+        validOutputJobEntryNames.add( jobEntryName );
+      }
+    }
+    return validOutputJobEntryNames;
+  }
 
   @Override
-  public KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName ) {
+  public KettleResult processRequest( Map<String, String> kettleParameters, String outputJobEntryName ) {
     logger.info( "Starting job '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 
-    // If no step name is defined use default step name.
-    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_OUTPUT_STEP_NAME;
 
     // update parameters
     KettleElementHelper.updateParameters( this.meta );
@@ -101,7 +117,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     job.start();
     job.waitUntilFinished();
 
-    Result jobResult = this.getResult( job, stepName );
+    Result jobResult = this.getResult( job, outputJobEntryName );
     KettleResult result = new KettleResult( jobResult );
     result.setKettleType( KettleElementHelper.KettleType.JOB );
 
