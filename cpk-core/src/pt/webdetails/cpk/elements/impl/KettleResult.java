@@ -36,7 +36,11 @@ public final class KettleResult implements Serializable {
   protected transient Log logger = LogFactory.getLog( this.getClass() );
   private transient Result result;
 
-  private KettleElementHelper.KettleType kettleType;
+  private KettleType kettleType;
+
+  public static enum KettleType {
+    JOB, TRANSFORMATION
+  }
 
   // Getters / Setters
 
@@ -54,8 +58,8 @@ public final class KettleResult implements Serializable {
    * Gets the type (job or transformation) of the kettle that returned this result.
    * @return
    */
-  public KettleElementHelper.KettleType getKettleType() { return this.kettleType; }
-  public KettleResult setKettleType( KettleElementHelper.KettleType kettleType ) {
+  public KettleType getKettleType() { return this.kettleType; }
+  public KettleResult setKettleType( KettleType kettleType ) {
     this.kettleType = kettleType;
     return this;
   }

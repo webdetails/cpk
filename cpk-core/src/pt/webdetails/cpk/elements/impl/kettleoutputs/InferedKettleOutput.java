@@ -13,7 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
-import pt.webdetails.cpk.elements.impl.KettleElementHelper;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
@@ -42,7 +41,7 @@ public class InferedKettleOutput extends KettleOutput {
     if ( result.getFiles().size() > 0 ) {
       kettleOutput = new ResultFilesKettleOutput( this.getResponse(), this.getDownload() );
 
-    } else if ( result.getKettleType() == KettleElementHelper.KettleType.JOB ) {
+    } else if ( result.getKettleType() == KettleResult.KettleType.JOB ) {
       kettleOutput = new ResultOnlyKettleOutput( this.getResponse(), this.getDownload() );
 
     } else if ( result.getRows().size() == 1

@@ -40,7 +40,6 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     this.cache = cache;
   }
 
-  // TODO
   @Override
   public void put( K key, V value ) {
     final Element storeElement = new Element( key, value );
@@ -51,8 +50,6 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
       + this.cache.getDiskStoreSize() + " in disk" );
   }
 
-  // TODO
-  //@SuppressWarnings( "unchecked" )
   @Override
   public V get( K key ) {
     ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
@@ -91,15 +88,6 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
 
   public Cache getCache() {
     return this.cache;
-  }
-
-  public boolean remove( K key ) {
-    return this.cache.remove( key );
-  }
-
-  @SuppressWarnings( "unchecked" )
-  public Iterable<K> getKeys() {
-    return this.cache.getKeys();
   }
 
 }

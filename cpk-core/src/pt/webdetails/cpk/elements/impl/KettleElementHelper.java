@@ -261,8 +261,4 @@ public final class KettleElementHelper {
     }
   }
 
-  // TODO: remove in kettleOutput refactor
-  public static enum KettleType {
-    JOB, TRANSFORMATION
-  }
 }

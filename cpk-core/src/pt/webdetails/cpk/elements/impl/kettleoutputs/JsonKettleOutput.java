@@ -35,7 +35,7 @@ public class JsonKettleOutput extends KettleOutput {
   public void processResult( KettleResult result ) {
     logger.debug( "Process Json" );
 
-    // TODO: This is assuming that all rows have the same metadata! This could lead to an error.
+    // TODO: Check: This is assuming that all rows have the same metadata! This could eventually lead to an error.
     RowMetaInterface rowMeta = result.getRows().size() > 0 ? result.getRows().get( 0 ).getRowMeta() : null;
     Collection<Object[]> rows = new ArrayList<Object[]>();
     if ( rowMeta != null ) {

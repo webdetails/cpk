@@ -119,7 +119,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
 
     Result jobResult = this.getResult( job, outputJobEntryName );
     KettleResult result = new KettleResult( jobResult );
-    result.setKettleType( KettleElementHelper.KettleType.JOB );
+    result.setKettleType( KettleResult.KettleType.JOB );
 
     // clear request parameters
     KettleElementHelper.clearParameters( this.meta, addedParameters );

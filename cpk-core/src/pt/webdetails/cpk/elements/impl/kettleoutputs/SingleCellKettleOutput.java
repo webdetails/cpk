@@ -31,11 +31,7 @@ public class SingleCellKettleOutput extends KettleOutput {
   public void processResult( KettleResult result ) {
     this.logger.debug( "Process Single Cell - print it" );
 
-    // TODO - make sure this is correct
-
     try {
-
-      // TODO: check rows stored in kettleResults
       Object cell = result.getRows().get( 0 ).getData()[ 0 ];
       if ( cell != null ) {
         OutputStream out = this.getOut();

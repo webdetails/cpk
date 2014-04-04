@@ -19,6 +19,7 @@ import org.pentaho.di.core.parameters.NamedParams;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
+import pt.webdetails.cpk.elements.IKettleElement;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.InferedKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.JsonKettleOutput;
@@ -30,7 +31,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.Map;
 
-public abstract class KettleElement<TMeta extends NamedParams> extends Element implements IDataSourceProvider {
+public abstract class KettleElement<TMeta extends NamedParams>
+  extends Element
+  implements IDataSourceProvider, IKettleElement {
 
   protected static final String OUTPUT_NAME_PREFIX = "OUTPUT";
 
@@ -170,7 +173,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
   }
 
 
-  // TODO: kettleoutput processing should be in the REST service layer?
+  // TODO: kettleoutput processing should be in the REST service layer
   private void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
                                boolean download, boolean bypassCache, HttpServletResponse httpResponse ) {
     KettleResult result = this.processRequest( kettleParameters, outputStepName, bypassCache );
@@ -183,6 +186,15 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
   }
 
 
+  /**
+   * Executes Executes the kettle transformation / job.
+   * @param kettleParameters Parameters to be passed into the kettle transformation/job.
+   * @param outputStepName The step name from where the result will be fetched.
+   * @param bypassCache If true, forces the request to be processed even if a value for it already exists in the cache.
+   *                    Bypassing the cache also updates the cache with the new obtained result.
+   * @return The result of executing the kettle transformation / job.
+   */
+  @Override
   public KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
                                        boolean bypassCache ) {
     KettleResult  result;

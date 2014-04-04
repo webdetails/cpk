@@ -23,6 +23,7 @@ public interface IDataSourceProvider {
 
   public DataSource getDataSource();
 
+  // TODO: move get/set Cache to another interface ( e.g. ICachable<K,V>)
   // TODO: change KettleResultKey, KettleResult to interfaces?
   public ICache<KettleResultKey, KettleResult> getCache();
   public IDataSourceProvider setCache( ICache<KettleResultKey, KettleResult> cache );

@@ -125,7 +125,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       rows.addAll( transformationResult.getRows() );
       transformationResult.setRows( rows );
       result = new KettleResult( transformationResult );
-      result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
+      result.setKettleType( KettleResult.KettleType.TRANSFORMATION );
 
       // clear request parameters
       KettleElementHelper.clearParameters( meta, addedParameters );
