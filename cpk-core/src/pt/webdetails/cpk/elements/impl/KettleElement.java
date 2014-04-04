@@ -32,7 +32,8 @@ import java.util.Map;
 
 public abstract class KettleElement<TMeta extends NamedParams> extends Element implements IDataSourceProvider {
 
-  protected static final String DEFAULT_STEP = "OUTPUT";
+  protected static final String DEFAULT_OUTPUT_STEP_NAME = "OUTPUT";
+  protected static final String OUTPUT_STEP_NAME_PREFIX = "OUTPUT";
   protected static final String KETTLEOUTPUT_CLASSES_NAMESPACE = "pt.webdetails.cpk.elements.impl.kettleOutputs";
 
   private static final String CPK_CACHE_RESULTS = "cpk.cacheResults";
@@ -78,7 +79,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
 
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
-      this.processRequest( Collections.<String, String>emptyMap(), DEFAULT_STEP );
+      this.processRequest( Collections.<String, String>emptyMap(), DEFAULT_OUTPUT_STEP_NAME );
     }
 
     String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
@@ -105,8 +106,8 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
   }
 
 
-  protected final IKettleOutput inferResult( String kettleOutputType, boolean download
-    , HttpServletResponse httpResponse ) {
+  protected final IKettleOutput inferResult( String kettleOutputType, boolean download,
+                                             HttpServletResponse httpResponse ) {
 
      /*
      *  There are a few different types of kettle output processing.
@@ -210,10 +211,9 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
    */
   private KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName,
                                              boolean bypassCache ) {
-    // If no step name is defined use default step name.
-    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
 
-    KettleResultKey cacheKey = new KettleResultKey( this.getPluginId(), this.getId(), stepName, kettleParameters );
+    KettleResultKey cacheKey = new KettleResultKey( this.getPluginId(), this.getId(),
+      outputStepName, kettleParameters );
 
     KettleResult result;
     if ( !bypassCache ) {
@@ -223,7 +223,7 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
       }
     }
 
-    result = this.processRequest( kettleParameters, stepName );
+    result = this.processRequest( kettleParameters, outputStepName );
     // put new, or update current, result in cache.
     this.getCache().put( cacheKey, result );
     return result;
@@ -236,5 +236,9 @@ public abstract class KettleElement<TMeta extends NamedParams> extends Element i
    * @return The result of executing the kettle transformation / job.
    */
   protected abstract KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName );
+
+  protected boolean isValidOutputStepName( String stepName ) {
+    return stepName != null && stepName.startsWith( OUTPUT_STEP_NAME_PREFIX );
+  }
 
 }

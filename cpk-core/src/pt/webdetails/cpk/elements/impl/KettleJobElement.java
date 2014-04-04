@@ -83,7 +83,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     long start = System.currentTimeMillis();
 
     // If no step name is defined use default step name.
-    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
+    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_OUTPUT_STEP_NAME;
 
     // update parameters
     KettleElementHelper.updateParameters( this.meta );

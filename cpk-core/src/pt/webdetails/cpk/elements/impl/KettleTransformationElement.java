@@ -78,9 +78,6 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 
-    // If no step name is defined use default step name.
-    String stepName = !( outputStepName == null || outputStepName.isEmpty() ) ? outputStepName : DEFAULT_STEP;
-
     KettleResult result = null;
     final List<RowMetaAndData> rows = new ArrayList<RowMetaAndData>(  );
 
@@ -103,7 +100,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
 
       transformation.prepareExecution( null ); // get the step threads after this line
 
-      StepInterface step = transformation.findRunThread( stepName );
+      StepInterface step = this.getRunThread(transformation, outputStepName );
       if ( step != null ) {
         // Store the written rows for later processing
         step.addRowListener( new RowAdapter() {
@@ -123,7 +120,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
         result.setKettleType( KettleElementHelper.KettleType.TRANSFORMATION );
 
       } else {
-        logger.error( "Couldn't find step '" + stepName + "'" );
+        logger.error( "Couldn't find step '" + outputStepName + "' nor default output step '" + DEFAULT_OUTPUT_STEP_NAME + "'." );
       }
 
       // clear request parameters
@@ -140,6 +137,35 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
     return result;
   }
 
+  /**
+   *
+   * @param transformation
+   * @param stepName
+   * @return
+   */
+  protected StepInterface getRunThread( Trans transformation, String stepName ) {
+    Collection<String> outputStepNames = this.getOutputStepNames();
+    StepInterface step;
+
+    if ( outputStepNames.contains( stepName ) ) {
+      step = transformation.findRunThread( stepName );
+    } else {
+      step = transformation.findRunThread( DEFAULT_OUTPUT_STEP_NAME );
+    }
+
+    return step;
+  }
+
+  protected Collection<String> getOutputStepNames() {
+    List<String> validOutputStepNames = new ArrayList<String>();
+    for ( String name : this.meta.getStepNames() ) {
+      if ( this.isValidOutputStepName( name ) ) {
+        validOutputStepNames.add( name );
+      }
+    }
+    return validOutputStepNames;
+  }
+
 
   public static void execute( String kettleTransformationPath ) {
     try {
@@ -153,7 +179,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       Trans transformation = new Trans( transMeta );
       // prepare execution
       transformation.prepareExecution( null );
-      StepInterface step = transformation.findRunThread( DEFAULT_STEP );
+      StepInterface step = transformation.findRunThread( DEFAULT_OUTPUT_STEP_NAME );
       if ( step != null ) {
         // start transformation threads and wait until they finish
         transformation.startThreads();
