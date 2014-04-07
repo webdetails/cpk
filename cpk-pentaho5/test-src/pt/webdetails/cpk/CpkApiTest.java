@@ -269,7 +269,7 @@ public class CpkApiTest {
     path.put( "path", "/create-result-rows" ); //kjb or ktr
     path.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
     path.put( "httprequest", new MockHttpServletRequest() );
-    request.put( "stepName", "copy rows to result" );
+    request.put( "stepName", "OUTPUT Copy rows to result" );
     request.put( "paramarg1", "value1" );
     request.put( "paramarg2", "value2" );
     request.put( "paramarg3", "value3" );

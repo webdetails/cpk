@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -11,12 +11,28 @@
 * the license for the specific language governing your rights and limitations.
 */
 
-package pt.webdetails.cpk.elements.impl.kettleoutputs;
+package pt.webdetails.cpk.cache;
 
-import pt.webdetails.cpk.elements.impl.KettleResult;
 
-public interface IKettleOutput {
+public interface ICache<K, V> {
 
-  public void processResult( KettleResult result );
+  /**
+   * Stores a key, value pair in the cache. If the cache already contains the given key, then the new value overrides the old.
+   * @param key
+   * @param value
+   */
+  void put( K key, V value );
+
+  /**
+   *
+   * @param key The key of the cached value.
+   * @return The cached value for the given key or null if not found.
+   */
+  V get( K key );
+
+  /**
+   * Removes all elements from cache.
+   */
+  void clear();
 
 }

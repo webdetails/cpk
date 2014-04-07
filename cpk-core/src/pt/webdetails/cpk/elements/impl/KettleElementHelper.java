@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
 *                
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -71,7 +71,7 @@ public final class KettleElementHelper {
       params.addParameterDefinition( paramName, defaultValue, null );
       logger.debug( "Added kettle param '" + paramName + "' with default value '" + defaultValue + "'" );
     } catch ( DuplicateParamException e ) {
-      logger.debug( "Kettle param '" + paramName + "' already exists");
+      logger.debug( "Kettle param '" + paramName + "' already exists" );
     }
   }
 
@@ -163,7 +163,7 @@ public final class KettleElementHelper {
     return false;
   }
 
-  private static boolean addRequestParameter( NamedParams params, String paramName, String paramValue) {
+  private static boolean addRequestParameter( NamedParams params, String paramName, String paramValue ) {
     if ( isReservedName( paramName ) ) {
       logger.warn( "Request param '" + paramName + "' uses a reserved name in the Kettle job/transformation" );
       return false;
@@ -195,7 +195,46 @@ public final class KettleElementHelper {
     return addedParamNames;
   }
 
-  public static void clearRequestParameters( NamedParams params, Collection<String> paramNames ) {
+  /**
+   *
+   * @param kettleParams The parameters to add (set value) to params.
+   * @return The parameters that were added.
+   */
+  public static Collection<String> addKettleParameters( NamedParams params, Map<String, String> kettleParams ) {
+    LinkedList<String> addedParamNames = new LinkedList<String>();
+    if ( kettleParams != null ) {
+      for ( Map.Entry<String, String> parameter : kettleParams.entrySet() ) {
+        if ( addRequestParameter( params, parameter.getKey(),  parameter.getValue() ) ) {
+          addedParamNames.add( parameter.getKey() );
+        }
+      }
+    }
+    return addedParamNames;
+  }
+
+  /**
+   * Parses the map obtained from a httpRequest to get the kettle parameter name/value pairs.
+   * @param requestParams the map obtained from the httpRequest.
+   * @return The processed kettle parameter name/value.
+   */
+  public static Map<String, String> getKettleParameters( Map<String, Object> requestParams ) {
+    Map<String, String> parameters = new HashMap<String, String>();
+    if ( requestParams != null ) {
+      String paramName;
+      String paramValue;
+      for ( String key : requestParams.keySet() ) {
+        if ( key.startsWith( REQUEST_PARAM_PREFIX ) ) {
+          paramName = key.substring( REQUEST_PARAM_PREFIX.length() );
+          paramValue = requestParams.get( key ).toString();
+          parameters.put( paramName, paramValue );
+        }
+      }
+    }
+    return parameters;
+  }
+
+
+  public static void clearParameters( NamedParams params, Collection<String> paramNames ) {
     if ( paramNames != null ) {
       for ( String paramName : paramNames ) {
         setParameterValue( params, paramName, null );
@@ -206,8 +245,8 @@ public final class KettleElementHelper {
 
   // debug only
   public static void dump( NamedParams params, VariableSpace vars, String desc, boolean show ) {
-    logger.debug( desc + " has " + params.listParameters().length + " param(s) and " +
-      vars.listVariables().length + " var(s)" );
+    logger.debug( desc + " has " + params.listParameters().length + " param(s) and "
+      + vars.listVariables().length + " var(s)" );
     if ( show ) {
       String[] parameters = params.listParameters();
       Arrays.sort( parameters );
@@ -222,8 +261,4 @@ public final class KettleElementHelper {
     }
   }
 
-  // TODO: remove in kettleOutput refactor
-  public static enum KettleType {
-    JOB, TRANSFORMATION
-  }
 }

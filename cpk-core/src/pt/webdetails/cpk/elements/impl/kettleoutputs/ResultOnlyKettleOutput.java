@@ -15,7 +15,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.pentaho.di.core.Result;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -26,51 +26,49 @@ public class ResultOnlyKettleOutput extends KettleOutput {
     super( response, download );
   }
 
-  @Override
-  public boolean needsRowListener() {
-    return false;
+
+  public static final class ResultStruct {
+    boolean result;
+    int exitStatus;
+    int nrRows;
+    long nrErrors;
+
+    public ResultStruct( KettleResult result ) {
+      this.result = result.wasExecutedSuccessfully();
+      this.exitStatus = result.getExitStatus();
+      this.nrRows = ( result.getRows() == null ) ? 0 : result.getRows().size();
+      this.nrErrors = result.getNumberOfErrors();
+    }
+
+    @JsonProperty( "result" )
+    public boolean isResult() {
+      return result;
+    }
+
+    @JsonProperty( "exitStatus" )
+    public int getExitStatus() {
+      return exitStatus;
+    }
+
+    @JsonProperty( "nrRows" )
+    public int getNrRows() {
+      return nrRows;
+    }
+
+    @JsonProperty( "nrErrors" )
+    public long getNrErrors() {
+      return nrErrors;
+    }
   }
 
   @Override
-  public void processResult() {
+  public void processResult( KettleResult result ) {
+    this.logger.debug( "Process Result Only" );
 
-    ObjectMapper mapper = new ObjectMapper();
-
-    class ResultStruct {
-      boolean result;
-      int exitStatus, nrRows, nrErrors;
-
-      public ResultStruct( Result result ) {
-        this.result = result.getResult();
-        this.exitStatus = result.getExitStatus();
-        this.nrRows = ( result.getRows() == null ) ? 0 : result.getRows().size();
-        this.nrErrors = (int) result.getNrErrors();
-      }
-
-      @JsonProperty( "result" )
-      public boolean isResult() {
-        return result;
-      }
-
-      @JsonProperty( "exitStatus" )
-      public int getExitStatus() {
-        return exitStatus;
-      }
-
-      @JsonProperty( "nrRows" )
-      public int getNrRows() {
-        return nrRows;
-      }
-
-      @JsonProperty( "nrErrors" )
-      public int getNrErrors() {
-        return nrErrors;
-      }
-    }
-
-    ResultStruct resultStruct = new ResultStruct( this.getResult() );
+    ResultStruct resultStruct = new ResultStruct( result );
 
     try {
+      ObjectMapper mapper = new ObjectMapper();
       mapper.writeValue( this.getOut(), resultStruct );
     } catch ( IOException ex ) {
       this.logger.fatal( null, ex );

@@ -14,6 +14,8 @@
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
+import pt.webdetails.cpk.elements.impl.KettleResult;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,22 +28,14 @@ public class SingleCellKettleOutput extends KettleOutput {
   }
 
   @Override
-  public boolean needsRowListener() {
-    return true;
-  }
-
-  @Override
-  public void processResult() {
+  public void processResult( KettleResult result ) {
     this.logger.debug( "Process Single Cell - print it" );
 
-    // TODO - make sure this is correct
-
     try {
-
-      Object result = getRows().get( 0 )[ 0 ];
-      if ( result != null ) {
+      Object cell = result.getRows().get( 0 ).getData()[ 0 ];
+      if ( cell != null ) {
         OutputStream out = this.getOut();
-        out.write( result.toString().getBytes( ENCODING ) );
+        out.write( cell.toString().getBytes( ENCODING ) );
         out.flush();
       }
 
@@ -50,6 +44,5 @@ public class SingleCellKettleOutput extends KettleOutput {
     } catch ( IOException ex ) {
       this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
-
   }
 }

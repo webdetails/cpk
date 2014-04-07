@@ -20,6 +20,7 @@ import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 // This class aids in the construction of a CDA-like JSON output (made to be build with jackson library)
@@ -27,13 +28,13 @@ public class RowsJson {
   private ArrayList<Object[]> rows;
   private RowMetaInterface rowsMeta;
 
-  public RowsJson( ArrayList<Object[]> rows, RowMetaInterface meta ) {
+  public RowsJson( Collection<Object[]> rows, RowMetaInterface meta ) {
     init( rows, meta );
   }
 
   @JsonIgnore
-  private void init( ArrayList<Object[]> rows, RowMetaInterface meta ) {
-    this.rows = rows;
+  private void init( Collection<Object[]> rows, RowMetaInterface meta ) {
+    this.rows = new ArrayList<Object[]>( rows );
     this.rowsMeta = meta != null ? meta : new RowMeta();
   }
 

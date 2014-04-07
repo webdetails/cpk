@@ -19,7 +19,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.dom4j.DocumentException;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
+import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.IElement;
+import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.elements.impl.KettleResultKey;
 import pt.webdetails.cpk.security.IAccessControl;
 import pt.webdetails.cpk.utils.CpkUtils;
 
@@ -34,14 +37,24 @@ public class CpkCoreService {
   private static final Log logger = LogFactory.getLog( CpkCoreService.class );
   private static final String ENCODING = "UTF-8";
 
+  private CpkEngine engine;
+
+  public CpkEngine getEngine() { return this.engine; }
+  public CpkCoreService setEngine( CpkEngine engine) {
+    this.engine = engine;
+    return this;
+  }
+
   public CpkCoreService( ICpkEnvironment environment ) {
-    CpkEngine.getInstance().init( environment );
+    // by default use the CpkEgine singleton.
+    this.setEngine( CpkEngine.getInstance() );
+    this.getEngine().init( environment );
   }
 
   public void createContent( Map<String, Map<String, Object>> bloatedMap )
     throws Exception {
 
-    IAccessControl accessControl = CpkEngine.getInstance().getEnvironment().getAccessControl();
+    IAccessControl accessControl = this.getEngine().getEnvironment().getAccessControl();
     HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
     logger.debug( "Creating content" );
 
@@ -50,18 +63,18 @@ public class CpkCoreService {
     IElement element = null;
 
     if ( path == null || path.equals( "/" ) ) {
-      element = CpkEngine.getInstance().getDefaultElement();
+      element = this.getEngine().getDefaultElement();
       if ( element != null ) {
         String url = element.getId();
         if ( path == null ) {
           // We need to put the http redirection on the right level
-          url = CpkEngine.getInstance().getEnvironment().getPluginName() + "/" + url;
+          url = this.getEngine().getEnvironment().getPluginName() + "/" + url;
         }
         CpkUtils.redirect( response, url );
       }
     }
     if ( path != null ) {
-      element = CpkEngine.getInstance().getElement( path.substring( 1 ).toLowerCase() );
+      element = this.getEngine().getElement( path.substring( 1 ).toLowerCase() );
     }
     if ( element != null ) {
       if ( accessControl.isAllowed( element ) ) {
@@ -85,17 +98,22 @@ public class CpkCoreService {
 
   public void refresh( OutputStream out, Map<String, Map<String, Object>> bloatedMap )
     throws DocumentException, IOException {
-    IAccessControl accessControl = CpkEngine.getInstance().getEnvironment().getAccessControl();
+    IAccessControl accessControl = this.getEngine().getEnvironment().getAccessControl();
     if ( accessControl.isAdmin() ) {
-      logger.info( "Refreshing CPK plugin " + CpkEngine.getInstance().getEnvironment().getPluginName() );
-      CpkEngine.getInstance().reload();
+      logger.info( "Refreshing CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
+      this.getEngine().reload();
       status( out, bloatedMap );
     } else {
       accessControl.throwAccessDenied( (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" ) );
     }
   }
 
-
+  public void clearKettleResultsCache() {
+    ICache<KettleResultKey, KettleResult> cache = this.getEngine().getKettleResultCache();
+    if( cache != null) {
+      cache.clear();
+    }
+  }
 
   public void status( OutputStream out, Map<String, Map<String, Object>> bloatedMap )
     throws DocumentException, IOException {
@@ -110,35 +128,35 @@ public class CpkCoreService {
 
       logger.debug( "## status ##" );
 
-      logger.info( "Showing status for CPK plugin " + CpkEngine.getInstance().getEnvironment().getPluginName() );
+      logger.info( "Showing status for CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
       // Only set the headers if we have access to the response (via parameterProviders).
       if ( response != null ) {
         CpkUtils.setResponseHeaders( response, "text/plain" );
       }
-      writeMessage( out, CpkEngine.getInstance().getStatus().getStatus() );
+      writeMessage( out, this.getEngine().getStatus().getStatus() );
     //}
   }
 
   public void statusJson( OutputStream out, HttpServletResponse response ) throws DocumentException, IOException {
 
 
-    logger.info( "Showing status for CPK plugin " + CpkEngine.getInstance().getEnvironment().getPluginName() );
+    logger.info( "Showing status for CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
 
     // Only set the headers if we have access to the response (via parameterProviders).
     if ( response != null ) {
       CpkUtils.setResponseHeaders( response, "text/plain" );
     }
 
-    writeMessage( out, CpkEngine.getInstance().getStatus().getStatusJson() );
+    writeMessage( out, this.getEngine().getStatus().getStatusJson() );
   }
 
   public boolean hasElement( String elementId ) {
-    Map<String, IElement> elementsMap = CpkEngine.getInstance().getElementsMap();
+    Map<String, IElement> elementsMap = this.getEngine().getElementsMap();
     return elementsMap.containsKey( elementId.toLowerCase() );
   }
 
   public Collection<IElement> getElements() {
-    return CpkEngine.getInstance().getElements();
+    return this.getEngine().getElements();
   }
 
   public void getElementsList( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
@@ -153,7 +171,7 @@ public class CpkCoreService {
       String json = null;
 
       try {
-        json = mapper.writeValueAsString( CpkEngine.getInstance().getElements() );
+        json = mapper.writeValueAsString( this.getEngine().getElements() );
         writeMessage( out, json );
       } catch ( IOException ex ) {
         logger.error( "Error getting json elements", ex );
@@ -162,7 +180,7 @@ public class CpkCoreService {
   }
 
   public IElement getDefaultElement() {
-    return CpkEngine.getInstance().getDefaultElement();
+    return this.getEngine().getDefaultElement();
   }
 
 

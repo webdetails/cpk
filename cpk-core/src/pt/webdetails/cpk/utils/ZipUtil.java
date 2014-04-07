@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,9 +47,17 @@ public class ZipUtil {
 
 
   public void buildZip( List<ResultFile> filesList ) {
+    List<FileObject> files = new ArrayList<FileObject>( );
+    for ( ResultFile resultFile : filesList ) {
+      files.add( resultFile.getFile() );
+    }
+    this.buildZipFromFileObjectList( files );
+  }
+
+  public void buildZipFromFileObjectList( List<FileObject> files ) {
     try {
       ZipOutputStream zipOut;
-      topFilename = getTopFileName( filesList );
+      topFilename = getTopFileName( files );
       zipName = this.topFilename.getBaseName();
       File tempZip = null;
 
@@ -67,7 +76,7 @@ public class ZipUtil {
 
       logger.info( "Building '" + zipName + "'..." );
 
-      zipOut = writeEntriesToZip( filesList, zipOut );
+      zipOut = writeEntriesToZip( files, zipOut );
 
       zipOut.close();
       fos.close();
@@ -81,6 +90,7 @@ public class ZipUtil {
     }
   }
 
+
   public void closeInputStream() {
     try {
       fis.close();
@@ -89,36 +99,31 @@ public class ZipUtil {
     }
   }
 
-  private ZipOutputStream writeEntriesToZip( List<ResultFile> filesList, ZipOutputStream zipOut ) {
+  private ZipOutputStream writeEntriesToZip( Collection<FileObject> files, ZipOutputStream zipOut ) {
     int i = 0;
     try {
-      for ( ResultFile resFile : filesList ) {
+      for ( FileObject file : files ) {
         i++;
-        logger.debug( "Files to process:" + filesList.size() );
+        logger.debug( "Files to process:" + files.size() );
         logger.debug( "Files processed: " + i );
-        logger.debug( "Files remaining: " + ( filesList.size() - i ) );
-        logger.debug( resFile.getFile().getName().getPath() );
-        FileObject myFile = resFile.getFile();
+        logger.debug( "Files remaining: " + ( files.size() - i ) );
+        logger.debug( file.getName().getPath() );
 
-        fileListing.add( removeTopFilenamePathFromString( myFile.getName().getPath() ) );
+        fileListing.add( removeTopFilenamePathFromString( file.getName().getPath() ) );
 
         ZipEntry zip = null;
 
-        if ( myFile.getType() == FileType.FOLDER ) {
-          zip = new ZipEntry( removeTopFilenamePathFromString( myFile.getName().getPath() + File.separator + "" ) );
+        if ( file.getType() == FileType.FOLDER ) {
+          zip = new ZipEntry( removeTopFilenamePathFromString( file.getName().getPath() + File.separator + "" ) );
           zipOut.putNextEntry( zip );
         } else {
-          zip = new ZipEntry( removeTopFilenamePathFromString( myFile.getName().getPath() ) );
+          zip = new ZipEntry( removeTopFilenamePathFromString( file.getName().getPath() ) );
           zipOut.putNextEntry( zip );
-          byte[] bytes = IOUtils.toByteArray( myFile.getContent().getInputStream() );
+          byte[] bytes = IOUtils.toByteArray( file.getContent().getInputStream() );
           zipOut.write( bytes );
           zipOut.closeEntry();
-
         }
-
-
       }
-
 
     } catch ( Exception exception ) {
       logger.error( exception );
@@ -203,15 +208,17 @@ public class ZipUtil {
     return 0;
   }
 
-  private FileName getTopFileName( List<ResultFile> filesList ) {
+
+
+  private FileName getTopFileName( List<FileObject> files ) {
     FileName topFileName = null;
     try {
-      if ( !filesList.isEmpty() ) {
-        topFileName = filesList.get( 0 ).getFile().getParent().getName();
+      if ( !files.isEmpty() ) {
+        topFileName = files.get( 0 ).getParent().getName();
       }
-      for ( ResultFile resFile : filesList ) {
-        logger.debug( resFile.getFile().getParent().getName().getPath() );
-        FileName myFileName = resFile.getFile().getParent().getName();
+      for ( FileObject file : files ) {
+        logger.debug( file.getParent().getName().getPath() );
+        FileName myFileName = file.getParent().getName();
         if ( topFileName.getURI().length() > myFileName.getURI().length() ) {
           topFileName = myFileName;
         }

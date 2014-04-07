@@ -13,6 +13,8 @@
 
 package pt.webdetails.cpk;
 
+import net.sf.ehcache.config.CacheConfiguration;
+import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,8 +22,13 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import pt.webdetails.cpk.cache.EHCache;
+import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
+import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
+import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.elements.impl.KettleResultKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,10 +43,36 @@ public class CpkEngine {
 
   private static Log logger = LogFactory.getLog( CpkEngine.class );
   private static final String DEFAULT_SETTINGS_FILENAME = "cpk.xml";
+  private static final String DEFAULT_CACHE_SETTINGS_FILENAME = "ehcache-cpk.xml";
   private ICpkEnvironment environment;
   private String settingsFilename;
   private TreeMap<String, IElement> elementsMap;
   private IElement defaultElement;
+
+  private ICache<KettleResultKey, KettleResult> kettleResultCache;
+
+  private String getCacheName() {
+    return CpkEngine.class.getPackage().getName() + ":" + this.getEnvironment().getPluginName();
+  }
+
+  private CacheConfiguration getDefaultCacheConfiguration() {
+    CacheConfiguration cacheConfiguration = new CacheConfiguration();
+    cacheConfiguration.setName( this.getCacheName() );
+    cacheConfiguration.setMaxEntriesLocalHeap( 10 );
+    cacheConfiguration.setMaxEntriesLocalDisk( 10000 );
+    cacheConfiguration.setTimeToIdleSeconds( 0 );
+    cacheConfiguration.setTimeToLiveSeconds( 0 );
+    cacheConfiguration.overflowToDisk( true );
+    cacheConfiguration.diskPersistent( false );
+    cacheConfiguration.setDiskExpiryThreadIntervalSeconds( 60 );
+    cacheConfiguration.setMemoryStoreEvictionPolicyFromObject( MemoryStoreEvictionPolicy.LFU );
+
+    return cacheConfiguration;
+  }
+
+  public ICache<KettleResultKey, KettleResult> getKettleResultCache() {
+    return this.kettleResultCache;
+  }
 
   private CpkEngine() {
     this.elementsMap = new TreeMap<String, IElement>();
@@ -66,6 +99,7 @@ public class CpkEngine {
     // initialize engine
     this.environment = environment;
     this.settingsFilename = DEFAULT_SETTINGS_FILENAME;
+    this.kettleResultCache = new EHCache<KettleResultKey, KettleResult>( this.getDefaultCacheConfiguration() );
     this.reload();
   }
 
@@ -77,7 +111,11 @@ public class CpkEngine {
     this.environment.reload();
 
     // load elements
-    loadElements();
+    this.loadElements();
+
+    if ( this.getKettleResultCache() != null ) {
+      this.getKettleResultCache().clear();
+    }
 
     long end = System.currentTimeMillis();
     logger.info( "Finished initialization of CPK PLugin '" + this.environment.getPluginName() + "' in "
@@ -114,7 +152,7 @@ public class CpkEngine {
 
   // TODO: refactor
   public Status getStatus() {
-    if (this.defaultElement != null ) {
+    if ( this.defaultElement != null ) {
       return new Status( this.elementsMap, this.defaultElement.getName(), this.environment );
     } else {
       return new Status( this.elementsMap, "", this.environment );
@@ -205,10 +243,16 @@ public class CpkEngine {
     try {
       // create element wrapper
       Element element = (Element) Class.forName( typeClass ).newInstance();
-      if ( element.init( id, type, filePath, adminOnly ) ) {
+      // TODO: using plugin name as id. Should a plugin also have an Id and not just a name?
+      String pluginId = this.getEnvironment().getPluginName();
+      if ( element.init( pluginId, id, type, filePath, adminOnly ) ) {
         // add element to elements map
         this.elementsMap.put( id, element );
         logger.info( "Done " + element.toString() );
+      }
+      // TODO: check if setting the cache should be done in init, passing the cache as an argument.
+      if ( element instanceof IDataSourceProvider ) {
+        ( (IDataSourceProvider) element ).setCache( this.getKettleResultCache() );
       }
     } catch ( Exception e ) {
       logger.error( "Failed: missing '" + typeClass + "'" );

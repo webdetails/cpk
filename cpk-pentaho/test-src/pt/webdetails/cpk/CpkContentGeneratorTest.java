@@ -269,7 +269,7 @@ public class CpkContentGeneratorTest {
     ICommonParameterProvider p1 = new CommonParameterProvider();
     p.put( "path", "/create-result-rows" );//kjb or ktr
     p.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
-    p1.put( "stepName", "copy rows to result" );
+    p1.put( "stepName", "OUTPUT Copy rows to result" );
     p1.put( "paramarg1", "value1" );
     p1.put( "paramarg2", "value2" );
     p1.put( "paramarg3", "value3" );

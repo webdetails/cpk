@@ -206,7 +206,7 @@ public class CpkCoreServiceTest {
     requestMap.put( "paramarg1", "value1" );
     requestMap.put( "paramarg2", "value2" );
     requestMap.put( "paramarg3", "value3" );
-    requestMap.put( "stepName", "copy rows to result" );
+    requestMap.put( "stepName", "OUTPUT Copy rows to result" );
 
     pathMap.put( "path", "/create-result-rows" );
     pathMap.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );

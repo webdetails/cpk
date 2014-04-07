@@ -15,9 +15,15 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.pentaho.di.core.RowMetaAndData;
+import org.pentaho.di.core.row.RowMetaInterface;
+import pt.webdetails.cpk.elements.impl.KettleResult;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class JsonKettleOutput extends KettleOutput {
 
@@ -26,17 +32,24 @@ public class JsonKettleOutput extends KettleOutput {
   }
 
   @Override
-  public boolean needsRowListener() {
-    return true;
-  }
+  public void processResult( KettleResult result ) {
+    logger.debug( "Process Json" );
 
-  @Override
-  public void processResult() {
-    ObjectMapper mapper = new ObjectMapper();
+    // TODO: Check: This is assuming that all rows have the same metadata! This could eventually lead to an error.
+    RowMetaInterface rowMeta = result.getRows().size() > 0 ? result.getRows().get( 0 ).getRowMeta() : null;
+    Collection<Object[]> rows = new ArrayList<Object[]>();
+    if ( rowMeta != null ) {
+      int rowSize = rowMeta.size();
+      for ( RowMetaAndData row : result.getRows() ) {
+        // array needs copy to truncate null elements
+        rows.add( Arrays.copyOfRange( row.getData(), 0, rowSize ) );
+      }
+    }
 
-    RowsJson rowsJson = new RowsJson( this.getRows(), this.getRowMeta() );
+    RowsJson rowsJson = new RowsJson( rows, rowMeta );
 
     try {
+      ObjectMapper mapper = new ObjectMapper();
       mapper.writeValue( this.getOut(), rowsJson );
     } catch ( IOException ex ) {
       this.logger.error( "IO Error processing Json kettle output.", ex );

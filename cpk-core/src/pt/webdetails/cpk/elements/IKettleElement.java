@@ -13,34 +13,19 @@
 
 package pt.webdetails.cpk.elements;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-
+import pt.webdetails.cpk.elements.impl.KettleResult;
 import java.util.Map;
 
-public interface IElement {
+public interface IKettleElement {
 
-  @JsonProperty( "type" )
-  public String getType();
+  /**
+   * Executes the kettle transformation / job.
+   * @param kettleParameters Parameters to be passed into the kettle transformation/job.
+   * @param outputStepName The step name from where the result will be fetched.
+   * @param bypassCache If true, forces the request to be processed even if a value for it already exists in the cache.
+   *                    Bypassing the cache also updates the cache with the new obtained result.
+   * @return The result of executing the kettle transformation / job.
+   */
+  KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName, boolean bypassCache );
 
-  @JsonProperty( "pluginId" )
-  public String getPluginId();
-
-  @JsonProperty( "id" )
-  public String getId();
-
-  @JsonProperty( "name" )
-  public String getName();
-
-  @JsonProperty( "location" )
-  public String getLocation();
-
-  @JsonProperty( "adminOnly" )
-  public boolean isAdminOnly();
-
-  @JsonProperty( "isRenderable" )
-  public boolean isRenderable();
-
-  @JsonIgnore
-  public void processRequest( Map<String, Map<String, Object>> bloatedMap );
 }
