@@ -59,6 +59,7 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
       Thread.currentThread().setContextClassLoader( this.getClass().getClassLoader() );
       final Element element = cache.get( key );
       if ( element != null ) {
+        @SuppressWarnings( "unchecked" )
         final V value = (V) element.getObjectValue();
         if ( value != null ) {
           if ( logger.isDebugEnabled() ) {
