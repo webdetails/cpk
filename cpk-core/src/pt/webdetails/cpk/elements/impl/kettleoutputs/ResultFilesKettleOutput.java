@@ -14,12 +14,12 @@
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.vfs.FileName;
 import org.apache.commons.vfs.FileObject;
 import org.apache.commons.vfs.FileSystemException;
 import org.apache.commons.vfs.FileType;
 import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.vfs.KettleVFS;
-import pt.webdetails.cpf.Util;
 import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
@@ -27,10 +27,9 @@ import pt.webdetails.cpk.utils.ZipUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ResultFilesKettleOutput extends KettleOutput {
 
@@ -41,63 +40,73 @@ public class ResultFilesKettleOutput extends KettleOutput {
   @Override
   public void processResult( KettleResult result ) {
     logger.debug( "Process Result Files" );
+
+    List<FileObject> files = new ArrayList<FileObject>(  );
+    for ( ResultFile resultFile : result.getFiles() ) {
+      files.add( resultFile.getFile() );
+    }
+
+    if ( files.isEmpty() ) {
+      logger.warn( "Processing result files but no files found" );
+      this.getResponse().setStatus(HttpServletResponse.SC_NO_CONTENT  );
+      return;
+    }
+
     try {
-
-      List<FileObject> files = new ArrayList<FileObject>(  );
-      for ( ResultFile resultFile : result.getFiles() ) {
-        files.add( resultFile.getFile() );
-      }
-
-      HttpServletResponse response = this.getResponse();
-
-      if ( files.isEmpty() ) {
-        logger.warn( "Processing result files but no files found" );
-        this.getResponse().setStatus(HttpServletResponse.SC_NO_CONTENT  );
-        return;
-      } else if ( files.size() == 1 && files.get( 0 ).getType() == FileType.FILE ) {
-        // Singe file? Just write it to the outputstream
+      if ( files.size() == 1 && files.get( 0 ).getType() == FileType.FILE ) {
+        // Singe file
         FileObject file = files.get( 0 );
+        InputStream fileInputStream = KettleVFS.getInputStream( file );
+        FileName fileName = file.getName();
+        String mimeType = MimeTypes.getMimeType( fileName.getExtension() );
 
-        // Do we know the mime type?
-        String mimeType = MimeTypes.getMimeType( file.getName().getExtension() );
         if ( this.getDownload() ) {
           try {
-            long attachmentSize = file.getContent().getInputStream().available();
-            CpkUtils.setResponseHeaders( response, mimeType, file.getName().getBaseName(),
+            long attachmentSize = fileInputStream.available();
+            this.sendAttached( KettleVFS.getInputStream( file ), mimeType, fileName.getBaseName(),
               attachmentSize );
-          } catch ( Exception e ) {
-            logger.error( "Problem setting the attachment size: " + e );
+          } catch ( IOException e ) {
+            logger.error( "Failed setting attachment size.", e );
           }
         } else {
-          // set Mimetype only
-          CpkUtils.setResponseHeaders( response, mimeType );
-        }
-
-
-        try {
-          IOUtils.copy( KettleVFS.getInputStream( file ), response.getOutputStream() );
-        } catch ( Exception ex ) {
-          logger.warn( "Failed to copy file to outputstream: " + Util.getExceptionDescription( ex ) );
+          this.sendDirectly( fileInputStream, mimeType );
         }
 
       } else {
+        // More than one file, or folder
         // Build a zip / tar and ship it over!
-
         ZipUtil zip = new ZipUtil();
         zip.buildZipFromFileObjectList( files );
 
-        CpkUtils.setResponseHeaders( response, MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
-        try {
-          IOUtils.copy( zip.getZipInputStream(), this.getOut() );
-          zip.closeInputStream();
-        } catch ( IOException ex ) {
-          this.logger.error( "Failed to copy file to outputstream.", ex );
-        }
-
-
+        this.sendAttached( zip.getZipInputStream(), MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
       }
     } catch ( FileSystemException ex ) {
-      Logger.getLogger( ResultFilesKettleOutput.class.getName() ).log( Level.SEVERE, null, ex );
+      logger.error( "Failed sending files from kettle result.", ex );
+    }
+  }
+
+
+  private void sendDirectly( InputStream file, String mimeTypes ) {
+    CpkUtils.setResponseHeaders( this.getResponse(), mimeTypes );
+
+    try {
+      IOUtils.copy( file, this.getOut() );
+      this.getOut().flush();
+      file.close();
+    } catch ( Exception ex ) {
+      logger.error( "Failed to copy file to outputstream: " + ex );
+    }
+  }
+
+  private void sendAttached( InputStream file, String mimeTypes, String fileName, long fileSize ) {
+    CpkUtils.setResponseHeaders( this.getResponse(), mimeTypes, fileName, fileSize );
+
+    try {
+      IOUtils.copy( file, this.getOut() );
+      this.getOut().flush();
+      file.close();
+    } catch ( IOException ex ) {
+      this.logger.error( "Failed to copy file to outputstream.", ex );
     }
   }
 
