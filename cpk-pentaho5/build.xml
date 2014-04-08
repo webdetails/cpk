@@ -31,6 +31,9 @@
     <property name="plugin.name"
               value="cpk-pentaho"
               description="Name of the plugin"/>
+    <property name="core.resource.dir"
+              value="../cpk-core/res"
+              description="Directory of cpk core resources."/>
     <property name="resource.dir"
               value="resources"
               description="Name of the resource directory"/>
@@ -98,6 +101,12 @@
             <include name="**/*"/>
           </fileset>
         </copy>-->
+
+        <!-- copy resources from cpk source -->
+        <copy todir="${stage.dir}/${plugin.name}">
+          <fileset dir="${core.resource.dir}"/>
+        </copy>
+
         <copy todir="${stage.dir}/${plugin.name}" overwrite="true">
             <fileset dir="${basedir}">
                 <include name="readme.txt"/>
