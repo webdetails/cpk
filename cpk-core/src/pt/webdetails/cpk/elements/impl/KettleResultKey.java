@@ -65,7 +65,7 @@ public final class KettleResultKey implements Serializable {
   }
 
   private static boolean stringEquals( String textL, String testR ) {
-    return textL != null ? textL.equals( testR ) : testR != null;
+    return textL == null ? testR == null : textL.equals( testR );
   }
 
   @Override
