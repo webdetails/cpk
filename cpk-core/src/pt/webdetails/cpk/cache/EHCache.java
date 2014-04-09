@@ -26,6 +26,10 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   private static final Log logger = LogFactory.getLog( EHCache.class );
   private Cache cache = null;
 
+  public Cache getCache() {
+    return this.cache;
+  }
+
   private synchronized CacheManager getCacheManager( ) {
     return CacheManager.create();
   }
@@ -82,13 +86,18 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   }
 
   @Override
+  public Iterable<K> getKeys() {
+    return this.cache.getKeys();
+  }
+
+  @Override public boolean remove( K key ) {
+    return this.getCache().remove( key );
+  }
+
+  @Override
   public void clear() {
     this.cache.removeAll();
     logger.info( "Cache " + this.cache.getName() + " was cleared." );
-  }
-
-  public Cache getCache() {
-    return this.cache;
   }
 
 }

@@ -23,12 +23,27 @@ public interface ICache<K, V> {
    */
   void put( K key, V value );
 
+
+
+  /**
+   * Removes value with given key from cache.
+   * @param key
+   * @return <code>true</code> if element existed.
+   */
+  public boolean remove( K key );
+
   /**
    *
    * @param key The key of the cached value.
    * @return The cached value for the given key or null if not found.
    */
   V get( K key );
+
+  /**
+   *
+   * @return The keys of all cached values.
+   */
+  Iterable<K> getKeys();
 
   /**
    * Removes all elements from cache.
