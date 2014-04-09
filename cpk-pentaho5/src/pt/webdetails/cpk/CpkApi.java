@@ -229,13 +229,6 @@ public class CpkApi {
     coreService.getElementsList( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
   }
 
-  /*
-  public String getPluginName() {
-
-    return cpkEnv.getPluginName();
-  }
-  */
-
   private void writeMessage( OutputStream out, String message ) {
     try {
       out.write( message.getBytes( getEncoding() ) );
@@ -393,6 +386,9 @@ public class CpkApi {
     Map<String, Map<String, Object>> bloatedMap = buildBloatedMap( request, response, headers );
     bloatedMap.get( "path" ).put( "path", "/" + endpoint );
     coreService.createContent( bloatedMap );
+
+    // make sure that everything written in the output stream is sent to the client
+    response.getOutputStream().flush();
   }
 
   public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
