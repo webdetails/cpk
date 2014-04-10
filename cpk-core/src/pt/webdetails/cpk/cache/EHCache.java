@@ -54,6 +54,16 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
       + this.cache.getDiskStoreSize() + " in disk" );
   }
 
+  @Override public void put( K key, V value, int timeToLiveSeconds ) {
+    final Element storeElement = new Element( key, value );
+    storeElement.setTimeToLive( timeToLiveSeconds );
+    this.cache.put( storeElement );
+
+    // Print cache status size
+    logger.debug( "Cache status: " + this.cache.getMemoryStoreSize() + " in memory, "
+      + this.cache.getDiskStoreSize() + " in disk" );
+  }
+
   @Override
   public V get( K key ) {
     ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
@@ -100,4 +110,7 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     logger.info( "Cache " + this.cache.getName() + " was cleared." );
   }
 
+  @Override public Number getTimeToLiveSeconds() {
+    return this.getCache().getCacheConfiguration().getTimeToLiveSeconds();
+  }
 }
