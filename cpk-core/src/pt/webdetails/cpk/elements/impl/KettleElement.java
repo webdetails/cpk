@@ -37,8 +37,11 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
   protected static final String OUTPUT_NAME_PREFIX = "OUTPUT";
 
-  private static final String CPK_CACHE_RESULTS = "cpk.cacheResults";
+  private static final String CPK_CACHE_RESULTS = "cpk.cache.isEnabled";
   private static final boolean CPK_CACHE_RESULTS_DEFAULT_VALUE = false;
+
+  private static final String CPK_CACHE_TTL = "cpk.cache.timeToLiveSeconds";
+
 
   // TODO: this class should be in the REST layer
   private static class RequestParameterName {
@@ -48,14 +51,21 @@ public abstract class KettleElement<TMeta extends NamedParams>
     public static final String BYPASS_CACHE = "bypassCache";
   }
 
-
   private ICache<KettleResultKey, KettleResult> cache;
+  private boolean isResultsCacheEnabled;
+
+  private int timeToLive;
+
+  public int getTimeToLive() { return this.timeToLive; }
+  public KettleElement<TMeta> setTimeToLive( int timeToLive ) {
+    this.timeToLive = timeToLive;
+    return this;
+  }
+
   protected TMeta meta;
 
-  private boolean cacheResults;
-
-  public boolean isCacheResultsEnabled() {
-    return this.cacheResults;
+  public boolean isResultsCacheEnabled() {
+    return this.cache != null && this.isResultsCacheEnabled;
   }
 
   @Override
@@ -78,14 +88,14 @@ public abstract class KettleElement<TMeta extends NamedParams>
     // add base parameters to ensure they exist
     KettleElementHelper.addBaseParameters( this.meta );
 
+    String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
+    this.isResultsCacheEnabled = cacheResultsStr == null ?  CPK_CACHE_RESULTS_DEFAULT_VALUE
+      : Boolean.parseBoolean( cacheResultsStr );
+
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
       this.processRequest( Collections.<String, String>emptyMap(), null );
     }
-
-    String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
-    this.cacheResults = cacheResultsStr == null ?  CPK_CACHE_RESULTS_DEFAULT_VALUE
-      : Boolean.parseBoolean( cacheResultsStr );
 
     // init was successful
     return true;
@@ -93,15 +103,34 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
   protected abstract TMeta loadMeta( String filePath );
 
-
+  // TODO: this JsonIgnore annotation is required due to direct serialization in
+  // cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
+  @JsonIgnore
   @Override
-  @JsonIgnore // TODO: this JsonIgnore annotation is required due to direct serialization in cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
   public ICache<KettleResultKey, KettleResult> getCache() {
     return this.cache;
   }
 
   @Override
   public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
+    int timeToLive;
+    String timeToLiveStr = null;
+    if ( this.meta != null ) {
+      timeToLiveStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_TTL );
+    }
+
+    if ( timeToLiveStr != null ) {
+      try {
+        timeToLive = Integer.parseInt( timeToLiveStr );
+      } catch ( NumberFormatException e ) {
+        timeToLive = cache.getTimeToLiveSeconds().intValue();
+      }
+    } else {
+      timeToLive = cache.getTimeToLiveSeconds().intValue();
+    }
+
+    this.setTimeToLive( timeToLive );
+
     this.cache = cache;
     return this;
   }
@@ -197,8 +226,8 @@ public abstract class KettleElement<TMeta extends NamedParams>
   @Override
   public KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
                                        boolean bypassCache ) {
-    KettleResult  result;
-    if ( this.isCacheResultsEnabled() ) {
+    KettleResult result;
+    if ( this.isResultsCacheEnabled() ) {
       result = this.processRequestCached( kettleParameters, outputStepName, bypassCache );
     } else {
       result = this.processRequest( kettleParameters, outputStepName );
@@ -231,7 +260,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     result = this.processRequest( kettleParameters, outputStepName );
     // put new, or update current, result in cache.
-    this.getCache().put( cacheKey, result );
+    this.getCache().put( cacheKey, result, this.getTimeToLive() );
     return result;
   }
 

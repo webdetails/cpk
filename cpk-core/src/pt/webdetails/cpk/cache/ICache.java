@@ -17,11 +17,21 @@ package pt.webdetails.cpk.cache;
 public interface ICache<K, V> {
 
   /**
-   * Stores a key, value pair in the cache. If the cache already contains the given key, then the new value overrides the old.
+   * Stores a key, value pair in the cache.
+   * If the cache already contains the given key, then the new value overrides the old.
    * @param key
    * @param value
    */
   void put( K key, V value );
+
+  void put( K key, V value, int timeToLiveSeconds );
+
+  /**
+   * Removes value with given key from cache.
+   * @param key
+   * @return <code>true</code> if element existed.
+   */
+  public boolean remove( K key );
 
   /**
    *
@@ -31,8 +41,20 @@ public interface ICache<K, V> {
   V get( K key );
 
   /**
+   *
+   * @return The keys of all cached values.
+   */
+  Iterable<K> getKeys();
+
+  /**
    * Removes all elements from cache.
    */
   void clear();
+
+  /**
+   *
+   * @return The default time to live (in seconds) for cached values.
+   */
+  Number getTimeToLiveSeconds();
 
 }

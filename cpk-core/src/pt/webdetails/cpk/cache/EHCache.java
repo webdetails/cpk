@@ -26,6 +26,10 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   private static final Log logger = LogFactory.getLog( EHCache.class );
   private Cache cache = null;
 
+  public Cache getCache() {
+    return this.cache;
+  }
+
   private synchronized CacheManager getCacheManager( ) {
     return CacheManager.create();
   }
@@ -43,6 +47,17 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   @Override
   public void put( K key, V value ) {
     final Element storeElement = new Element( key, value );
+    this.cache.put( storeElement );
+
+    // Print cache status size
+    logger.debug( "Cache status: " + this.cache.getMemoryStoreSize() + " in memory, "
+      + this.cache.getDiskStoreSize() + " in disk" );
+  }
+
+  @Override
+  public void put( K key, V value, int timeToLiveSeconds ) {
+    final Element storeElement = new Element( key, value );
+    storeElement.setTimeToLive( timeToLiveSeconds );
     this.cache.put( storeElement );
 
     // Print cache status size
@@ -82,13 +97,23 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   }
 
   @Override
+  public Iterable<K> getKeys() {
+    return this.cache.getKeys();
+  }
+
+  @Override
+  public boolean remove( K key ) {
+    return this.getCache().remove( key );
+  }
+
+  @Override
   public void clear() {
     this.cache.removeAll();
     logger.info( "Cache " + this.cache.getName() + " was cleared." );
   }
 
-  public Cache getCache() {
-    return this.cache;
+  @Override
+  public Number getTimeToLiveSeconds() {
+    return this.getCache().getCacheConfiguration().getTimeToLiveSeconds();
   }
-
 }

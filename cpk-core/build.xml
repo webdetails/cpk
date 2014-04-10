@@ -16,7 +16,7 @@
             value="cpk-core"
             description="Name of the plugin"/>
   <property name="resource.dir"
-            value="resources"
+            value="res"
             description="Name of the resource directory"/>
   <property name="stage.dir"
             value="${bin.dir}/stage"
@@ -85,6 +85,12 @@
         <include name="**/*"/>
       </fileset>
     </copy>-->
+
+    <!-- copy resources from cpk source -->
+    <copy todir="${stage.dir}/${plugin.name}">
+      <fileset dir="${resource.dir}"/>
+    </copy>
+
     <copy todir="${stage.dir}/${plugin.name}" overwrite="true">
       <fileset dir="${basedir}">
         <include name="readme.txt"/>
