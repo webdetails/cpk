@@ -54,7 +54,8 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
       + this.cache.getDiskStoreSize() + " in disk" );
   }
 
-  @Override public void put( K key, V value, int timeToLiveSeconds ) {
+  @Override
+  public void put( K key, V value, int timeToLiveSeconds ) {
     final Element storeElement = new Element( key, value );
     storeElement.setTimeToLive( timeToLiveSeconds );
     this.cache.put( storeElement );
@@ -100,7 +101,8 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     return this.cache.getKeys();
   }
 
-  @Override public boolean remove( K key ) {
+  @Override
+  public boolean remove( K key ) {
     return this.getCache().remove( key );
   }
 
@@ -110,7 +112,8 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     logger.info( "Cache " + this.cache.getName() + " was cleared." );
   }
 
-  @Override public Number getTimeToLiveSeconds() {
+  @Override
+  public Number getTimeToLiveSeconds() {
     return this.getCache().getCacheConfiguration().getTimeToLiveSeconds();
   }
 }

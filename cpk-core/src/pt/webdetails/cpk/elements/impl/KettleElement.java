@@ -103,15 +103,17 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
   protected abstract TMeta loadMeta( String filePath );
 
+  // TODO: this JsonIgnore annotation is required due to direct serialization in
+  // cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
+  @JsonIgnore
   @Override
-  @JsonIgnore // TODO: this JsonIgnore annotation is required due to direct serialization in cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
   public ICache<KettleResultKey, KettleResult> getCache() {
     return this.cache;
   }
 
   @Override
   public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
-    int ttl;
+    int timeToLive;
     String timeToLiveStr = null;
     if ( this.meta != null ) {
       timeToLiveStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_TTL );
@@ -119,15 +121,15 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     if ( timeToLiveStr != null ) {
       try {
-        ttl = Integer.parseInt( timeToLiveStr );
+        timeToLive = Integer.parseInt( timeToLiveStr );
       } catch ( NumberFormatException e ) {
-        ttl = cache.getTimeToLiveSeconds().intValue();
+        timeToLive = cache.getTimeToLiveSeconds().intValue();
       }
     } else {
-      ttl = cache.getTimeToLiveSeconds().intValue();
+      timeToLive = cache.getTimeToLiveSeconds().intValue();
     }
 
-    this.setTimeToLive( ttl );
+    this.setTimeToLive( timeToLive );
 
     this.cache = cache;
     return this;

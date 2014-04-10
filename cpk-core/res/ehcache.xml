@@ -4,7 +4,7 @@
   <cache 
       name=""
       maxEntriesLocalHeap="100"
-			maxEntriesLocalDisk="10000"
+      maxEntriesLocalDisk="10000"
       eternal="false"
       overflowToDisk="true"
       timeToLiveSeconds="0"
@@ -12,7 +12,7 @@
       diskPersistent="false"
       diskExpiryThreadIntervalSeconds="360"
       memoryStoreEvictionPolicy="LFU"
-			diskSpoolBufferSizeMB="50">
+      diskSpoolBufferSizeMB="50">
   </cache>
 
 </ehcache>

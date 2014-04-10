@@ -17,7 +17,8 @@ package pt.webdetails.cpk.cache;
 public interface ICache<K, V> {
 
   /**
-   * Stores a key, value pair in the cache. If the cache already contains the given key, then the new value overrides the old.
+   * Stores a key, value pair in the cache.
+   * If the cache already contains the given key, then the new value overrides the old.
    * @param key
    * @param value
    */
