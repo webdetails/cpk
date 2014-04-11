@@ -33,8 +33,12 @@ import java.util.List;
 
 public class ResultFilesKettleOutput extends KettleOutput {
 
-  public ResultFilesKettleOutput( HttpServletResponse response, boolean download ) {
+  private String defaultMimeType;
+
+  public ResultFilesKettleOutput( HttpServletResponse response, boolean download, String defaultMimeType ) {
     super( response, download );
+
+    this.defaultMimeType = defaultMimeType;
   }
 
   @Override
@@ -58,7 +62,8 @@ public class ResultFilesKettleOutput extends KettleOutput {
         FileObject file = files.get( 0 );
         InputStream fileInputStream = KettleVFS.getInputStream( file );
         FileName fileName = file.getName();
-        String mimeType = MimeTypes.getMimeType( fileName.getExtension() );
+        String mimeType = this.defaultMimeType != null ? this.defaultMimeType
+          : MimeTypes.getMimeType( fileName.getBaseName() );
 
         if ( this.getDownload() ) {
           try {
@@ -84,7 +89,6 @@ public class ResultFilesKettleOutput extends KettleOutput {
       logger.error( "Failed sending files from kettle result.", ex );
     }
   }
-
 
   private void sendDirectly( InputStream file, String mimeTypes ) {
     CpkUtils.setResponseHeaders( this.getResponse(), mimeTypes );

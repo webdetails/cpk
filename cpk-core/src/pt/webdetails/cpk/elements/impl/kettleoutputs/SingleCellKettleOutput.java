@@ -15,6 +15,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
 import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -23,8 +24,12 @@ import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
-  public SingleCellKettleOutput( HttpServletResponse response, boolean download ) {
+  private String mimeType;
+
+  public SingleCellKettleOutput( HttpServletResponse response, boolean download, String mimeType ) {
     super( response, download );
+
+    this.mimeType = mimeType;
   }
 
   @Override
@@ -34,6 +39,7 @@ public class SingleCellKettleOutput extends KettleOutput {
     try {
       Object cell = result.getRows().get( 0 ).getData()[ 0 ];
       if ( cell != null ) {
+        CpkUtils.setResponseHeaders( this.getResponse(), this.mimeType );
         OutputStream out = this.getOut();
         out.write( cell.toString().getBytes( ENCODING ) );
         out.flush();

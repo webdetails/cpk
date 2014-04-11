@@ -19,8 +19,12 @@ import javax.servlet.http.HttpServletResponse;
 
 public class InferedKettleOutput extends KettleOutput {
 
-  public InferedKettleOutput( HttpServletResponse response, boolean download ) {
+  private String mimeType;
+
+  public InferedKettleOutput( HttpServletResponse response, boolean download, String mimeType ) {
     super( response, download );
+
+    this.mimeType = mimeType;
   }
 
   /**
@@ -39,14 +43,14 @@ public class InferedKettleOutput extends KettleOutput {
 
     IKettleOutput kettleOutput;
     if ( result.getFiles().size() > 0 ) {
-      kettleOutput = new ResultFilesKettleOutput( this.getResponse(), this.getDownload() );
+      kettleOutput = new ResultFilesKettleOutput( this.getResponse(), this.getDownload(), this.mimeType );
 
     } else if ( result.getKettleType() == KettleResult.KettleType.JOB ) {
       kettleOutput = new ResultOnlyKettleOutput( this.getResponse(), this.getDownload() );
 
     } else if ( result.getRows().size() == 1
       && result.getRows().get( 0 ).getRowMeta().getValueMetaList().size() == 1 ) {
-      kettleOutput = new SingleCellKettleOutput( this.getResponse(), this.getDownload() );
+      kettleOutput = new SingleCellKettleOutput( this.getResponse(), this.getDownload(), this.mimeType );
 
     } else {
       kettleOutput = new JsonKettleOutput( this.getResponse(), this.getDownload() );
