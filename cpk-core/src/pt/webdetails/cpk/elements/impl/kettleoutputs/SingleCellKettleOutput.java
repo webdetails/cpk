@@ -14,22 +14,27 @@
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
+import org.apache.commons.io.IOUtils;
+import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
   private String mimeType;
+  private String attachmentName;
 
-  public SingleCellKettleOutput( HttpServletResponse response, boolean download, String mimeType ) {
+  public SingleCellKettleOutput( HttpServletResponse response, boolean download, String mimeType, String attachmentName ) {
     super( response, download );
 
     this.mimeType = mimeType;
+    this.attachmentName = attachmentName;
   }
 
   @Override
@@ -37,18 +42,26 @@ public class SingleCellKettleOutput extends KettleOutput {
     this.logger.debug( "Process Single Cell - print it" );
 
     try {
-      Object cell = result.getRows().get( 0 ).getData()[ 0 ];
-      if ( cell != null ) {
-        CpkUtils.setResponseHeaders( this.getResponse(), this.mimeType );
+      // at least one row to process?
+      if ( !result.getRows().isEmpty() ) {
+        Object cell = result.getRows().get( 0 ).getData()[ 0 ];
+        byte[] resultContent = cell.toString().getBytes( ENCODING );
+        if ( this.getDownload() ) {
+          long attachmentSize = resultContent.length;
+          String attachmentName = this.attachmentName != null ? this.attachmentName : "singleCell";
+          CpkUtils.setResponseHeaders( this.getResponse(), this.mimeType, attachmentName, attachmentSize );
+        } else {
+          CpkUtils.setResponseHeaders( this.getResponse(), this.mimeType );
+        }
         OutputStream out = this.getOut();
-        out.write( cell.toString().getBytes( ENCODING ) );
+        out.write( resultContent );
         out.flush();
       }
-
     } catch ( UnsupportedEncodingException ex ) {
       this.logger.error( "Unsupported encoding.", ex );
     } catch ( IOException ex ) {
       this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
   }
+
 }

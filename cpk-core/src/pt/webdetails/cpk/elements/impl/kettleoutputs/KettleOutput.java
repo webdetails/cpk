@@ -43,6 +43,7 @@ public abstract class KettleOutput implements IKettleOutput {
     }
   }
 
+  // TODO: rename this getter... this says if a result is to be returned as an attachment / download file
   protected boolean getDownload() { return this.download; }
 
   protected HttpServletResponse getResponse() { return this.response; }

@@ -44,12 +44,15 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     // TODO: change to enum
     public String outputType;
+
+    public String attachmentName;
   }
 
   public enum KettleParameter {
     CACHE_IS_ENABLED( "cpk.cache.isEnabled", false ),
     CACHE_TIME_TO_LIVE_SECONDS( "cpk.cache.timeToLiveSeconds", 0 ),
-    MIME_TYPE( "cpk.mimeType", "application/octet-stream" );
+    MIME_TYPE( "cpk.mimeType", "application/octet-stream" ),
+    ATTACHMENT_NAME( "cpk.attachmentName", null );
 
     private final String name;
     private final Object defaultValue;
@@ -166,8 +169,11 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     // TODO: time to live?
 
+    String mimeType = parametersFromFile.get( KettleParameter.MIME_TYPE );
+    String attachmentName = parametersFromFile.get( KettleParameter.ATTACHMENT_NAME );
     TransportConfiguration configuration = new TransportConfiguration();
-    configuration.mimeType = parametersFromFile.get( KettleParameter.MIME_TYPE );
+    configuration.mimeType = mimeType;
+    configuration.attachmentName = attachmentName;
 
     this.setTransportConfiguration( configuration );
   }
@@ -239,13 +245,13 @@ public abstract class KettleElement<TMeta extends NamedParams>
     if ( kettleOutputType.equalsIgnoreCase( "Json" ) ) {
       kettleOutput = new JsonKettleOutput( httpResponse, download );
     } else if ( kettleOutputType.equalsIgnoreCase( "ResultFiles" ) ) {
-      kettleOutput = new ResultFilesKettleOutput( httpResponse, download, this.getTransportConfiguration().mimeType );
+      kettleOutput = new ResultFilesKettleOutput( httpResponse, download, this.getTransportConfiguration().mimeType, this.getTransportConfiguration().attachmentName );
     } else if ( kettleOutputType.equalsIgnoreCase( "ResultOnly" ) ) {
       kettleOutput = new ResultOnlyKettleOutput( httpResponse, download );
     } else if ( kettleOutputType.equalsIgnoreCase( "SingleCell" ) ) {
-      kettleOutput = new SingleCellKettleOutput( httpResponse, download, this.getTransportConfiguration().mimeType );
+      kettleOutput = new SingleCellKettleOutput( httpResponse, download, this.getTransportConfiguration().mimeType, this.getTransportConfiguration().attachmentName );
     } else {
-      kettleOutput = new InferedKettleOutput( httpResponse, download, this.getTransportConfiguration().mimeType );
+      kettleOutput = new InferedKettleOutput( httpResponse, download, this.getTransportConfiguration().mimeType, this.getTransportConfiguration().attachmentName );
     }
 
     return kettleOutput;

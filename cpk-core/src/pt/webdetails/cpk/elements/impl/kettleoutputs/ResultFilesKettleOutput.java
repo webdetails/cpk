@@ -34,11 +34,13 @@ import java.util.List;
 public class ResultFilesKettleOutput extends KettleOutput {
 
   private String defaultMimeType;
+  private String attachmentName;
 
-  public ResultFilesKettleOutput( HttpServletResponse response, boolean download, String defaultMimeType ) {
+  public ResultFilesKettleOutput( HttpServletResponse response, boolean download, String defaultMimeType, String attachmentName ) {
     super( response, download );
 
     this.defaultMimeType = defaultMimeType;
+    this.attachmentName = attachmentName;
   }
 
   @Override
@@ -68,7 +70,8 @@ public class ResultFilesKettleOutput extends KettleOutput {
         if ( this.getDownload() ) {
           try {
             long attachmentSize = fileInputStream.available();
-            this.sendAttached( KettleVFS.getInputStream( file ), mimeType, fileName.getBaseName(),
+            String attachmentName = this.attachmentName != null ? this.attachmentName : fileName.getBaseName();
+            this.sendAttached( KettleVFS.getInputStream( file ), mimeType, attachmentName,
               attachmentSize );
           } catch ( IOException e ) {
             logger.error( "Failed setting attachment size.", e );
@@ -83,7 +86,8 @@ public class ResultFilesKettleOutput extends KettleOutput {
         ZipUtil zip = new ZipUtil();
         zip.buildZipFromFileObjectList( files );
 
-        this.sendAttached( zip.getZipInputStream(), MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
+        String attachmentName = this.attachmentName != null ? this.attachmentName : zip.getZipNameToDownload();
+        this.sendAttached( zip.getZipInputStream(), MimeTypes.ZIP, attachmentName, zip.getZipSize() );
       }
     } catch ( FileSystemException ex ) {
       logger.error( "Failed sending files from kettle result.", ex );
