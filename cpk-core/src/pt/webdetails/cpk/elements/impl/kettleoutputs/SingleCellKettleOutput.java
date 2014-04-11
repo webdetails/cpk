@@ -14,27 +14,18 @@
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
-import org.apache.commons.io.IOUtils;
-import org.pentaho.di.core.vfs.KettleVFS;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
-  private String mimeType;
-  private String attachmentName;
-
-  public SingleCellKettleOutput( HttpServletResponse response, boolean download, String mimeType, String attachmentName ) {
-    super( response, download );
-
-    this.mimeType = mimeType;
-    this.attachmentName = attachmentName;
+  public SingleCellKettleOutput( HttpServletResponse response, Configuration configuration ) {
+    super( response, configuration );
   }
 
   @Override
@@ -46,12 +37,14 @@ public class SingleCellKettleOutput extends KettleOutput {
       if ( !result.getRows().isEmpty() ) {
         Object cell = result.getRows().get( 0 ).getData()[ 0 ];
         byte[] resultContent = cell.toString().getBytes( ENCODING );
-        if ( this.getDownload() ) {
+        String mimeType = this.getConfiguration().getMimeType();
+        if ( this.getConfiguration().getSendResultAsAttachment() ) {
           long attachmentSize = resultContent.length;
-          String attachmentName = this.attachmentName != null ? this.attachmentName : "singleCell";
-          CpkUtils.setResponseHeaders( this.getResponse(), this.mimeType, attachmentName, attachmentSize );
+          String defaultAttachmentName = this.getConfiguration().getAttachmentName();
+          String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : "singleCell";
+          CpkUtils.setResponseHeaders( this.getResponse(), mimeType, attachmentName, attachmentSize );
         } else {
-          CpkUtils.setResponseHeaders( this.getResponse(), this.mimeType );
+          CpkUtils.setResponseHeaders( this.getResponse(), mimeType );
         }
         OutputStream out = this.getOut();
         out.write( resultContent );
