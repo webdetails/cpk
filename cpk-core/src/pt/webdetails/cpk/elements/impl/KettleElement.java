@@ -36,12 +36,13 @@ public abstract class KettleElement<TMeta extends NamedParams>
   extends Element
   implements IDataSourceProvider, IKettleElement {
 
-  // region Inner Classes
+  // region Inner Definitions
   public enum KettleParameter {
     CACHE_IS_ENABLED( "cpk.cache.isEnabled", false ),
     CACHE_TIME_TO_LIVE_SECONDS( "cpk.cache.timeToLiveSeconds", 0 ),
-    MIME_TYPE( "cpk.mimeType", "application/octet-stream" ),
-    ATTACHMENT_NAME( "cpk.attachmentName", null );
+    RESPONSE_MIME_TYPE( "cpk.response.mimeType", "application/octet-stream" ),
+    RESPONSE_ATTACHMENT_NAME( "cpk.response.attachmentName", null ),
+    RESPONSE_DOWNLOAD( "cpk.response.download", false );
 
     private final String name;
     private final Object defaultValue;
@@ -189,20 +190,30 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     // TODO: time to live?
 
+
+    KettleOutput.Configuration outputConfiguration = this.getOutputConfiguration( parametersFromFile );
+    this.setDefaultOutputConfiguration( outputConfiguration );
+  }
+
+  private KettleOutput.Configuration getOutputConfiguration( Map<KettleParameter, String> parameters ) {
     // init default output configuration
-    String mimeType = parametersFromFile.get( KettleParameter.MIME_TYPE );
-    String attachmentName = parametersFromFile.get( KettleParameter.ATTACHMENT_NAME );
+    String mimeType = parameters.get( KettleParameter.RESPONSE_MIME_TYPE );
+    String attachmentName = parameters.get( KettleParameter.RESPONSE_ATTACHMENT_NAME );
+    String attachResultStr = parameters.get( KettleParameter.RESPONSE_DOWNLOAD );
+    boolean attachResult = attachResultStr != null ? Boolean.parseBoolean( attachResultStr )
+      : (Boolean) KettleParameter.RESPONSE_DOWNLOAD.defaultValue();
+
     KettleOutput.Configuration configuration = new KettleOutput.Configuration();
     configuration
       .setMimeType( mimeType )
-      .setAttachmentName( attachmentName );
+      .setAttachmentName( attachmentName )
+      .setSendResultAsAttachment( attachResult );
 
-    this.setDefaultOutputConfiguration( configuration );
+    return configuration;
   }
 
 
-  protected final IKettleOutput inferResult( String kettleOutputType, boolean download,
-                                             HttpServletResponse httpResponse ) {
+  protected final KettleOutput inferResult( String kettleOutputType ) {
 
      /*
      *  There are a few different types of kettle output processing.
@@ -226,20 +237,18 @@ public abstract class KettleElement<TMeta extends NamedParams>
       kettleOutputType = "Infered";
     }
 
-    KettleOutput.Configuration configuration = this.getDefaultOutputConfiguration().clone();
-    configuration.setSendResultAsAttachment( download );
 
-    IKettleOutput kettleOutput;
+    KettleOutput kettleOutput;
     if ( kettleOutputType.equalsIgnoreCase( "Json" ) ) {
-      kettleOutput = new JsonKettleOutput( httpResponse, configuration );
+      kettleOutput = new JsonKettleOutput();
     } else if ( kettleOutputType.equalsIgnoreCase( "ResultFiles" ) ) {
-      kettleOutput = new ResultFilesKettleOutput( httpResponse, configuration );
+      kettleOutput = new ResultFilesKettleOutput();
     } else if ( kettleOutputType.equalsIgnoreCase( "ResultOnly" ) ) {
-      kettleOutput = new ResultOnlyKettleOutput( httpResponse, configuration );
+      kettleOutput = new ResultOnlyKettleOutput();
     } else if ( kettleOutputType.equalsIgnoreCase( "SingleCell" ) ) {
-      kettleOutput = new SingleCellKettleOutput( httpResponse, configuration );
+      kettleOutput = new SingleCellKettleOutput();
     } else {
-      kettleOutput = new InferedKettleOutput( httpResponse, configuration );
+      kettleOutput = new InferedKettleOutput();
     }
 
     return kettleOutput;
@@ -254,8 +263,9 @@ public abstract class KettleElement<TMeta extends NamedParams>
     String stepName = (String) request.get( RequestParameterName.STEP_NAME );
     String kettleOutputType = (String) request.get( RequestParameterName.KETTLE_OUTPUT );
 
+    // if download parameter is not defined use value from default output configuration
     String downloadStr = (String) request.get( RequestParameterName.DOWNLOAD );
-    boolean download = Boolean.parseBoolean( downloadStr != null ? downloadStr : "false" );
+    boolean download = downloadStr != null ? Boolean.parseBoolean( downloadStr ) : this.getDefaultOutputConfiguration().getSendResultAsAttachment();
 
     String bypassCacheStr = (String) request.get( RequestParameterName.BYPASS_CACHE );
     boolean bypassCache = Boolean.parseBoolean( bypassCacheStr != null ? bypassCacheStr : "false" );
@@ -273,9 +283,17 @@ public abstract class KettleElement<TMeta extends NamedParams>
   private void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
                                boolean download, boolean bypassCache, HttpServletResponse httpResponse ) {
     KettleResult result = this.processRequest( kettleParameters, outputStepName, bypassCache );
+
     if ( result != null ) {
+      // get default configuration and overload download value
+      KettleOutput.Configuration configuration = this.getDefaultOutputConfiguration().clone();
+      configuration.setSendResultAsAttachment( download );
+
       // Choose kettle output type and process result with it
-      IKettleOutput kettleOutput = this.inferResult( outputType, download, httpResponse );
+      KettleOutput kettleOutput = this.inferResult( outputType );
+      kettleOutput
+        .setConfiguration( configuration )
+        .setResponse( httpResponse );
 
       // TODO: pass configuration to process result
       kettleOutput.processResult( result );

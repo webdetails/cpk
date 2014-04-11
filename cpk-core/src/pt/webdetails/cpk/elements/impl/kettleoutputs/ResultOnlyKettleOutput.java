@@ -24,12 +24,6 @@ import java.io.IOException;
 
 public class ResultOnlyKettleOutput extends KettleOutput {
 
-  public ResultOnlyKettleOutput( HttpServletResponse response, Configuration configuration ) {
-    super( response, configuration );
-
-    this.getConfiguration().setMimeType( MimeTypes.JSON );
-  }
-
   public static final class ResultStruct {
     boolean result;
     int exitStatus;
@@ -62,6 +56,14 @@ public class ResultOnlyKettleOutput extends KettleOutput {
     public long getNrErrors() {
       return nrErrors;
     }
+  }
+
+  @Override
+  public ResultOnlyKettleOutput setConfiguration( Configuration configuration ) {
+    configuration.setMimeType( MimeTypes.JSON );
+    super.setConfiguration( configuration );
+
+    return this;
   }
 
   @Override

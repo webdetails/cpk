@@ -33,10 +33,6 @@ import java.util.List;
 
 public class ResultFilesKettleOutput extends KettleOutput {
 
-  public ResultFilesKettleOutput( HttpServletResponse response, Configuration configuration ) {
-    super( response, configuration );
-  }
-
   @Override
   public void processResult( KettleResult result ) {
     logger.debug( "Process Result Files" );

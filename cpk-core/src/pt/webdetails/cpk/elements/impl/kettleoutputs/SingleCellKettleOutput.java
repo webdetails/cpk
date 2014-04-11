@@ -17,16 +17,11 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
-
-  public SingleCellKettleOutput( HttpServletResponse response, Configuration configuration ) {
-    super( response, configuration );
-  }
 
   @Override
   public void processResult( KettleResult result ) {
