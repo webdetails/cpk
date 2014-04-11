@@ -15,6 +15,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 
 import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -23,8 +24,8 @@ import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
 
-  public SingleCellKettleOutput( HttpServletResponse response, boolean download ) {
-    super( response, download );
+  public SingleCellKettleOutput( HttpServletResponse response, Configuration configuration ) {
+    super( response, configuration );
   }
 
   @Override
@@ -32,17 +33,28 @@ public class SingleCellKettleOutput extends KettleOutput {
     this.logger.debug( "Process Single Cell - print it" );
 
     try {
-      Object cell = result.getRows().get( 0 ).getData()[ 0 ];
-      if ( cell != null ) {
+      // at least one row to process?
+      if ( !result.getRows().isEmpty() ) {
+        Object cell = result.getRows().get( 0 ).getData()[ 0 ];
+        byte[] resultContent = cell.toString().getBytes( ENCODING );
+        String mimeType = this.getConfiguration().getMimeType();
+        if ( this.getConfiguration().getSendResultAsAttachment() ) {
+          long attachmentSize = resultContent.length;
+          String defaultAttachmentName = this.getConfiguration().getAttachmentName();
+          String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : "singleCell";
+          CpkUtils.setResponseHeaders( this.getResponse(), mimeType, attachmentName, attachmentSize );
+        } else {
+          CpkUtils.setResponseHeaders( this.getResponse(), mimeType );
+        }
         OutputStream out = this.getOut();
-        out.write( cell.toString().getBytes( ENCODING ) );
+        out.write( resultContent );
         out.flush();
       }
-
     } catch ( UnsupportedEncodingException ex ) {
       this.logger.error( "Unsupported encoding.", ex );
     } catch ( IOException ex ) {
       this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
   }
+
 }

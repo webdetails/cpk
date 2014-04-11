@@ -15,17 +15,20 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
+import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class ResultOnlyKettleOutput extends KettleOutput {
 
-  public ResultOnlyKettleOutput( HttpServletResponse response, boolean download ) {
-    super( response, download );
-  }
+  public ResultOnlyKettleOutput( HttpServletResponse response, Configuration configuration ) {
+    super( response, configuration );
 
+    this.getConfiguration().setMimeType( MimeTypes.JSON );
+  }
 
   public static final class ResultStruct {
     boolean result;
@@ -68,6 +71,7 @@ public class ResultOnlyKettleOutput extends KettleOutput {
     ResultStruct resultStruct = new ResultStruct( result );
 
     try {
+      CpkUtils.setResponseHeaders( this.getResponse(), this.getConfiguration().getMimeType() );
       ObjectMapper mapper = new ObjectMapper();
       mapper.writeValue( this.getOut(), resultStruct );
     } catch ( IOException ex ) {

@@ -19,8 +19,9 @@ import javax.servlet.http.HttpServletResponse;
 
 public class InferedKettleOutput extends KettleOutput {
 
-  public InferedKettleOutput( HttpServletResponse response, boolean download ) {
-    super( response, download );
+  public InferedKettleOutput( HttpServletResponse response, Configuration configuration ) {
+    super( response, configuration );
+
   }
 
   /**
@@ -39,17 +40,17 @@ public class InferedKettleOutput extends KettleOutput {
 
     IKettleOutput kettleOutput;
     if ( result.getFiles().size() > 0 ) {
-      kettleOutput = new ResultFilesKettleOutput( this.getResponse(), this.getDownload() );
+      kettleOutput = new ResultFilesKettleOutput( this.getResponse(), this.getConfiguration() );
 
     } else if ( result.getKettleType() == KettleResult.KettleType.JOB ) {
-      kettleOutput = new ResultOnlyKettleOutput( this.getResponse(), this.getDownload() );
+      kettleOutput = new ResultOnlyKettleOutput( this.getResponse(), this.getConfiguration() );
 
     } else if ( result.getRows().size() == 1
       && result.getRows().get( 0 ).getRowMeta().getValueMetaList().size() == 1 ) {
-      kettleOutput = new SingleCellKettleOutput( this.getResponse(), this.getDownload() );
+      kettleOutput = new SingleCellKettleOutput( this.getResponse(), this.getConfiguration() );
 
     } else {
-      kettleOutput = new JsonKettleOutput( this.getResponse(), this.getDownload() );
+      kettleOutput = new JsonKettleOutput( this.getResponse(), this.getConfiguration() );
     }
 
     kettleOutput.processResult( result );

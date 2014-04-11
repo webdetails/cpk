@@ -13,7 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl;
 
-
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.pentaho.di.core.parameters.NamedParams;
 import pt.webdetails.cpk.cache.ICache;
@@ -23,25 +22,47 @@ import pt.webdetails.cpk.elements.IKettleElement;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.InferedKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.JsonKettleOutput;
+import pt.webdetails.cpk.elements.impl.kettleoutputs.KettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultFilesKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultOnlyKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.SingleCellKettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.Map;
 
 public abstract class KettleElement<TMeta extends NamedParams>
   extends Element
   implements IDataSourceProvider, IKettleElement {
 
+  // region Inner Classes
+  public enum KettleParameter {
+    CACHE_IS_ENABLED( "cpk.cache.isEnabled", false ),
+    CACHE_TIME_TO_LIVE_SECONDS( "cpk.cache.timeToLiveSeconds", 0 ),
+    MIME_TYPE( "cpk.mimeType", "application/octet-stream" ),
+    ATTACHMENT_NAME( "cpk.attachmentName", null );
+
+    private final String name;
+    private final Object defaultValue;
+
+    public String parameterName() { return this.name; }
+
+    /**
+     * @return The hard coded default value of the kettle parameter.
+     */
+    public Object defaultValue() { return this.defaultValue; }
+
+    private KettleParameter( String name, Object defaultValue ) {
+      this.name = name;
+      this.defaultValue = defaultValue;
+    }
+  }
+
+  // endregion
+
+  // region Constants
   protected static final String OUTPUT_NAME_PREFIX = "OUTPUT";
-
-  private static final String CPK_CACHE_RESULTS = "cpk.cache.isEnabled";
-  private static final boolean CPK_CACHE_RESULTS_DEFAULT_VALUE = false;
-
-  private static final String CPK_CACHE_TTL = "cpk.cache.timeToLiveSeconds";
-
 
   // TODO: this class should be in the REST layer
   private static class RequestParameterName {
@@ -51,22 +72,74 @@ public abstract class KettleElement<TMeta extends NamedParams>
     public static final String BYPASS_CACHE = "bypassCache";
   }
 
+  // endregion
+
+  // region Fields
   private ICache<KettleResultKey, KettleResult> cache;
   private boolean isResultsCacheEnabled;
-
   private int timeToLive;
 
+  protected TMeta meta;
+
+  private KettleOutput.Configuration defaultOutputConfiguration;
+
+  // endregion
+
+  // region Getters / Setters
   public int getTimeToLive() { return this.timeToLive; }
   public KettleElement<TMeta> setTimeToLive( int timeToLive ) {
     this.timeToLive = timeToLive;
     return this;
   }
 
-  protected TMeta meta;
-
   public boolean isResultsCacheEnabled() {
     return this.cache != null && this.isResultsCacheEnabled;
   }
+
+  // TODO: check if this makes sense here or somewher closer to the transport layer
+  public KettleOutput.Configuration getDefaultOutputConfiguration() {
+    return this.defaultOutputConfiguration;
+  }
+  public KettleElement<TMeta> setDefaultOutputConfiguration( KettleOutput.Configuration configuration ) {
+    this.defaultOutputConfiguration = configuration;
+    return this;
+  }
+
+  // TODO: this JsonIgnore annotation is required due to direct serialization in
+  // cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
+  @JsonIgnore
+  @Override
+  public ICache<KettleResultKey, KettleResult> getCache() {
+    return this.cache;
+  }
+
+  @Override
+  public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
+    int timeToLive;
+    String timeToLiveStr = null;
+    if ( this.meta != null ) {
+      logger.debug( "Setting cache while job/transform meta is not set. Unable to load default values from ktr/kjb." );
+      timeToLiveStr = KettleElementHelper.getParameterDefault( this.meta,
+        KettleParameter.CACHE_TIME_TO_LIVE_SECONDS.parameterName() );
+    }
+
+    if ( timeToLiveStr != null ) {
+      try {
+        timeToLive = Integer.parseInt( timeToLiveStr );
+      } catch ( NumberFormatException e ) {
+        timeToLive = cache.getTimeToLiveSeconds().intValue();
+      }
+    } else {
+      timeToLive = cache.getTimeToLiveSeconds().intValue();
+    }
+
+    this.setTimeToLive( timeToLive );
+
+    this.cache = cache;
+    return this;
+  }
+
+  // endregion
 
   @Override
   public boolean init( final String pluginId, final String id,
@@ -88,9 +161,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
     // add base parameters to ensure they exist
     KettleElementHelper.addBaseParameters( this.meta );
 
-    String cacheResultsStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_RESULTS );
-    this.isResultsCacheEnabled = cacheResultsStr == null ?  CPK_CACHE_RESULTS_DEFAULT_VALUE
-      : Boolean.parseBoolean( cacheResultsStr );
+    this.initializeKettleParameters( this.meta );
 
     // execute at start?
     if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
@@ -101,38 +172,32 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return true;
   }
 
-  protected abstract TMeta loadMeta( String filePath );
-
-  // TODO: this JsonIgnore annotation is required due to direct serialization in
-  // cpkCoreService.getElementsList() => Refactor getElementsList() to use DTOs
-  @JsonIgnore
-  @Override
-  public ICache<KettleResultKey, KettleResult> getCache() {
-    return this.cache;
-  }
-
-  @Override
-  public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
-    int timeToLive;
-    String timeToLiveStr = null;
-    if ( this.meta != null ) {
-      timeToLiveStr = KettleElementHelper.getParameterDefault( this.meta, CPK_CACHE_TTL );
-    }
-
-    if ( timeToLiveStr != null ) {
-      try {
-        timeToLive = Integer.parseInt( timeToLiveStr );
-      } catch ( NumberFormatException e ) {
-        timeToLive = cache.getTimeToLiveSeconds().intValue();
+  private void initializeKettleParameters( NamedParams params ) {
+    // read parameter default values from ktr/kjb
+    Map<KettleParameter, String> parametersFromFile = new Hashtable<KettleParameter, String>(  );
+    for ( KettleParameter parameter : KettleParameter.values() ) {
+      String defaultValue = KettleElementHelper.getParameterDefault( params, parameter.parameterName() );
+      if ( defaultValue != null ) {
+        parametersFromFile.put( parameter, defaultValue );
       }
-    } else {
-      timeToLive = cache.getTimeToLiveSeconds().intValue();
     }
 
-    this.setTimeToLive( timeToLive );
+    // init variables
+    String isCacheEnabledStr = parametersFromFile.get( KettleParameter.CACHE_IS_ENABLED );
+    this.isResultsCacheEnabled = isCacheEnabledStr != null ? Boolean.parseBoolean( isCacheEnabledStr )
+      : (Boolean) KettleParameter.CACHE_IS_ENABLED.defaultValue();
 
-    this.cache = cache;
-    return this;
+    // TODO: time to live?
+
+    // init default output configuration
+    String mimeType = parametersFromFile.get( KettleParameter.MIME_TYPE );
+    String attachmentName = parametersFromFile.get( KettleParameter.ATTACHMENT_NAME );
+    KettleOutput.Configuration configuration = new KettleOutput.Configuration();
+    configuration
+      .setMimeType( mimeType )
+      .setAttachmentName( attachmentName );
+
+    this.setDefaultOutputConfiguration( configuration );
   }
 
 
@@ -161,18 +226,20 @@ public abstract class KettleElement<TMeta extends NamedParams>
       kettleOutputType = "Infered";
     }
 
+    KettleOutput.Configuration configuration = this.getDefaultOutputConfiguration().clone();
+    configuration.setSendResultAsAttachment( download );
 
     IKettleOutput kettleOutput;
     if ( kettleOutputType.equalsIgnoreCase( "Json" ) ) {
-      kettleOutput = new JsonKettleOutput( httpResponse, download );
+      kettleOutput = new JsonKettleOutput( httpResponse, configuration );
     } else if ( kettleOutputType.equalsIgnoreCase( "ResultFiles" ) ) {
-      kettleOutput = new ResultFilesKettleOutput( httpResponse, download );
+      kettleOutput = new ResultFilesKettleOutput( httpResponse, configuration );
     } else if ( kettleOutputType.equalsIgnoreCase( "ResultOnly" ) ) {
-      kettleOutput = new ResultOnlyKettleOutput( httpResponse, download );
+      kettleOutput = new ResultOnlyKettleOutput( httpResponse, configuration );
     } else if ( kettleOutputType.equalsIgnoreCase( "SingleCell" ) ) {
-      kettleOutput = new SingleCellKettleOutput( httpResponse, download );
+      kettleOutput = new SingleCellKettleOutput( httpResponse, configuration );
     } else {
-      kettleOutput = new InferedKettleOutput( httpResponse, download );
+      kettleOutput = new InferedKettleOutput( httpResponse, configuration );
     }
 
     return kettleOutput;
@@ -209,6 +276,8 @@ public abstract class KettleElement<TMeta extends NamedParams>
     if ( result != null ) {
       // Choose kettle output type and process result with it
       IKettleOutput kettleOutput = this.inferResult( outputType, download, httpResponse );
+
+      // TODO: pass configuration to process result
       kettleOutput.processResult( result );
       logger.info( "[ " + result + " ]" );
     }
@@ -264,6 +333,12 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return result;
   }
 
+
+  protected boolean isValidOutputName( String Name ) {
+    return Name != null && Name.startsWith( OUTPUT_NAME_PREFIX );
+  }
+
+
   /**
    * Executes the kettle transformation / job.
    * @param kettleParameters Parameters to be passed into the kettle transformation/job.
@@ -272,8 +347,6 @@ public abstract class KettleElement<TMeta extends NamedParams>
    */
   protected abstract KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName );
 
-  protected boolean isValidOutputName( String Name ) {
-    return Name != null && Name.startsWith( OUTPUT_NAME_PREFIX );
-  }
+  protected abstract TMeta loadMeta( String filePath );
 
 }

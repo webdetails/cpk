@@ -33,8 +33,8 @@ import java.util.List;
 
 public class ResultFilesKettleOutput extends KettleOutput {
 
-  public ResultFilesKettleOutput( HttpServletResponse response, boolean download ) {
-    super( response, download );
+  public ResultFilesKettleOutput( HttpServletResponse response, Configuration configuration ) {
+    super( response, configuration );
   }
 
   @Override
@@ -58,12 +58,15 @@ public class ResultFilesKettleOutput extends KettleOutput {
         FileObject file = files.get( 0 );
         InputStream fileInputStream = KettleVFS.getInputStream( file );
         FileName fileName = file.getName();
-        String mimeType = MimeTypes.getMimeType( fileName.getExtension() );
+        String defaultMimeType = this.getConfiguration().getMimeType();
+        String mimeType = defaultMimeType != null ? defaultMimeType : MimeTypes.getMimeType( fileName.getBaseName() );
 
-        if ( this.getDownload() ) {
+        if ( this.getConfiguration().getSendResultAsAttachment() ) {
           try {
             long attachmentSize = fileInputStream.available();
-            this.sendAttached( KettleVFS.getInputStream( file ), mimeType, fileName.getBaseName(),
+            String defaultAttachmentName = this.getConfiguration().getAttachmentName();
+            String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : fileName.getBaseName();
+            this.sendAttached( KettleVFS.getInputStream( file ), mimeType, attachmentName,
               attachmentSize );
           } catch ( IOException e ) {
             logger.error( "Failed setting attachment size.", e );
@@ -78,13 +81,14 @@ public class ResultFilesKettleOutput extends KettleOutput {
         ZipUtil zip = new ZipUtil();
         zip.buildZipFromFileObjectList( files );
 
-        this.sendAttached( zip.getZipInputStream(), MimeTypes.ZIP, zip.getZipNameToDownload(), zip.getZipSize() );
+        String defaultAttachmentName = this.getConfiguration().getAttachmentName();
+        String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : zip.getZipNameToDownload();
+        this.sendAttached( zip.getZipInputStream(), MimeTypes.ZIP, attachmentName, zip.getZipSize() );
       }
     } catch ( FileSystemException ex ) {
       logger.error( "Failed sending files from kettle result.", ex );
     }
   }
-
 
   private void sendDirectly( InputStream file, String mimeTypes ) {
     CpkUtils.setResponseHeaders( this.getResponse(), mimeTypes );

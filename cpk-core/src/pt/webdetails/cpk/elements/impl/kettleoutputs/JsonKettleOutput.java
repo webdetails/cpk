@@ -17,7 +17,9 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.row.RowMetaInterface;
+import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.elements.impl.KettleResult;
+import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -27,8 +29,10 @@ import java.util.Collection;
 
 public class JsonKettleOutput extends KettleOutput {
 
-  public JsonKettleOutput( HttpServletResponse response, boolean download ) {
-    super( response, download );
+  public JsonKettleOutput( HttpServletResponse response, Configuration configuration ) {
+    super( response, configuration );
+
+    configuration.setMimeType( MimeTypes.JSON );
   }
 
   @Override
@@ -49,6 +53,7 @@ public class JsonKettleOutput extends KettleOutput {
     RowsJson rowsJson = new RowsJson( rows, rowMeta );
 
     try {
+      CpkUtils.setResponseHeaders( this.getResponse(), this.getConfiguration().getMimeType() );
       ObjectMapper mapper = new ObjectMapper();
       mapper.writeValue( this.getOut(), rowsJson );
     } catch ( IOException ex ) {
