@@ -19,7 +19,6 @@ import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IKettleElement;
-import pt.webdetails.cpk.elements.impl.kettleoutputs.IKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.InferedKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.JsonKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.KettleOutput;
@@ -42,7 +41,8 @@ public abstract class KettleElement<TMeta extends NamedParams>
     CACHE_TIME_TO_LIVE_SECONDS( "cpk.cache.timeToLiveSeconds", 0 ),
     RESPONSE_MIME_TYPE( "cpk.response.mimeType", "application/octet-stream" ),
     RESPONSE_ATTACHMENT_NAME( "cpk.response.attachmentName", null ),
-    RESPONSE_DOWNLOAD( "cpk.response.download", false );
+    RESPONSE_DOWNLOAD( "cpk.response.download", false ),
+    RESPONSE_OUTPUT_TYPE( "cpk.response.outputType", "Infered" );
 
     private final String name;
     private final Object defaultValue;
@@ -202,12 +202,14 @@ public abstract class KettleElement<TMeta extends NamedParams>
     String attachResultStr = parameters.get( KettleParameter.RESPONSE_DOWNLOAD );
     boolean attachResult = attachResultStr != null ? Boolean.parseBoolean( attachResultStr )
       : (Boolean) KettleParameter.RESPONSE_DOWNLOAD.defaultValue();
+    String outputType = parameters.get( KettleParameter.RESPONSE_OUTPUT_TYPE );
 
     KettleOutput.Configuration configuration = new KettleOutput.Configuration();
     configuration
       .setMimeType( mimeType )
       .setAttachmentName( attachmentName )
-      .setSendResultAsAttachment( attachResult );
+      .setSendResultAsAttachment( attachResult )
+      .setOutputType( outputType );
 
     return configuration;
   }
@@ -261,7 +263,11 @@ public abstract class KettleElement<TMeta extends NamedParams>
     // "Parse" bloated map
     Map<String, Object> request = bloatedMap.get( "request" );
     String stepName = (String) request.get( RequestParameterName.STEP_NAME );
-    String kettleOutputType = (String) request.get( RequestParameterName.KETTLE_OUTPUT );
+
+    // if output type is not defined in request use value from default config. If not defined in default config use hardcoded default.
+    String kettleOutputType = this.getStringParameter( (String) request.get( RequestParameterName.KETTLE_OUTPUT ),
+                                                       this.getDefaultOutputConfiguration().getOutputType(),
+                                                       (String) KettleParameter.RESPONSE_OUTPUT_TYPE.defaultValue() );
 
     // if download parameter is not defined use value from default output configuration
     String downloadStr = (String) request.get( RequestParameterName.DOWNLOAD );
@@ -276,6 +282,14 @@ public abstract class KettleElement<TMeta extends NamedParams>
     Map<String, String> kettleParameters = KettleElementHelper.getKettleParameters( request );
 
     this.processRequest( kettleParameters, kettleOutputType , stepName, download, bypassCache, httpResponse );
+  }
+
+  private String getStringParameter( String requestParameter, String configParameter, String hardcodedParameter ) {
+    String result = requestParameter != null ? requestParameter
+      : configParameter != null ? configParameter
+      : hardcodedParameter;
+
+    return result;
   }
 
 
