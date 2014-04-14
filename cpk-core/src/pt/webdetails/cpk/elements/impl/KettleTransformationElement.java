@@ -38,7 +38,6 @@ import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement<TransMeta> implements IDataSourceProvider {
 
-
   public KettleTransformationElement() {
   }
 

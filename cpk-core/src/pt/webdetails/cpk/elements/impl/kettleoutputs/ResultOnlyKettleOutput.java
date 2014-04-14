@@ -19,7 +19,6 @@ import pt.webdetails.cpf.utils.MimeTypes;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class ResultOnlyKettleOutput extends KettleOutput {

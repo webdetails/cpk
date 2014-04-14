@@ -31,6 +31,8 @@ import java.util.List;
  * Wrapper class for org.pentaho.di.core.Result to have a Serializable result for disk caching.
  */
 public final class KettleResult implements Serializable {
+
+  // region Constants and Definitions
   private static final long serialVersionUID = 110982374129L;
 
   protected transient Log logger = LogFactory.getLog( this.getClass() );
@@ -41,8 +43,9 @@ public final class KettleResult implements Serializable {
   public static enum KettleType {
     JOB, TRANSFORMATION
   }
+  // endregion
 
-  // Getters / Setters
+  // region Getters / Setters
 
   public boolean wasExecutedSuccessfully() { return this.result.getResult(); }
 
@@ -63,14 +66,17 @@ public final class KettleResult implements Serializable {
     this.kettleType = kettleType;
     return this;
   }
+  // endregion
 
-  // Constructors
+  // region Constructors
 
   public KettleResult( Result result ) {
     this.result = result;
   }
 
-  // Serialization
+  // endregion
+
+  // region Serialization
   private void writeObject( java.io.ObjectOutputStream out ) throws IOException
   {
     out.defaultWriteObject();
@@ -93,5 +99,6 @@ public final class KettleResult implements Serializable {
     }
   }
 
+  // endregion
 
 }
