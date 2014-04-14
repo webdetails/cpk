@@ -81,8 +81,4 @@ public final class KettleResultKey implements Serializable {
     return text != null ? text.hashCode() : 0;
   }
 
-  // Serialization
-
-
-
 }

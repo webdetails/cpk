@@ -89,25 +89,26 @@ public abstract class KettleOutput implements IKettleOutput {
 
   private OutputStream out;
   private HttpServletResponse response;
-
   private Configuration configuration;
-  public Configuration getConfiguration() { return this.configuration; }
-
 
   protected OutputStream getOut() { return this.out; }
 
-  protected KettleOutput( HttpServletResponse response, Configuration configuration ) {
+  public HttpServletResponse getResponse() { return this.response; }
+  public KettleOutput setResponse( HttpServletResponse response ) {
     this.response = response;
-    this.configuration = configuration;
 
     try {
       this.out = response.getOutputStream();
     } catch ( IOException ex ) {
-      this.logger.error( "Something went wrong on the KettleOutput class initialization.", ex );
+      this.logger.error( "Something went wrong setting http response on KettleOutput.", ex );
     }
+    return this;
   }
 
-  protected HttpServletResponse getResponse() { return this.response; }
-
+  public Configuration getConfiguration() { return this.configuration; }
+  public KettleOutput setConfiguration( Configuration configuration ) {
+    this.configuration = configuration;
+    return this;
+  }
 
 }
