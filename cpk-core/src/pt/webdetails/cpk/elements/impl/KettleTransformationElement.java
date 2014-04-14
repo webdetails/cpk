@@ -38,7 +38,6 @@ import java.util.Map;
 
 public class KettleTransformationElement extends KettleElement<TransMeta> implements IDataSourceProvider {
 
-  protected static final String DEFAULT_OUTPUT_STEP_NAME = "OUTPUT";
 
   public KettleTransformationElement() {
   }
@@ -113,7 +112,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
         } );
       } else {
         logger.error( "Couldn't find step '" + outputStepName
-          + "' nor default output step '" + DEFAULT_OUTPUT_STEP_NAME + "'." );
+          + "' nor default output step '" + this.getDefaultOutputName() + "'." );
       }
 
       // start transformation threads and wait until they finish
@@ -148,13 +147,14 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
    * @return
    */
   protected StepInterface getRunThread( Trans transformation, String stepName ) {
-    Collection<String> outputStepNames = this.getOutputStepNames();
+    Collection<String> outputStepNames = this.getOutputNames();
     StepInterface step;
 
+    // if stepName is not a valid output step name, then fallback to default value
     if ( outputStepNames.contains( stepName ) ) {
       step = transformation.findRunThread( stepName );
     } else {
-      step = transformation.findRunThread( DEFAULT_OUTPUT_STEP_NAME );
+      step = transformation.findRunThread( this.getDefaultOutputName() );
     }
 
     return step;
@@ -164,7 +164,8 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
    * Gets the names of the transformation steps which can be used for output.
    * @return
    */
-  protected Collection<String> getOutputStepNames() {
+  @Override
+  protected Collection<String> getOutputNames() {
     List<String> validOutputStepNames = new ArrayList<String>();
     for ( String name : this.meta.getStepNames() ) {
       if ( this.isValidOutputName( name ) ) {
@@ -187,12 +188,9 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       Trans transformation = new Trans( transMeta );
       // prepare execution
       transformation.prepareExecution( null );
-      StepInterface step = transformation.findRunThread( DEFAULT_OUTPUT_STEP_NAME );
-      if ( step != null ) {
-        // start transformation threads and wait until they finish
-        transformation.startThreads();
-        transformation.waitUntilFinished();
-      }
+      // start transformation threads and wait until they finish
+      transformation.startThreads();
+      transformation.waitUntilFinished();
     } catch ( KettleException e ) {
       // do nothing?
     }

@@ -31,8 +31,6 @@ import java.util.Map;
 
 public class KettleJobElement extends KettleElement<JobMeta> implements IDataSourceProvider {
 
-  protected static final String DEFAULT_OUTPUT_JOB_ENTRY_NAME = "OUTPUT";
-
   public KettleJobElement() {
   }
 
@@ -63,9 +61,9 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     Result result = job.getResult();
 
     // If no jobEntry name is defined use default jobEntry name.
-    jobEntryName = !( jobEntryName == null || jobEntryName.isEmpty() ) ? jobEntryName : DEFAULT_OUTPUT_JOB_ENTRY_NAME;
+    jobEntryName = !( jobEntryName == null || jobEntryName.isEmpty() ) ? jobEntryName : this.getDefaultOutputName();
 
-    List<String> outputJobEntryNames = this.getOutputJobEntryNames( job.getJobMeta() );
+    Collection<String> outputJobEntryNames = this.getOutputNames( );
 
     if ( outputJobEntryNames.contains( jobEntryName ) ) {
       List<JobEntryResult> jobEntryResultList = job.getJobEntryResults();
@@ -84,10 +82,11 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
    * Gets the names of the job entries where the result can be fetched to return in a cpk endpoint.
    * @return
    */
-  private List<String> getOutputJobEntryNames( JobMeta meta ) {
+  @Override
+  protected Collection<String> getOutputNames() {
     List<String> validOutputJobEntryNames = new ArrayList<String>();
-    for ( int iJobEntry = 0; iJobEntry < meta.nrJobEntries(); iJobEntry++ ) {
-      String jobEntryName = meta.getJobEntry( iJobEntry ).getName();
+    for ( int iJobEntry = 0; iJobEntry < this.meta.nrJobEntries(); iJobEntry++ ) {
+      String jobEntryName = this.meta.getJobEntry( iJobEntry ).getName();
       if ( this.isValidOutputName( jobEntryName ) ) {
         validOutputJobEntryNames.add( jobEntryName );
       }
