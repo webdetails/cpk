@@ -41,12 +41,16 @@ them. The end goal is that business consultants are able to build new plugins,
 not requiring specific java knowledge.
 
 ## Kettle Endpoints
-Kettle transformations or jobs of a CPK plugin are automatically exposed as rest endpoints **pentaho/plugin/{cpkPluginId}/api/{kettleFileName}**. To execute the corresponding transformation/job simply perform an HTTP GET request to the endpoint. 
-
-If you have need of a private transformation/job, prefix its name with an underscore and it won't be made available in an endpoint. 
+Kettle transformations or jobs of a CPK plugin are automatically exposed as rest endpoints. To execute the corresponding transformation/job simply perform an HTTP GET request to the endpoint.
+ 
+	http://{host}/pentaho/plugin/{cpkPluginId}/api/{kettleFileName}
+	
+If you have need of a private transformation/job, prefix its file name with an underscore and it won't be made available in an endpoint. 
 
 ### Specifying from where to get results
-It is possible to specify from which step/job entry we want to fetch row results. To do so, simply include the _**stepName**_ parameter in the query string of the request. For example, to get the transformation results from the "OUTPUT" step execute the request *pentaho/plugin/{cpkPluginId}/api/{kettleFileName}?stepName=OUTPUT*.
+It is possible to specify from which step/job entry we want to fetch row results. To do so, simply include the _**stepName**_ parameter in the query string of the request. For example, to get the transformation results from the "OUTPUT" step execute the request
+
+	http://{host}/pentaho/plugin/{cpkPluginId}/api/{kettleFileName}?stepName=OUTPUT
 
 A kettle endpoint may have multiple steps or job entries from where we can fetch results. Because allowing to get results from any given intermediate step/job entry would be a possible security breach, it is necessary to explicitly identify which can be used as output. This is done by setting the name of the step/job entry to start with *"OUTPUT"*. For example, a kettle endpoint for a transformation that has five steps with names "Step1", "Step2", "OutputStep", "OUTPUTStep1" and "OUTPUTStep2" will only allow getting results from "OUTPUTStep1" and "OUTPUTStep2".
 
@@ -56,7 +60,9 @@ If no *stepName* is specified in the HTTP request and no default value is set fo
 
 ### Passing parameter values into a kettle transformation/job
 
-It is also possible to pass parameter values to a transformation/job at runtime. This is achieved by encoding the parameter names in the query string with a *param* prefix. For example, if a transformation expects a parameter named *foo* and you want to set *bar* as its value, your request should be *pentaho/plugin/{cpkPluginId}/api/{kettleFileName}?paramfoo=bar*.
+It is also possible to pass parameter values to a transformation/job at runtime. This is achieved by encoding the parameter names in the query string with a *param* prefix. For example, if a transformation expects a parameter named *foo* and you want to set *bar* as its value, your request should be
+
+	http://{host}/pentaho/plugin/{cpkPluginId}/api/{kettleFileName}?paramfoo=bar
 
 ### Result formatting
 The nature of a transformation/job result will vary and as such it is desirable to be able to format it differently. For example, a transformation may produce a tabular result set which we want to feed into a chart or it may select and filter some files which we want to zip and download. 
@@ -68,7 +74,9 @@ CPK allows formatting a kettle endpoint result in four different ways:
 * **SingleCell**: returns the content of the first cell of the first row in the result
 * **ResultOnly**: returns status information about the execution 
 
-To select the desired format set the **kettleOutput** query string parameter to the chosen value. For example, *{cpkPluginId}/api/{kettleFileName}?kettleOutput=Json*.
+To select the desired format set the **kettleOutput** query string parameter to the chosen value. For example 
+
+	http://{host}/pentaho/plugin/{cpkPluginId}/api/{kettleFileName}?kettleOutput=Json
 
 It is possible to specify the default value to be used when the kettleOutput parameter is not defined in the query string. This is achieved by setting the default value of the transformation/job parameter **cpk.response.kettleOutput**.
 
@@ -91,7 +99,9 @@ Some output formats may trigger the download of a file.
 ##### ResultFiles
 When **ResultFiles** is used and the result contains multiple files, CPK compresses them into a single Zip file that is returned as an attachment of the response. However, results that have a single file do not trigger a download by default, i.e. the file is not marked as an attachment of the response.
 
-It is possible to change this default behaviour by setting the transformation/job parameter **cpk.response.download** to *true*. Also, the default value is always overrided when the value of the query string parameter **download** is defined in the request. For example, consider a transformation which result has one file and which **cpk.response.download** is set to *true*. If the request *{cpkPluginId}/api/{kettleFileName}?kettleOutput=ResultFiles&download=false* is executed the file will not be marked as an attachment.
+It is possible to change this default behaviour by setting the transformation/job parameter **cpk.response.download** to *true*. Also, the default value is always overrided when the value of the query string parameter **download** is defined in the request. For example, consider a transformation which result has one file and which **cpk.response.download** is set to *true*. If the following request is executed the file will not be marked as an attachment.
+
+	http://{host}/pentaho/plugin/{cpkPluginId}/api/{kettleFileName}?kettleOutput=ResultFiles&download=false
 
 When the result has single file, CPK will try to determine the mime type from the file extension. If the mime type is known a priori you can override the default behaviour by setting the transformation/job parameter **cpk.response.mimeType** to the desired value (e.g. application/xml).
 
@@ -100,8 +110,9 @@ It is also possible to define the name of the downloaded file by setting the tra
 ##### SingleCell
 In some cases it is useful to interpret the contents of a cell as the contents of a file. In this way the **SingleCell** output format behaves similarly to **ResultFiles** and as such it is sensible to the parameters **download**, **cpk.response.download**, **cpk.response.mimeType** and **cpk.response.attachmentName**.    
 
-For example, consider a transformation that writes xml to the single cell of the single row of the result with parameters _**cpk.response.mimeType**=application/xml_, _**cpk.response.attachmentName**=myXml.xml_ and _**cpk.response.download**=true_ A request *{cpkPluginId}/api/{transformationKettleFileName}* will download a file named *myXml.xml* which content is the content of the single cell result.
+For example, consider a transformation that writes xml to the single cell of the single row of the result with parameters _**cpk.response.mimeType**=application/xml_, _**cpk.response.attachmentName**=myXml.xml_ and _**cpk.response.download**=true_. The following request will download a file named *myXml.xml* which content is the content of the single cell result.
 
+	http://{host}/pentaho/plugin/{cpkPluginId}/api/{transformationKettleFileName}
 
 <!-- TODO: There should be a better explanation on the Json and ResultOnly outputs -->
 
@@ -115,6 +126,86 @@ Although there is one cache per CPK plugin, this cache can be enabled/disabled p
 If at runtime you wish to bypass an enabled cache use the query string parameter **bypassCache** set to true. This will force the transformation/job to execute and update the previous cached valued.
 
 <!-- TODO: explicitly refer that EHCache is being used for CPK caching and it is possible to use Ehcache.xml configuration to tweak cache settings -->
+
+
+<!-- TODO: this is "older" documentation that can eventually be re-used  
+ 
+##How to use a CPK Plugin 
+
+###How to use an endpoint:
+
+It's really simple, to use an endpoint you can just type this on your browser address bar:
+
+    http://hostAdress/pentaho/content/pluginID/endpointNameLowerCase
+
+As an example let's say we're working on a plugin called _"example"_.
+Assuming you're using your local machine as a server the address to use is: 
+
+    http://localhost:8080/pentaho/content/example
+
+This plugin has an endpoint called "helloWorld" and to use it all you have to do is:
+
+    http://localhost:8080/pentaho/content/example/helloworld
+
+
+You can also specify parameters to this endpoint by typing: 
+
+    http://localhost:8080/pentaho/content/example/helloworld?paramPARAMETER_HERE=parameterValue&paramSecondParameter=secondValue
+
+If this endpoint has a parameter defined called "bold" and its possible values are "true" or "false" we can tell the plugin which value we want to set to it:
+
+    http://localhost:8080/pentaho/content/example/helloworld?parambold=true
+
+#####As you must have noticed the "param" prefix is always present, it means it is a custom parameter to be inserted onto your endpoint (It must always be present to disambiguate between endpoint parameter and general parameter).
+
+Endpoints have a parameter called _"pentahoUsername"_ injected before their execution and a _"pentahoRoles"_ (as Comma Separated Value, CSV format) injected aswell.
+ - This can be used on the endpoints to specify some kind of security on their execution.
+
+There is also the concept of getting information out of a specific step of your transformation and job and this is where the "stepName" parameter comes in!
+
+#####_How to use it? Really simple!_
+You just need to type this into the address bar
+
+    http://localhost:8080/pentaho/content/example/helloworld?stepName=yourCustomOutputStep
+
+As before, if we have a stepName called "Output as JSON" the correct way to set this stepName is:
+
+    http://localhost:8080/pentaho/content/example/helloworld?stepName=Output as JSON
+
+
+_"stepName"_ provides a way to get the output we want out of a transformation with more than one output and the specific result of a job entry that was executed.
+--> 
+
+##Dashboards
+
+A Dashboard is used like the endpoints are. The URL to call is basically the same, the only change is the name after the "example" field on the address bar!
+
+    http://{host}/pentaho/plugin/{cpkPluginId}/api/{dashboardName}
+
+Here you have a very useful parameter that is: *"mode"*.
+It allows to change between "edit" and "render" mode on the fly! All you need to do is append "?mode=edit" to the URL like this: 
+
+    http://{host}/pentaho/plugin/{cpkPluginId}/api/{dashboardName}?mode=edit
+
+After you're finished editing the dashboard just hit "back" on your browser and refresh the page.
+
+
+##CPK command list
+
+_status_ : Displays the status of the plugin and all it's endpoints
+
+_refresh_ : Reloads all the configurations, endpoints and dashboards, _also clears the endpoints cache!_
+
+_version_ : Returns the plugin version (Defined on the plugins "version.xml" file or through the Control Panel)
+
+_getSitemapJson_ : Returns a [JSON](http://www.json.org/) with the plugins sitemap (Dashboards only!)
+
+_getElementsList_ : Returns a [JSON](http://www.json.org/) with the whole list of elements present on the plugin (dashboards and kettle endpoints)
+
+To perform a command:
+
+    http://{host}/pentaho/pentaho/plugin/{pluginId}/api/{command}
+
 
 
 ## Structure
@@ -186,6 +277,7 @@ so it can be integrated into Pentaho's marketplace.
 
 Pentaho will then be able to categorize / approve the plugin so that it becomes
 available to other users through the marketplace
+
 
 
 
