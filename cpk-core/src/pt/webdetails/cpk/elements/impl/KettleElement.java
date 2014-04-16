@@ -43,7 +43,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
     RESPONSE_MIME_TYPE( "cpk.response.mimeType", null ),
     RESPONSE_ATTACHMENT_NAME( "cpk.response.attachmentName", null ),
     RESPONSE_DOWNLOAD( "cpk.response.download", false ),
-    RESPONSE_OUTPUT_TYPE( "cpk.response.outputType", "Infered" ),
+    RESPONSE_OUTPUT_TYPE( "cpk.response.kettleOutput", "Infered" ),
     RESULT_STEP_NAME( "cpk.result.stepName", "OUTPUT" );
 
 
