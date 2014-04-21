@@ -119,7 +119,8 @@ public class CpkEngine {
     InputStream configFile = null;
     try {
       // get configuration from file
-      configFile = this.getEnvironment().getContentAccessFactory().getPluginSystemReader( "" ).getFileInputStream( DEFAULT_CACHE_SETTINGS_FILENAME );
+      configFile = this.getEnvironment().getContentAccessFactory().getPluginSystemReader( "" )
+        .getFileInputStream( DEFAULT_CACHE_SETTINGS_FILENAME );
       Configuration cacheManagerConfiguration = ConfigurationFactory.parseConfiguration( configFile );
       Collection<CacheConfiguration> cacheConfigurations = cacheManagerConfiguration.getCacheConfigurations().values();
       // get one cache configuration, ignore if more are present
@@ -128,13 +129,14 @@ public class CpkEngine {
       if ( cacheConfiguration.getName() == null || cacheConfiguration.getName().isEmpty() ) {
         cacheConfiguration.setName( this.getDefaultCacheName() );
       }
-      logger.debug( this.getEnvironment().getPluginName() + " is using cache configuration from file " + DEFAULT_CACHE_SETTINGS_FILENAME );
+      logger.debug( this.getEnvironment().getPluginName() + " is using cache configuration from file "
+        + DEFAULT_CACHE_SETTINGS_FILENAME );
     }
     catch ( Exception ioe ) {
       // unable to load cache configuration file. Using hardcoded default configuration.
-      logger.error( "Error reading cache configuration file " + DEFAULT_CACHE_SETTINGS_FILENAME );
+      logger.info( "No Eh cache configuration file found " + DEFAULT_CACHE_SETTINGS_FILENAME + "." );
       cacheConfiguration = this.getDefaultCacheConfiguration();
-      logger.debug( this.getEnvironment().getPluginName() + " is using default hardcoded cache configuration." );
+      logger.info( this.getEnvironment().getPluginName() + " is using default hardcoded cache configuration." );
     }
     finally {
       IOUtils.closeQuietly( configFile );

@@ -55,13 +55,12 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
       .setDefinition( new KettleElementDefinition() );
   }
 
-
   private Result getResult( Job job, String jobEntryName ) {
     // by default return the result from the job
     Result result = job.getResult();
 
-    // If no jobEntry name is defined use default jobEntry name.
-    jobEntryName = !( jobEntryName == null || jobEntryName.isEmpty() ) ? jobEntryName : this.getDefaultOutputName();
+    // If jobEntry is invalid use default jobEntry name.
+    jobEntryName = this.getOutputNames().contains( jobEntryName ) ? jobEntryName : this.getDefaultOutputName();
 
     Collection<String> outputJobEntryNames = this.getOutputNames( );
 
@@ -69,8 +68,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
       List<JobEntryResult> jobEntryResultList = job.getJobEntryResults();
       for ( JobEntryResult jobEntryResult : jobEntryResultList ) {
         if ( jobEntryResult != null && jobEntryResult.getJobEntryName().equals( jobEntryName ) ) {
-          result = jobEntryResult.getResult();
-          break;
+          return jobEntryResult.getResult();
         }
       }
     }
@@ -99,14 +97,10 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     logger.info( "Starting job '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 
-
-    // update parameters
-    KettleElementHelper.updateParameters( this.meta );
-
     // add request parameters
-    Collection<String> addedParameters = Collections.emptyList();
+    Collection<String> setParameters = Collections.emptyList();
     if ( kettleParameters != null ) {
-      addedParameters = KettleElementHelper.addKettleParameters( this.meta, kettleParameters );
+      setParameters = KettleElementHelper.setKettleParameterValues( this.meta, kettleParameters );
     }
 
     // create a new job
@@ -116,35 +110,18 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     job.start();
     job.waitUntilFinished();
 
+    // assemble kettle result
     Result jobResult = this.getResult( job, outputJobEntryName );
     KettleResult result = new KettleResult( jobResult );
     result.setKettleType( KettleResult.KettleType.JOB );
 
     // clear request parameters
-    KettleElementHelper.clearParameters( this.meta, addedParameters );
+    KettleElementHelper.clearParameters( this.meta, setParameters );
 
     long end = System.currentTimeMillis();
     this.logger.info( "Finished job '" + this.getName()
       + "' (" + this.meta.getName() + ") in " + ( end - start ) + " ms" );
 
     return result;
-  }
-
-  public static void execute( String kettleJobPath ) {
-    try {
-      // load transformation meta info
-      JobMeta jobMeta = new JobMeta( kettleJobPath, null );
-      // add base parameters to ensure they exist
-      KettleElementHelper.addBaseParameters( jobMeta );
-      // update parameters
-      KettleElementHelper.updateParameters( jobMeta );
-      // create a new job
-      Job job = new Job( null, jobMeta );
-      // start job thread and wait until it finishes
-      job.start();
-      job.waitUntilFinished();
-    } catch ( Exception e ) {
-      // do nothing
-    }
   }
 }

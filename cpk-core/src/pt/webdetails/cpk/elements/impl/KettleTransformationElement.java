@@ -71,8 +71,6 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
     return dataSource;
   }
 
-
-  // TODO: this method should replace processRequest eventually
   @Override
   protected KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName ) {
     logger.info( "Starting transformation '" + this.getName() + "' (" + this.meta.getName() + ")" );
@@ -86,13 +84,10 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       this.meta.setResultRows( new ArrayList<RowMetaAndData>() );
       this.meta.setResultFiles( new ArrayList<ResultFile>() );
 
-      // update parameters
-      KettleElementHelper.updateParameters( this.meta );
-
-      // add request parameters
-      Collection<String> addedParameters = Collections.emptyList();
+      // add parameters
+      Collection<String> setParameters = Collections.emptyList();
       if ( kettleParameters != null ) {
-        addedParameters = KettleElementHelper.addKettleParameters( this.meta, kettleParameters );
+        setParameters = KettleElementHelper.setKettleParameterValues( this.meta, kettleParameters );
       }
 
       // create a new transformation
@@ -120,13 +115,12 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
 
       // assemble kettle result
       Result transformationResult = transformation.getResult();
-      rows.addAll( transformationResult.getRows() );
       transformationResult.setRows( rows );
       result = new KettleResult( transformationResult );
       result.setKettleType( KettleResult.KettleType.TRANSFORMATION );
 
       // clear request parameters
-      KettleElementHelper.clearParameters( meta, addedParameters );
+      KettleElementHelper.clearParameters( meta, setParameters );
 
     } catch ( KettleException e ) {
       logger.debug( "KETTLE EXCEPTION: " + e, e );
@@ -172,26 +166,5 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       }
     }
     return validOutputStepNames;
-  }
-
-
-  public static void execute( String kettleTransformationPath ) {
-    try {
-      // load transformation meta info
-      TransMeta transMeta = new TransMeta( kettleTransformationPath );
-      // add base parameters to ensure they exist
-      KettleElementHelper.addBaseParameters( transMeta );
-      // update parameters
-      KettleElementHelper.updateParameters( transMeta );
-      // create a new transformation
-      Trans transformation = new Trans( transMeta );
-      // prepare execution
-      transformation.prepareExecution( null );
-      // start transformation threads and wait until they finish
-      transformation.startThreads();
-      transformation.waitUntilFinished();
-    } catch ( KettleException e ) {
-      // do nothing?
-    }
   }
 }

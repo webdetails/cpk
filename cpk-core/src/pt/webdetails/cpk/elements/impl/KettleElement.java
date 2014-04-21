@@ -15,6 +15,7 @@ package pt.webdetails.cpk.elements.impl;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.pentaho.di.core.parameters.NamedParams;
+import org.pentaho.di.core.parameters.UnknownParamException;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
@@ -27,9 +28,11 @@ import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultOnlyKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.SingleCellKettleOutput;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class KettleElement<TMeta extends NamedParams>
@@ -37,27 +40,82 @@ public abstract class KettleElement<TMeta extends NamedParams>
   implements IDataSourceProvider, IKettleElement {
 
   // region Inner Definitions
+
+  /**
+   * Kettle parameters that have special handling by cpk plugins.
+   */
   public enum KettleParameter {
-    CACHE_IS_ENABLED( "cpk.cache.isEnabled", false ),
-    CACHE_TIME_TO_LIVE_SECONDS( "cpk.cache.timeToLiveSeconds", 0 ),
+    CACHE_IS_ENABLED( "cpk.cache.isEnabled", "false" ),
+    CACHE_TIME_TO_LIVE_SECONDS( "cpk.cache.timeToLiveSeconds", "0" ),
     RESPONSE_MIME_TYPE( "cpk.response.mimeType", null ),
     RESPONSE_ATTACHMENT_NAME( "cpk.response.attachmentName", null ),
-    RESPONSE_DOWNLOAD( "cpk.response.download", false ),
+    RESPONSE_DOWNLOAD( "cpk.response.download", "false" ),
     RESPONSE_OUTPUT_TYPE( "cpk.response.kettleOutput", "Infered" ),
-    RESULT_STEP_NAME( "cpk.result.stepName", "OUTPUT" );
+    RESULT_STEP_NAME( "cpk.result.stepName", "OUTPUT" ),
+    EXECUTE_AT_START( "cpk.executeAtStart", "false" );
 
+    public static final Collection<String> reservedNamePrefixes;
+
+    static {
+      Collection<String> prefixes = new ArrayList<String>( Arrays.asList( "_", "cpk." ) );
+      reservedNamePrefixes = Collections.unmodifiableCollection( prefixes );
+    }
 
     private final String name;
-    private final Object defaultValue;
+    private final String defaultValue;
 
+    /**
+     *
+     * @param name the name to check if is a reserved.
+     * @return true if the name is a reserved name that can not be passed into a kettle element for execution.
+     */
+    public static boolean isReservedName( String name ) {
+      for ( String prefix : KettleParameter.reservedNamePrefixes ) {
+        if ( name.startsWith( prefix ) ) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     *
+     * @return The name of this kettle parameter.
+     */
     public String parameterName() { return this.name; }
 
     /**
-     * @return The hard coded default value of the kettle parameter.
+     * @return the hard coded default value of this kettle parameter.
      */
-    public Object defaultValue() { return this.defaultValue; }
+    public String hardCodedDefaultValue() { return this.defaultValue; }
 
-    private KettleParameter( String name, Object defaultValue ) {
+    /**
+     *
+     * @param params the NamedParams where to get the default value from.
+     * @return the default value of this kettle parameter as defined in params.
+     */
+    public String metaDefaultValue( NamedParams params ) {
+      String value = null;
+      try {
+        value = params.getParameterDefault( this.name );
+      } catch ( UnknownParamException e ) {
+        // ignore it
+      }
+      return value;
+    }
+
+    /**
+     *
+     * @param params
+     * @return Returns the default value defined in params.
+     * If this value is null, then returns the hardcoded default value.
+     */
+    public String defaultValue( NamedParams params ) {
+      String metaDefaultValue = this.metaDefaultValue( params );
+      return metaDefaultValue != null ? metaDefaultValue : this.hardCodedDefaultValue();
+    }
+
+    private KettleParameter( String name, String defaultValue ) {
       this.name = name;
       this.defaultValue = defaultValue;
     }
@@ -112,7 +170,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return this;
   }
 
-  // TODO: check if this makes sense here or somewher closer to the transport layer
+  // TODO: check if this makes sense here or somewhere closer to the transport layer
   public KettleOutput.Configuration getDefaultOutputConfiguration() {
     return this.defaultOutputConfiguration;
   }
@@ -135,8 +193,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
     String timeToLiveStr = null;
     if ( this.meta != null ) {
       logger.debug( "Setting cache while job/transform meta is not set. Unable to load default values from ktr/kjb." );
-      timeToLiveStr = KettleElementHelper.getParameterDefault( this.meta,
-        KettleParameter.CACHE_TIME_TO_LIVE_SECONDS.parameterName() );
+      timeToLiveStr = KettleParameter.CACHE_TIME_TO_LIVE_SECONDS.metaDefaultValue( this.meta );
     }
 
     if ( timeToLiveStr != null ) {
@@ -155,9 +212,13 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return this;
   }
 
+  public boolean isExecuteAtStart() {
+    String isExecuteAtStartStr = KettleParameter.EXECUTE_AT_START.metaDefaultValue( this.meta );
+    return Boolean.parseBoolean( isExecuteAtStartStr );
+  }
   // endregion
 
-  // region Element Intialization
+  // region Element Initialization
   @Override
   public boolean init( final String pluginId, final String id,
                        final String type, final String filePath, boolean adminOnly ) {
@@ -175,13 +236,10 @@ public abstract class KettleElement<TMeta extends NamedParams>
       return false;
     }
 
-    // add base parameters to ensure they exist
-    KettleElementHelper.addBaseParameters( this.meta );
-
-    this.initializeKettleParameters( this.meta );
+    this.initializeKettleParameters();
 
     // execute at start?
-    if ( KettleElementHelper.isExecuteAtStart( this.meta ) ) {
+    if ( this.isExecuteAtStart() ) {
       this.processRequest( Collections.<String, String>emptyMap(), null );
     }
 
@@ -189,25 +247,16 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return true;
   }
 
-  private void initializeKettleParameters( NamedParams params ) {
-    // read parameter default values from ktr/kjb
-    Map<KettleParameter, String> parametersFromFile = new Hashtable<KettleParameter, String>(  );
-    for ( KettleParameter parameter : KettleParameter.values() ) {
-      String defaultValue = KettleElementHelper.getParameterDefault( params, parameter.parameterName() );
-      if ( defaultValue != null ) {
-        parametersFromFile.put( parameter, defaultValue );
-      }
-    }
-
+  private void initializeKettleParameters() {
     // init variables
-    String isCacheEnabledStr = parametersFromFile.get( KettleParameter.CACHE_IS_ENABLED );
-    boolean isResultsCacheEnabled = isCacheEnabledStr != null ? Boolean.parseBoolean( isCacheEnabledStr )
-      : (Boolean) KettleParameter.CACHE_IS_ENABLED.defaultValue();
+    String isCacheEnabledStr = KettleParameter.CACHE_IS_ENABLED.defaultValue( this.meta );
+    boolean isResultsCacheEnabled = Boolean.parseBoolean( isCacheEnabledStr );
 
-    String defaultOutputName = this.getDefaultOutputName( parametersFromFile.get( KettleParameter.RESULT_STEP_NAME ),
-                                                        (String) KettleParameter.RESULT_STEP_NAME.defaultValue() );
+    String defaultOutputName = this.getDefaultOutputName(
+      KettleParameter.RESULT_STEP_NAME.metaDefaultValue( this.meta ),
+      KettleParameter.RESULT_STEP_NAME.hardCodedDefaultValue() );
 
-    KettleOutput.Configuration outputConfiguration = this.getOutputConfiguration( parametersFromFile );
+    KettleOutput.Configuration outputConfiguration = this.getOutputConfiguration();
 
     this
       .setResultsCacheEnabled( isResultsCacheEnabled )
@@ -228,20 +277,19 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return defaultOutputName;
   }
 
-  private KettleOutput.Configuration getOutputConfiguration( Map<KettleParameter, String> parameters ) {
+  private KettleOutput.Configuration getOutputConfiguration( ) {
     // init default output configuration
-    String mimeType = parameters.get( KettleParameter.RESPONSE_MIME_TYPE );
-    String attachmentName = parameters.get( KettleParameter.RESPONSE_ATTACHMENT_NAME );
-    String downloadStr = parameters.get( KettleParameter.RESPONSE_DOWNLOAD );
-    boolean attachResult = downloadStr != null ? Boolean.parseBoolean( downloadStr )
-      : (Boolean) KettleParameter.RESPONSE_DOWNLOAD.defaultValue();
-    String outputType = parameters.get( KettleParameter.RESPONSE_OUTPUT_TYPE );
+    String mimeType = KettleParameter.RESPONSE_MIME_TYPE.defaultValue( this.meta );
+    String attachmentName = KettleParameter.RESPONSE_ATTACHMENT_NAME.defaultValue( this.meta );
+    String downloadStr = KettleParameter.RESPONSE_DOWNLOAD.defaultValue( this.meta );
+    boolean download = Boolean.parseBoolean( downloadStr );
+    String outputType = KettleParameter.RESPONSE_OUTPUT_TYPE.defaultValue( this.meta );
 
     KettleOutput.Configuration configuration = new KettleOutput.Configuration();
     configuration
       .setMimeType( mimeType )
       .setAttachmentName( attachmentName )
-      .setSendResultAsAttachment( attachResult )
+      .setSendResultAsAttachment( download )
       .setOutputType( outputType );
 
     return configuration;
@@ -303,7 +351,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
     // If not defined in default config use hardcoded default.
     String kettleOutputType = this.getStringParameter( (String) request.get( RequestParameterName.KETTLE_OUTPUT ),
                                                        this.getDefaultOutputConfiguration().getOutputType(),
-                                                       (String) KettleParameter.RESPONSE_OUTPUT_TYPE.defaultValue() );
+                                                       KettleParameter.RESPONSE_OUTPUT_TYPE.hardCodedDefaultValue() );
 
     // if download parameter is not defined use value from default output configuration
     String downloadStr = (String) request.get( RequestParameterName.DOWNLOAD );
@@ -325,6 +373,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
   // TODO: kettleoutput processing should be in the REST service layer
   private void processRequest( Map<String, String> kettleParameters, String outputType, String outputStepName,
                                boolean download, boolean bypassCache, HttpServletResponse httpResponse ) {
+
     KettleResult result = this.processRequest( kettleParameters, outputStepName, bypassCache );
 
     if ( result != null ) {
@@ -354,15 +403,35 @@ public abstract class KettleElement<TMeta extends NamedParams>
    * @return The result of executing the kettle transformation / job.
    */
   @Override
-  public KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
-                                       boolean bypassCache ) {
+  public final KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName,
+                                      boolean bypassCache ) {
+
+    // remove parameters which name is reserved
+    Map<String, String> filteredKettleParameters = this.sanitizeKettleParameters( kettleParameters );
+    filteredKettleParameters.putAll( this.getInjectedParameters() );
+
     KettleResult result;
     if ( this.isResultsCacheEnabled() ) {
-      result = this.processRequestCached( kettleParameters, outputStepName, bypassCache );
+      result = this.processRequestCached( filteredKettleParameters, outputStepName, bypassCache );
     } else {
-      result = this.processRequest( kettleParameters, outputStepName );
+      result = this.processRequest( filteredKettleParameters, outputStepName );
     }
     return result;
+  }
+
+  /**
+   *
+   * @param kettleParameters The parameters to sanitize.
+   * @return A new Map with only the parameters which name is valid.
+   */
+  private Map<String, String> sanitizeKettleParameters( Map<String, String> kettleParameters ) {
+    Map<String, String> sanitizedParameters = new HashMap<String, String>();
+    for ( Map.Entry<String, String> parameter : kettleParameters.entrySet() ) {
+      if ( !KettleParameter.isReservedName( parameter.getKey() ) ) {
+        sanitizedParameters.put( parameter.getKey(), parameter.getValue() );
+      }
+    }
+    return sanitizedParameters;
   }
 
   /**
@@ -375,7 +444,6 @@ public abstract class KettleElement<TMeta extends NamedParams>
    */
   private KettleResult processRequestCached( Map<String, String> kettleParameters, String outputStepName,
                                              boolean bypassCache ) {
-
     KettleResultKey cacheKey = new KettleResultKey( this.getPluginId(), this.getId(),
       outputStepName, kettleParameters );
 
@@ -393,6 +461,10 @@ public abstract class KettleElement<TMeta extends NamedParams>
     return result;
   }
 
+  private Map<String, String> getInjectedParameters() {
+    return KettleElementHelper.getInjectedParameters( this.meta );
+  }
+
   // endregion
 
   protected boolean isValidOutputName( String Name ) {
@@ -400,11 +472,9 @@ public abstract class KettleElement<TMeta extends NamedParams>
   }
 
   private String getStringParameter( String requestParameter, String configParameter, String hardcodedParameter ) {
-    String result = requestParameter != null ? requestParameter
+    return requestParameter != null ? requestParameter
       : configParameter != null ? configParameter
       : hardcodedParameter;
-
-    return result;
   }
 
   /**
@@ -415,8 +485,17 @@ public abstract class KettleElement<TMeta extends NamedParams>
    */
   protected abstract KettleResult processRequest( Map<String, String> kettleParameters, String outputStepName );
 
+  /**
+   * Loads kettle element meta information from file.
+   * @param filePath the file path from where to load meta information.
+   * @return the loaded meta information.
+   */
   protected abstract TMeta loadMeta( String filePath );
 
+  /**
+   * Gets the valid output names for the kettle element.
+   * @return the valid output names for the kettle element.
+   */
   protected abstract Collection<String> getOutputNames();
 
 
