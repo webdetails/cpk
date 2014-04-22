@@ -16,7 +16,6 @@ package pt.webdetails.cpk.elements.impl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.di.core.parameters.DuplicateParamException;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -24,8 +23,10 @@ import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpk.CpkEngine;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -34,7 +35,6 @@ public final class KettleElementHelper {
 
   private static final Log logger = LogFactory.getLog( KettleElementHelper.class );
 
-  private static final String CPK_PARAM_PREFIX = "cpk.";
   private static final String CPK_PLUGIN_ID = "cpk.plugin.id";
   private static final String CPK_SOLUTION_SYSTEM_DIR = "cpk.solution.system.dir";
   private static final String CPK_PLUGIN_DIR = "cpk.plugin.dir";
@@ -45,11 +45,11 @@ public final class KettleElementHelper {
   private static final String CPK_SESSION_USERNAME = "cpk.session.username";
   private static final String CPK_SESSION_ROLES = "cpk.session.roles";
 
-  private static final String CPK_EXECUTE_AT_START = "cpk.executeAtStart";
 
-  private static final String[] BASE_PARAM_SET = { CPK_PLUGIN_ID, CPK_PLUGIN_DIR, CPK_PLUGIN_SYSTEM_DIR,
-    CPK_SOLUTION_SYSTEM_DIR, CPK_WEBAPP_DIR, CPK_SESSION_USERNAME, CPK_SESSION_ROLES };
-  private static final String[] RESERVED_PARAM_PREFIX_SET = { "_", CPK_PARAM_PREFIX };
+  private static final Collection<String> INJECTED_PARAM_SET = new ArrayList<String>( Arrays.asList(
+    CPK_PLUGIN_ID, CPK_SOLUTION_SYSTEM_DIR, CPK_PLUGIN_DIR, CPK_PLUGIN_SYSTEM_DIR,
+    CPK_WEBAPP_DIR, CPK_SESSION_USERNAME, CPK_SESSION_ROLES ) );
+
   private static final String REQUEST_PARAM_PREFIX = "param";
 
   private static HashMap<String, String> parameterCache;
@@ -66,14 +66,6 @@ public final class KettleElementHelper {
     parameterCache.put( CPK_WEBAPP_DIR, CpkEngine.getInstance().getEnvironment().getWebAppDir() );
   }
 
-  public static void addParameterDefinition( NamedParams params, String paramName, String defaultValue ) {
-    try {
-      params.addParameterDefinition( paramName, defaultValue, null );
-      logger.debug( "Added kettle param '" + paramName + "' with default value '" + defaultValue + "'" );
-    } catch ( DuplicateParamException e ) {
-      logger.debug( "Kettle param '" + paramName + "' already exists" );
-    }
-  }
 
   public static boolean hasParameter( NamedParams params, String paramName ) {
     for ( String name : params.listParameters() ) {
@@ -84,15 +76,22 @@ public final class KettleElementHelper {
     return false;
   }
 
-  public static void setParameterValue( NamedParams params, String paramName, String paramValue ) {
+  public static boolean setParameterValue( NamedParams params, String paramName, String paramValue ) {
+    if ( !hasParameter( params, paramName ) ) {
+      logger.warn( "Param '" + paramName + "' doesn't exist in the Kettle job/transformation" );
+      return false;
+    }
+
     try {
       params.setParameterValue( paramName, paramValue );
+      logger.debug( "Set param '" + paramName + "' = '" + paramValue + "'" );
+      return true;
     } catch ( UnknownParamException e ) {
-      // ignore it
+      return false;
     }
   }
 
-  public static String getParameterDefault( NamedParams params, String paramName ) {
+  public static String getParameterDefaultValue( NamedParams params, String paramName ) {
     String value = null;
     try {
       value = params.getParameterDefault( paramName );
@@ -112,19 +111,10 @@ public final class KettleElementHelper {
     return value;
   }
 
-  public static void addBaseParameters( NamedParams params ) {
-    for ( String paramName : BASE_PARAM_SET ) {
-      addParameterDefinition( params, paramName, null );
-    }
-  }
-
-  public static boolean isExecuteAtStart( NamedParams params ) {
-    return Boolean.parseBoolean( getParameterDefault( params, CPK_EXECUTE_AT_START ) );
-  }
-
   private static String getCurrentValue( String paramName ) {
     // session parameter
     if ( paramName.startsWith( CPK_SESSION_PARAM_PREFIX ) ) {
+      // TODO: make cpkEngine dependency explicit
       IUserSession userSession = CpkEngine.getInstance().getEnvironment().getSessionUtils().getCurrentSession();
       if ( userSession != null ) {
         // username
@@ -146,70 +136,41 @@ public final class KettleElementHelper {
     return parameterCache.get( paramName );
   }
 
-  public static void updateParameters( NamedParams params ) {
+  /**
+   *
+   * @return The parameters which value are to be injected by CPK.
+   */
+  public static Map<String, String> getInjectedParameters( NamedParams params ) {
+    Map<String, String> parameters = new HashMap<String, String>();
     for ( String paramName : params.listParameters() ) {
-      if ( paramName.startsWith( CPK_PARAM_PREFIX ) ) {
-        setParameterValue( params, paramName, getCurrentValue( paramName ) );
+      if ( INJECTED_PARAM_SET.contains( paramName )
+        || paramName.startsWith( CPK_SESSION_PARAM_PREFIX ) ) {
+        parameters.put( paramName, getCurrentValue( paramName ) );
       }
     }
+    return parameters;
   }
 
-  private static boolean isReservedName( String name ) {
-    for ( String prefix : RESERVED_PARAM_PREFIX_SET ) {
-      if ( name.startsWith( prefix ) ) {
-        return true;
-      }
-    }
-    return false;
-  }
 
-  private static boolean addRequestParameter( NamedParams params, String paramName, String paramValue ) {
-    if ( isReservedName( paramName ) ) {
-      logger.warn( "Request param '" + paramName + "' uses a reserved name in the Kettle job/transformation" );
-      return false;
-    }
-    if ( !hasParameter( params, paramName ) ) {
-      logger.warn( "Request param '" + paramName + "' doesn't exist in the Kettle job/transformation" );
-      return false;
-    }
-    setParameterValue( params, paramName, paramValue );
-    logger.debug( "Added request param '" + paramName + "' = '" + paramValue + "'" );
-    return true;
-  }
-
-  public static Collection<String> addRequestParameters( NamedParams params, Map<String, Object> requestParams ) {
-    LinkedList<String> addedParamNames = new LinkedList<String>();
-    if ( requestParams != null ) {
-      String paramName;
-      String paramValue;
-      for ( String key : requestParams.keySet() ) {
-        if ( key.startsWith( REQUEST_PARAM_PREFIX ) ) {
-          paramName = key.substring( REQUEST_PARAM_PREFIX.length() );
-          paramValue = requestParams.get( key ).toString();
-          if ( addRequestParameter( params, paramName, paramValue ) ) {
-            addedParamNames.add( paramName );
-          }
-        }
-      }
-    }
-    return addedParamNames;
-  }
 
   /**
    *
-   * @param kettleParams The parameters to add (set value) to params.
-   * @return The parameters that were added.
+   * @param kettleParams The parameters to set the value.
+   * @return The parameters that which value was set.
    */
-  public static Collection<String> addKettleParameters( NamedParams params, Map<String, String> kettleParams ) {
-    LinkedList<String> addedParamNames = new LinkedList<String>();
-    if ( kettleParams != null ) {
-      for ( Map.Entry<String, String> parameter : kettleParams.entrySet() ) {
-        if ( addRequestParameter( params, parameter.getKey(),  parameter.getValue() ) ) {
-          addedParamNames.add( parameter.getKey() );
-        }
+  public static Collection<String> setKettleParameterValues( NamedParams params, Map<String, String> kettleParams ) {
+    if ( kettleParams == null || kettleParams == null ) {
+      return Collections.emptySet();
+    }
+
+    LinkedList<String> setValueParamNames = new LinkedList<String>();
+    for ( Map.Entry<String, String> parameter : kettleParams.entrySet() ) {
+      if ( setParameterValue( params, parameter.getKey(), parameter.getValue() ) ) {
+        setValueParamNames.add( parameter.getKey() );
       }
     }
-    return addedParamNames;
+
+    return setValueParamNames;
   }
 
   /**
@@ -218,28 +179,31 @@ public final class KettleElementHelper {
    * @return The processed kettle parameter name/value.
    */
   public static Map<String, String> getKettleParameters( Map<String, Object> requestParams ) {
+    if ( requestParams == null ) {
+      return Collections.emptyMap();
+    }
+
     Map<String, String> parameters = new HashMap<String, String>();
-    if ( requestParams != null ) {
-      String paramName;
-      String paramValue;
-      for ( String key : requestParams.keySet() ) {
-        if ( key.startsWith( REQUEST_PARAM_PREFIX ) ) {
-          paramName = key.substring( REQUEST_PARAM_PREFIX.length() );
-          paramValue = requestParams.get( key ).toString();
-          parameters.put( paramName, paramValue );
-        }
+    String paramName;
+    String paramValue;
+    for ( Map.Entry<String, Object> entry : requestParams.entrySet() ) {
+      if ( entry.getKey().startsWith( REQUEST_PARAM_PREFIX ) ) {
+        paramName = entry.getKey().substring( REQUEST_PARAM_PREFIX.length() );
+        paramValue = entry.getValue().toString();
+        parameters.put( paramName, paramValue );
       }
     }
     return parameters;
   }
 
-
   public static void clearParameters( NamedParams params, Collection<String> paramNames ) {
-    if ( paramNames != null ) {
-      for ( String paramName : paramNames ) {
-        setParameterValue( params, paramName, null );
-        logger.debug( "Cleared request param '" + paramName + "'" );
-      }
+    if ( paramNames == null ) {
+      return;
+    }
+
+    for ( String paramName : paramNames ) {
+      setParameterValue( params, paramName, null );
+      logger.debug( "Cleared request param '" + paramName + "'" );
     }
   }
 

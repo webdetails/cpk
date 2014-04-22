@@ -58,6 +58,9 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   public void put( K key, V value, int timeToLiveSeconds ) {
     final Element storeElement = new Element( key, value );
     storeElement.setTimeToLive( timeToLiveSeconds );
+    if ( timeToLiveSeconds == 0 ) {
+      storeElement.setTimeToIdle( 0 );
+    }
     this.cache.put( storeElement );
 
     // Print cache status size

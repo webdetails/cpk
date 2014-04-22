@@ -15,7 +15,7 @@ package pt.webdetails.cpk.elements.impl;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class KettleResultKey implements Serializable {
@@ -38,14 +38,16 @@ public final class KettleResultKey implements Serializable {
   public Map<String, String> getParameters() { return Collections.unmodifiableMap( this.parameters ); }
 
 
-  // Constructors
+  // region Constructors
 
   public KettleResultKey( String pluginId, String elementId, String outputStepName, Map<String, String> parameters ) {
     this.pluginId = pluginId;
     this.elementId = elementId;
     this.outputStepName = outputStepName;
-    this.parameters = new Hashtable<String, String>( parameters );
+    this.parameters = new HashMap<String, String>( parameters );
   }
+
+  // endregion
 
   @Override
   public boolean equals( final Object other ) {
