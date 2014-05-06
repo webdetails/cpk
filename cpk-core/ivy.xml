@@ -1,64 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+<ivy-module xmlns:m="http://ant.apache.org/ivy/maven" version="2.0">
   <info organisation="pentaho" module="${ivy.artifact.id}" revision="${project.revision}"/>
   <configurations>
     <conf name="default"/>
     <conf name="source"/>
     <conf name="zip"/>
     <conf name="test" visibility="private"/>
-    <conf name="codegen" visibility="private"/>
     <conf name="runtime" visibility="private"/>
     <conf name="dev" visibility="private"/>
+    <conf name="codegen" visibility="private"/>
   </configurations>
+
   <publications>
     <artifact name="${ivy.artifact.id}" type="jar" conf="default"/>
-    <artifact name="${ivy.artifact.id}" type="zip" conf="zip"/>
     <artifact name="${ivy.artifact.id}" m:classifier="sources" type="source" ext="jar" conf="source"/>
+    <artifact name="${ivy.artifact.id}" type="zip" conf="zip"/>
   </publications>
 
   <dependencies defaultconf="default->default">
-    <dependency org="net.sf.ehcache" name="ehcache-core" rev="2.5.1" transitive="false" />
-    <dependency org="commons-logging" name="commons-logging" rev="1.1.1"/>
-    <dependency org="commons-lang" name="commons-lang" rev="2.6"/>
-    <dependency org="commons-io" name="commons-io" rev="2.4"/>
-    <dependency org="commons-vfs" name="commons-vfs" rev="1.0"/>
-    <dependency org="dom4j" name="dom4j" rev="1.6.1"/>
-    <dependency org="log4j" name="log4j" rev="1.2.14"/>
-    <dependency org="org.json" name="json" rev="20090211"/>
 
-    <dependency org="pentaho-kettle" name="kettle-core" rev="${dependency.kettle.revision}" changing="true"
-                transitive="false"/>
-    <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}" changing="true"
-                transitive="false"/>
-    <dependency org="pentaho-kettle" name="kettle-db" rev="${dependency.kettle.revision}" changing="true"
-                transitive="false"/>
+    <!-- dependencies -->
+    <dependency org="pentaho"             name="cpf-core"           rev="${dependency.pentaho-cpf-plugin.revision}"     conf="runtime,test->default"     transitive="false"    changing="true"/>
+    <dependency org="pentaho-kettle"      name="kettle-core"        rev="${dependency.pentaho-kettle.revision}"                                          transitive="false"    changing="true"/>
+    <dependency org="pentaho-kettle"      name="kettle-engine"      rev="${dependency.pentaho-kettle.revision}"                                          transitive="false"    changing="true"/>
 
-    <dependency org="pentaho" name="cpf-core"
-                rev="${dependency.pentaho-cpf-plugin.revision}" transitive="false" changing="true"
-                conf='test,runtime->default'/>
+    <!-- third party dependencies -->
+    <dependency org="commons-io"                name="commons-io"             rev="2.4"       transitive="false"/>
+    <dependency org="commons-lang"              name="commons-lang"           rev="2.6"       transitive="false"/>
+    <dependency org="commons-logging"           name="commons-logging"        rev="1.1.1"     transitive="false"/>
+    <dependency org="commons-vfs"               name="commons-vfs"            rev="1.0"       transitive="false"/>
+    <dependency org="dom4j"                     name="dom4j"                  rev="1.6.1"     transitive="false"/>
+    <dependency org="net.sf.ehcache"            name="ehcache-core"           rev="2.5.1"     transitive="false"/>
+    <dependency org="log4j"                     name="log4j"                  rev="1.2.14"    transitive="false"/>
+    <dependency org="org.codehaus.jackson"      name="jackson-core-asl"       rev="1.8.2"     transitive="false"/>
+    <dependency org="org.codehaus.jackson"      name="jackson-mapper-asl"     rev="1.8.2"     transitive="false"/>
+    <dependency org="javax.servlet"             name="servlet-api"            rev="2.4"       transitive="false"/>
 
-    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2"/>
-    <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.8.2"/>
+    <!-- dependencies for tests -->
+    <dependency org="pentaho-kettle"      name="kettle-db"      rev="${dependency.pentaho-kettle.revision}"     conf="test->default"      transitive="false"     changing="true"/>
 
-    <dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.2.2"/>
-    <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.2.2"/>
-    <dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.2.2"/>
-
-    <dependency org="javax.servlet" name="servlet-api" rev="2.4" conf="default->default"/>
-
-    <dependency org="jaxen" name="jaxen" rev="1.1"/>
-    <dependency org="org.mozilla" name="rhino" rev="1.7R4" conf="test,runtime->default"/>
-    <dependency org="commons-httpclient" name="commons-httpclient" conf="test->default" rev='3.1'/>
-    <dependency org="junit" name="junit" conf="test->default" rev='4.10'/>
-    <dependency org="org.apache.clerezza.ext" name="org.json.simple" conf="test->default" rev='0.3-incubating'/>
-
-    <dependency org="org.safehaus.jug" name="jug" conf="test->default" rev='2.0.0'>
+    <!--  third-party dependencies for tests -->
+    <dependency org="commons-httpclient"          name="commons-httpclient"     rev='3.1'               conf="test->default"      transitive="false"/>
+    <dependency org="jaxen"                       name="jaxen"                  rev="1.1"               conf="test->default"      transitive="false"/>
+    <dependency org="org.json"                    name="json"                   rev="20090211"          conf="test->default"      transitive="false"/>
+    <dependency org="org.safehaus.jug"            name="jug"                    rev='2.0.0'             conf="test->default"      transitive="false">
       <artifact name="jug" type="jar" ext="jar" conf="" m:classifier="asl"/>
     </dependency>
-    <dependency org="spring" name="spring-mock" rev="1.0.2" conf="test->default"/>
-
-    <dependency org="org.slf4j"     name="slf4j-log4j12"    rev="1.6.1"     conf="test->default"/>
-
+    <dependency org="junit"                       name="junit"                  rev='4.10'              conf="test->default"      transitive="false"/>
+    <dependency org="org.apache.clerezza.ext"     name="org.json.simple"        rev='0.3-incubating'    conf="test->default"      transitive="false"/>
+    <dependency org="org.mozilla"                 name="rhino"                  rev="1.7R4"             conf="test->default"      transitive="false"/>
+    <dependency org="org.slf4j"                   name="slf4j-log4j12"          rev="1.6.1"             conf="test->default"      transitive="true"/>
+    <dependency org="spring"                      name="spring-mock"            rev="1.0.2"             conf="test->default"      transitive="false"/>
 
   </dependencies>
 </ivy-module>

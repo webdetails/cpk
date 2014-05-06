@@ -13,12 +13,12 @@
 
 package pt.webdetails.cpk.datasources;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 public class DataSourceDefinition {
