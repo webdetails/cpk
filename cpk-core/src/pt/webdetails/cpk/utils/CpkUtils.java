@@ -13,11 +13,13 @@
 
 package pt.webdetails.cpk.utils;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
@@ -96,6 +98,39 @@ public class CpkUtils {
     return response.getOutputStream();
   }
 
+  public static void send( HttpServletResponse response, InputStream fileInputStream, String mimeTypes, String fileName, boolean sendAsAttachment ) {
+    Integer contentLength = null;
+    try {
+      contentLength = fileInputStream.available();
+    } catch ( IOException e ) {
+      logger.error( "Failed setting attachment size.", e );
+    }
+
+    send( response, fileInputStream, mimeTypes, fileName, sendAsAttachment, contentLength );
+  }
+
+  public static void send( HttpServletResponse response, InputStream fileInputStream, String mimeTypes,
+                     String fileName, boolean sendAsAttachment, Integer contentLength ) {
+    if ( mimeTypes != null && !mimeTypes.isEmpty()) {
+      response.setContentType( mimeTypes );
+    }
+
+    String disposition = sendAsAttachment ? "attachment" : "inline";
+    String fileParam = fileName != null && !fileName.isEmpty() ? "; filename=" + fileName : "";
+    response.setHeader( "Content-disposition", disposition + fileParam );
+
+    if ( contentLength != null ) {
+      response.setContentLength( contentLength );
+    }
+
+    try {
+      IOUtils.copy( fileInputStream, response.getOutputStream() );
+      response.getOutputStream().flush();
+      fileInputStream.close();
+    } catch ( Exception ex ) {
+      logger.error( "Failed to copy file to outputstream: " + ex );
+    }
+  }
 
 }
 
