@@ -199,7 +199,7 @@ public class ZipUtil {
     return zipName;
   }
 
-  public long getZipSize() {
+  public int getZipSize() {
     try {
       return fis.available();
     } catch ( IOException ex ) {

@@ -13,7 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl.kettleoutputs;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs.FileName;
 import org.apache.commons.vfs.FileObject;
 import org.apache.commons.vfs.FileSystemException;
@@ -26,7 +25,6 @@ import pt.webdetails.cpk.utils.CpkUtils;
 import pt.webdetails.cpk.utils.ZipUtil;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +46,7 @@ public class ResultFilesKettleOutput extends KettleOutput {
       return;
     }
 
+    String defaultAttachmentName = this.getConfiguration().getAttachmentName();
     try {
       if ( files.size() == 1 && files.get( 0 ).getType() == FileType.FILE ) {
         // Singe file
@@ -56,20 +55,10 @@ public class ResultFilesKettleOutput extends KettleOutput {
         FileName fileName = file.getName();
         String defaultMimeType = this.getConfiguration().getMimeType();
         String mimeType = defaultMimeType != null ? defaultMimeType : MimeTypes.getMimeType( fileName.getBaseName() );
+        String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : fileName.getBaseName();
 
-        if ( this.getConfiguration().getSendResultAsAttachment() ) {
-          try {
-            long attachmentSize = fileInputStream.available();
-            String defaultAttachmentName = this.getConfiguration().getAttachmentName();
-            String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : fileName.getBaseName();
-            this.sendAttached( KettleVFS.getInputStream( file ), mimeType, attachmentName,
-              attachmentSize );
-          } catch ( IOException e ) {
-            logger.error( "Failed setting attachment size.", e );
-          }
-        } else {
-          this.sendDirectly( fileInputStream, mimeType );
-        }
+        CpkUtils.send( this.getResponse(), fileInputStream, mimeType,
+                       attachmentName, this.getConfiguration().getSendResultAsAttachment() );
 
       } else {
         // More than one file, or folder
@@ -77,36 +66,11 @@ public class ResultFilesKettleOutput extends KettleOutput {
         ZipUtil zip = new ZipUtil();
         zip.buildZipFromFileObjectList( files );
 
-        String defaultAttachmentName = this.getConfiguration().getAttachmentName();
         String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : zip.getZipNameToDownload();
-        this.sendAttached( zip.getZipInputStream(), MimeTypes.ZIP, attachmentName, zip.getZipSize() );
+        CpkUtils.send( this.getResponse(), zip.getZipInputStream(), MimeTypes.ZIP, attachmentName, true );
       }
     } catch ( FileSystemException ex ) {
       logger.error( "Failed sending files from kettle result.", ex );
-    }
-  }
-
-  private void sendDirectly( InputStream file, String mimeTypes ) {
-    CpkUtils.setResponseHeaders( this.getResponse(), mimeTypes );
-
-    try {
-      IOUtils.copy( file, this.getOut() );
-      this.getOut().flush();
-      file.close();
-    } catch ( Exception ex ) {
-      logger.error( "Failed to copy file to outputstream: " + ex );
-    }
-  }
-
-  private void sendAttached( InputStream file, String mimeTypes, String fileName, long fileSize ) {
-    CpkUtils.setResponseHeaders( this.getResponse(), mimeTypes, fileName, fileSize );
-
-    try {
-      IOUtils.copy( file, this.getOut() );
-      this.getOut().flush();
-      file.close();
-    } catch ( IOException ex ) {
-      this.logger.error( "Failed to copy file to outputstream.", ex );
     }
   }
 
