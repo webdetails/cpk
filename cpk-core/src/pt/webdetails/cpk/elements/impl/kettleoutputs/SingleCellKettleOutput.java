@@ -17,8 +17,7 @@ package pt.webdetails.cpk.elements.impl.kettleoutputs;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.utils.CpkUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 
 public class SingleCellKettleOutput extends KettleOutput {
@@ -32,23 +31,17 @@ public class SingleCellKettleOutput extends KettleOutput {
       if ( !result.getRows().isEmpty() ) {
         Object cell = result.getRows().get( 0 ).getData()[ 0 ];
         byte[] resultContent = cell.toString().getBytes( ENCODING );
+        int attachmentSize = resultContent.length;
+        ByteArrayInputStream resultInputStream = new ByteArrayInputStream( resultContent );
         String mimeType = this.getConfiguration().getMimeType();
-        if ( this.getConfiguration().getSendResultAsAttachment() ) {
-          long attachmentSize = resultContent.length;
-          String defaultAttachmentName = this.getConfiguration().getAttachmentName();
-          String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : "singleCell";
-          CpkUtils.setResponseHeaders( this.getResponse(), mimeType, attachmentName, attachmentSize );
-        } else {
-          CpkUtils.setResponseHeaders( this.getResponse(), mimeType );
-        }
-        OutputStream out = this.getOut();
-        out.write( resultContent );
-        out.flush();
+        String defaultAttachmentName = this.getConfiguration().getAttachmentName();
+        String attachmentName = defaultAttachmentName != null ? defaultAttachmentName : "singleCell";
+
+        CpkUtils.send( this.getResponse(), resultInputStream, mimeType, attachmentName,
+          this.getConfiguration().getSendResultAsAttachment(), attachmentSize );
       }
     } catch ( UnsupportedEncodingException ex ) {
       this.logger.error( "Unsupported encoding.", ex );
-    } catch ( IOException ex ) {
-      this.logger.error( "IO Error processing single cell kettle output.", ex );
     }
   }
 

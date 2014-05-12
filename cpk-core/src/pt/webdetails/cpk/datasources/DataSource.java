@@ -13,7 +13,7 @@
 
 package pt.webdetails.cpk.datasources;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 public class DataSource {
 
@@ -54,5 +54,4 @@ public class DataSource {
     this.metadata = metadata;
     return this;
   }
-
 }
