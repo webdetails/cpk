@@ -238,13 +238,7 @@ public class CpkApi {
     }
   }
 
-  // New Jackson API (version 2.x)
-  static final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-
-  static {
-    mapper.setSerializationInclusion( com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL );
-    mapper.setSerializationInclusion( com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY );
-  }
+  static final ObjectMapper mapper = new ObjectMapper();
 
   @GET
   @Path( "/listDataAccessTypes" )
