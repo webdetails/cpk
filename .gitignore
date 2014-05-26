@@ -2,6 +2,8 @@ nbbuild.xml
 manifest.mf
 /nbproject
 /nbproject/private/
+/cpk-core/nbbuild.xml
+/cpk-core/manifest.mf
 /cpk-core/nbproject
 /cpk-core/nbproject/private/
 /cpk-core/lib/
@@ -9,6 +11,8 @@ manifest.mf
 /cpk-core/test-lib/
 /cpk-core/bin/
 /cpk-core/dist/
+/cpk-pentaho/nbbuild.xml
+/cpk-pentaho/manifest.mf
 /cpk-pentaho/nbproject
 /cpk-pentaho/nbproject/private/
 /cpk-pentaho/lib/
@@ -16,6 +20,8 @@ manifest.mf
 /cpk-pentaho/test-lib/
 /cpk-pentaho/bin/
 /cpk-pentaho/dist/
+/cpk-pentaho5/nbbuild.xml
+/cpk-pentaho5/manifest.mf
 /cpk-pentaho5/nbproject
 /cpk-pentaho5/nbproject/private/
 /cpk-pentaho5/lib/

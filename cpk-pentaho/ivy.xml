@@ -24,23 +24,21 @@
   		<dependency org="pentaho"       name="cpf-pentaho"
 		  rev="${dependency.pentaho-cpf-plugin.revision}" transitive="false" changing="true" conf='default,runtime->default'/>
 
-		  <dependency org="pentaho" name="pentaho-bi-platform-web-servlet"
+    <dependency org="pentaho" name="pentaho-bi-platform-web-servlet"
                 rev="${dependency.bi-platform.revision}" transitive="false"  changing="true"/>
-           <dependency org="pentaho" name="pentaho-bi-platform-plugin-actions"
+
+    <dependency org="pentaho" name="pentaho-bi-platform-plugin-actions"
       			 rev="${dependency.bi-platform.revision}" changing="true" transitive="true" >
       			<exclude module="nekohtml" name="*" type="*" ext="*" conf="" matcher="exact"></exclude>
-    			</dependency>
+    </dependency>
 
 		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2" />
-		<dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.2.2" />
-		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.2.2" />
-		<dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.2.2" />
 
-        <dependency org="net.sf.ehcache"            name="ehcache-core"         rev="2.5.1" transitive="false"      conf="test->default"/>
-        <dependency org="org.slf4j"                 name="slf4j-log4j12"        rev="1.6.1"                         conf="test->default"/>
+    <dependency org="net.sf.ehcache"            name="ehcache-core"         rev="2.5.1" transitive="false"      conf="test->default"/>
+    <dependency org="org.slf4j"                 name="slf4j-log4j12"        rev="1.6.1" transitive="false"      conf="test->default"/>
         
-		<dependency org="junit" name="junit" conf="test->default" rev='4.10'/>
-		<dependency org="spring" name="spring-mock" rev="1.0.2" conf="test->default"/>
+		<dependency org="junit" name="junit" transitive="false" conf="test->default" rev='4.10'/>
+		<dependency org="spring" name="spring-mock" transitive="false" rev="1.0.2" conf="test->default"/>
 		
   </dependencies>
 </ivy-module>
