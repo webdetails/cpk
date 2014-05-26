@@ -240,7 +240,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     // execute at start?
     if ( this.isExecuteAtStart() ) {
-      this.processRequest( Collections.<String, String>emptyMap(), null );
+      this.processRequest( this.getInjectedParameters(), null );
     }
 
     // init was successful
