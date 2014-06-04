@@ -202,6 +202,8 @@ public class CpkContentGenerator extends RestContentGenerator {
     }
   }
 
+
+  /*
   // New Jackson API (version 2.x)
   static final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
@@ -209,6 +211,9 @@ public class CpkContentGenerator extends RestContentGenerator {
     mapper.setSerializationInclusion( com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL );
     mapper.setSerializationInclusion( com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY );
   }
+  */
+
+  static final ObjectMapper mapper = new ObjectMapper();
 
   @Exposed( accessLevel = AccessLevel.PUBLIC, outputType = MimeType.JSON )
   public void listDataAccessTypes( final OutputStream out ) throws Exception {
