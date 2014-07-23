@@ -25,6 +25,7 @@ import org.w3c.dom.Node;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -55,7 +56,13 @@ public final class KettleResult implements Serializable {
 
   public List<ResultFile> getFiles() { return this.result.getResultFilesList(); }
 
-  public List<RowMetaAndData> getRows() { return this.result.getRows(); }
+  public List<RowMetaAndData> getRows() {
+    if ( this.result.getRows() == null) {
+      return Collections.emptyList();
+    }
+
+    return this.result.getRows();
+  }
 
   /**
    * Gets the type (job or transformation) of the kettle that returned this result.
