@@ -15,7 +15,6 @@ package pt.webdetails.cpk.elements.impl;
 
 import org.pentaho.di.core.Result;
 import org.pentaho.di.job.Job;
-import org.pentaho.di.job.JobEntryResult;
 import org.pentaho.di.job.JobMeta;
 import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.datasources.DataSourceMetadata;
@@ -23,10 +22,8 @@ import pt.webdetails.cpk.datasources.KettleElementDefinition;
 import pt.webdetails.cpk.datasources.KettleElementMetadata;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class KettleJobElement extends KettleElement<JobMeta> implements IDataSourceProvider {
@@ -55,25 +52,9 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
       .setDefinition( new KettleElementDefinition() );
   }
 
-  private Result getResult( Job job, String jobEntryName ) {
-    // by default return the result from the job
-    Result result = job.getResult();
-
-    // If jobEntry is invalid use default jobEntry name.
-    jobEntryName = this.getOutputNames().contains( jobEntryName ) ? jobEntryName : this.getDefaultOutputName();
-
-    Collection<String> outputJobEntryNames = this.getOutputNames( );
-
-    if ( outputJobEntryNames.contains( jobEntryName ) ) {
-      List<JobEntryResult> jobEntryResultList = job.getJobEntryResults();
-      for ( JobEntryResult jobEntryResult : jobEntryResultList ) {
-        if ( jobEntryResult != null && jobEntryResult.getJobEntryName().equals( jobEntryName ) ) {
-          return jobEntryResult.getResult();
-        }
-      }
-    }
-
-    return result;
+  private Result getResult( Job job ) {
+    // Always return the result of the Job and not of a specific jobEntry [SPARKL-66]
+    return job.getResult();
   }
 
   /**
@@ -82,14 +63,8 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
    */
   @Override
   protected Collection<String> getOutputNames() {
-    List<String> validOutputJobEntryNames = new ArrayList<String>();
-    for ( int iJobEntry = 0; iJobEntry < this.meta.nrJobEntries(); iJobEntry++ ) {
-      String jobEntryName = this.meta.getJobEntry( iJobEntry ).getName();
-      if ( this.isValidOutputName( jobEntryName ) ) {
-        validOutputJobEntryNames.add( jobEntryName );
-      }
-    }
-    return validOutputJobEntryNames;
+    // [SPARKL-66] You can only get the result from a job and not a job entry
+    return Collections.<String>emptyList();
   }
 
   @Override
@@ -111,7 +86,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     job.waitUntilFinished();
 
     // assemble kettle result
-    Result jobResult = this.getResult( job, outputJobEntryName );
+    Result jobResult = this.getResult( job );
     KettleResult result = new KettleResult( jobResult );
     result.setKettleType( KettleResult.KettleType.JOB );
 
