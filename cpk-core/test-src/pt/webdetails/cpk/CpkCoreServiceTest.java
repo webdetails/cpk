@@ -187,6 +187,7 @@ public class CpkCoreServiceTest {
     requestMap.put( "paramarg1", "value1" );
     requestMap.put( "paramarg2", "value2" );
     requestMap.put( "paramarg3", "value3" );
+    requestMap.put( "kettleOutput", "resultOnly" );
 
     pathMap.put( "path", "/evaluate-result-rows" );
     pathMap.put( "httpresponse", new HttpServletResponseForTesting( outResponse ) );
