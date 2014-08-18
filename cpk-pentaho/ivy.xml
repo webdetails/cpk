@@ -31,6 +31,7 @@
       			 rev="${dependency.bi-platform.revision}" changing="true" transitive="true" >
       			<exclude module="nekohtml" name="*" type="*" ext="*" conf="" matcher="exact"></exclude>
       			<exclude module="pentaho-reporting-engine-classic-core" name="*" type="*" ext="*" conf="" matcher="exact"></exclude>
+      			<exclude module="pentaho-publisher" name="*" type="*" ext="*" conf="" matcher="exact"></exclude>
     </dependency>
 
 		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.8.2" />
