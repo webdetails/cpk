@@ -258,6 +258,8 @@ public class CpkContentGeneratorTest {
     p1.put( "paramarg1", "value1" );
     p1.put( "paramarg2", "value2" );
     p1.put( "paramarg3", "value3" );
+    p1.put( "kettleOutput", "resultOnly" );
+
     map.put( "path", p );
     map.put( "request", p1 );
     return map;
