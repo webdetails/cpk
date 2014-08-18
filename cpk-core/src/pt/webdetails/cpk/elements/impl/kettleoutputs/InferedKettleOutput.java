@@ -22,7 +22,9 @@ public class InferedKettleOutput extends KettleOutput {
    * Chooses one processing method according to the information in the Result.
    * Results from a job / transformation with filenames: use ResultFilesKettleOuput
    *   Without filenames:
-   *    * If it is a Job result: use ResultOnlyKettleOutput
+   *    * If it is a Job result:
+   *      * If result has rows: use JsonKettleOutput
+   *      * Else: use ResultOnlyKettleOutput
    *    * If it is a Transformation result:
    *      * If result has just one cell: us SingleCellKettleOutput
    * Otherwise: use JsonKettleOutput
@@ -37,7 +39,12 @@ public class InferedKettleOutput extends KettleOutput {
       kettleOutput = new ResultFilesKettleOutput();
 
     } else if ( result.getKettleType() == KettleResult.KettleType.JOB ) {
-      kettleOutput = new ResultOnlyKettleOutput();
+      if ( !result.getRows().isEmpty() ) {
+        kettleOutput = new JsonKettleOutput();
+      }
+      else {
+        kettleOutput = new ResultOnlyKettleOutput();
+      }
 
     } else if ( result.getRows().size() == 1
       && result.getRows().get( 0 ).getRowMeta().getValueMetaList().size() == 1 ) {
