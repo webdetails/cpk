@@ -85,7 +85,9 @@ If no query string or transformation/job parameter is defined for result formatt
 * Result has file names?	
 	* Yes => **ResultFiles**
 	* No  => Result from a kettle Job?
-		* Yes => **ResultOnly**
+		* Yes => Job's result contains rows?
+			* Yes => **Json**
+			* No => **ResultOnly**
 		* No => Result has only one row with a single cell?
 			* Yes => **SingleCell**
 			* No => **Json**
