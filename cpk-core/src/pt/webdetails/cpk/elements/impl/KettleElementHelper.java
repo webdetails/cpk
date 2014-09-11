@@ -16,6 +16,8 @@ package pt.webdetails.cpk.elements.impl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -23,6 +25,8 @@ import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpk.CpkEngine;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +48,7 @@ public final class KettleElementHelper {
   private static final String CPK_SESSION_PARAM_PREFIX = "cpk.session.";
   private static final String CPK_SESSION_USERNAME = "cpk.session.username";
   private static final String CPK_SESSION_ROLES = "cpk.session.roles";
+  private static final String ROLES_TAG = "roles";
 
 
   private static final Collection<String> INJECTED_PARAM_SET = new ArrayList<String>( Arrays.asList(
@@ -111,6 +116,30 @@ public final class KettleElementHelper {
     return value;
   }
 
+  private static String arrayToJson( String fieldName, String[] array ) {
+    if ( array != null ) {
+      JsonFactory factory = new JsonFactory();
+      StringWriter writer = new StringWriter();
+      JsonGenerator generator = null;
+      try {
+        generator = factory.createJsonGenerator( writer );
+        generator.writeStartObject();
+        generator.writeFieldName( fieldName );
+        generator.writeStartArray();
+        for ( String element : array ) {
+          generator.writeString( element );
+        }
+        generator.writeEndArray();
+        generator.writeEndObject();
+        generator.close();
+        return writer.toString();
+      } catch ( IOException e ) {
+        logger.error( "Failed to convert array that contains '" + fieldName + "' to JSON" );
+      }
+    }
+    return null;
+  }
+
   private static String getCurrentValue( String paramName ) {
     // session parameter
     if ( paramName.startsWith( CPK_SESSION_PARAM_PREFIX ) ) {
@@ -123,7 +152,8 @@ public final class KettleElementHelper {
         }
         // roles
         if ( paramName.equals( CPK_SESSION_ROLES ) ) {
-          return StringUtils.join( userSession.getAuthorities(), "," );
+          String[] roles = userSession.getAuthorities();
+          return arrayToJson( ROLES_TAG, roles );
         }
         // any other session variable
         String varName = paramName.substring( CPK_SESSION_PARAM_PREFIX.length() );
@@ -159,7 +189,7 @@ public final class KettleElementHelper {
    * @return The parameters that which value was set.
    */
   public static Collection<String> setKettleParameterValues( NamedParams params, Map<String, String> kettleParams ) {
-    if ( kettleParams == null || kettleParams == null ) {
+    if ( kettleParams == null ) {
       return Collections.emptySet();
     }
 
