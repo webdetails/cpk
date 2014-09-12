@@ -33,7 +33,7 @@ public class CpkEnvironmentForTesting implements ICpkEnvironment {
 
   private IPluginUtils pluginUtils;
   private IRepositoryAccess repAccess;
-  final IUserSession userSession = new SimpleUserSession( "userName", null, true, null );
+  final IUserSession userSession = new SimpleUserSession( "userName", new String[]{"administrator", "authenticated"}, true, null );
 
 
   private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
