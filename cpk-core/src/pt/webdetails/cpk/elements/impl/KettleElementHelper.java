@@ -23,16 +23,21 @@ import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.variables.VariableSpace;
 import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpk.CpkEngine;
+import pt.webdetails.cpk.ICpkEnvironment;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public final class KettleElementHelper {
@@ -57,20 +62,98 @@ public final class KettleElementHelper {
 
   private static final String REQUEST_PARAM_PREFIX = "param";
 
-  private static HashMap<String, String> parameterCache;
+  private static Map<String, String> parameterCache;
 
+  /**
+   * The character used to separate transformation in parameter names
+   * e.g. cpk.solution.dir|uriEncode
+   */
+  private static final char TRANSFORMATION_SEPARATOR = '|';
+
+  private static Map<String, Function<String, String>> transformations;
+  private static final String TRANSFORMATION_URL_CHARACTER_ENCODING = "UTF-8";
+  private static final String TRANSFORMATION_URL_ENCODE = "urlEncode";
+  private static final String TRANSFORMATION_URL_DECODE = "urlDecode";
 
   static {
-    // KettleElementHelper is a static helper class, so the parameter cache is shared between kettle elements
-    File pluginDir = CpkEngine.getInstance().getEnvironment().getPluginUtils().getPluginDirectory();
-    parameterCache = new HashMap<String, String>();
-    parameterCache.put( CPK_PLUGIN_ID, CpkEngine.getInstance().getEnvironment().getPluginName() );
-    parameterCache.put( CPK_PLUGIN_DIR, pluginDir.getAbsolutePath() );
-    parameterCache.put( CPK_PLUGIN_SYSTEM_DIR, pluginDir.getAbsolutePath() + File.separator + "system" );
-    parameterCache.put( CPK_SOLUTION_SYSTEM_DIR, pluginDir.getParentFile().getAbsolutePath() );
-    parameterCache.put( CPK_WEBAPP_DIR, CpkEngine.getInstance().getEnvironment().getWebAppDir() );
+    initInjectedParameters();
+    initTransformations();
   }
 
+  private static void initInjectedParameters() {
+    // KettleElementHelper is a static helper class, so the parameter cache is shared between kettle elements
+    parameterCache = new HashMap<String, String>();
+
+    ICpkEnvironment pluginEnvironment = CpkEngine.getInstance().getEnvironment();
+
+    File pluginDir = pluginEnvironment.getPluginUtils().getPluginDirectory();
+    cacheDirParameterValue( CPK_PLUGIN_DIR, pluginDir );
+
+    File pluginSystemDir = getChildDirectory( pluginDir, "system" );
+    cacheDirParameterValue( CPK_PLUGIN_SYSTEM_DIR, pluginSystemDir );
+
+    File solutionSystemDir = pluginDir.getParentFile();
+    cacheDirParameterValue( CPK_SOLUTION_SYSTEM_DIR, solutionSystemDir );
+
+    parameterCache.put( CPK_PLUGIN_ID, pluginEnvironment.getPluginName() );
+    parameterCache.put( CPK_WEBAPP_DIR, pluginEnvironment.getWebAppDir() );
+  }
+
+  private static void cacheDirParameterValue( String parameterName, File parameterDir ) {
+    if ( parameterDir != null ) {
+      try {
+        String decodeDirPath = URLDecoder.decode( parameterDir.getAbsolutePath(), TRANSFORMATION_URL_CHARACTER_ENCODING );
+        parameterCache.put( parameterName, decodeDirPath );
+      } catch ( UnsupportedEncodingException e ) {
+        logger.error( "Error with cpk injected directory parameter.", e );
+      }
+    }
+  }
+
+  private static void initTransformations() {
+    transformations = new HashMap<String, Function<String, String>>();
+
+    transformations.put( TRANSFORMATION_URL_ENCODE, new Function<String, String>() {
+      @Override public String call( String arg ) {
+        try {
+          return URLEncoder.encode( arg, TRANSFORMATION_URL_CHARACTER_ENCODING );
+        } catch ( UnsupportedEncodingException e ) {
+          logger.error( "Error encoding parameter "  + arg + ".", e );
+          return "URL_ENCODE_ERROR";
+        }
+      }
+    } );
+
+    transformations.put( TRANSFORMATION_URL_DECODE, new Function<String, String>() {
+      @Override public String call( String arg ) {
+        try {
+          return URLDecoder.decode( arg, TRANSFORMATION_URL_CHARACTER_ENCODING );
+        } catch ( UnsupportedEncodingException e ) {
+          logger.error( "Error decoding parameter "  + arg + ".", e );
+          return "URL_DECODE_ERROR";
+        }
+      }
+    } );
+  }
+
+  public static File getChildDirectory( File parent, String childDirectoryName ) {
+    if ( !parent.isDirectory() ) {
+      return null;
+    }
+
+    File[] children = parent.listFiles();
+    if ( children == null ) {
+      return null;
+    }
+
+    for ( File child : children ) {
+      if ( child.isDirectory() && child.getName().equals( childDirectoryName ) ) {
+        return child;
+      }
+    }
+
+    return null;
+  }
 
   public static boolean hasParameter( NamedParams params, String paramName ) {
     for ( String name : params.listParameters() ) {
@@ -172,15 +255,64 @@ public final class KettleElementHelper {
    */
   public static Map<String, String> getInjectedParameters( NamedParams params ) {
     Map<String, String> parameters = new HashMap<String, String>();
-    for ( String paramName : params.listParameters() ) {
-      if ( INJECTED_PARAM_SET.contains( paramName )
-        || paramName.startsWith( CPK_SESSION_PARAM_PREFIX ) ) {
-        parameters.put( paramName, getCurrentValue( paramName ) );
+    for ( String parameter : params.listParameters() ) {
+      String parameterName = getName( parameter );
+      if ( isInjectedParameter( parameterName ) ) {
+        Iterable<Function<String, String>> transformations = getTransformations( parameter );
+        String value = getCurrentValue( parameterName );
+        value = apply( value, transformations );
+        parameters.put( parameter, value );
       }
     }
     return parameters;
   }
 
+  private interface Function<T, TResult> {
+    TResult call( T arg );
+  }
+
+  private static boolean isInjectedParameter( String paramName ) {
+    return INJECTED_PARAM_SET.contains( paramName )
+      || paramName.startsWith( CPK_SESSION_PARAM_PREFIX );
+  }
+
+  private static Iterable<Function<String, String>> getTransformations( String parameter ) {
+    String[] splited = parameter.split( "\\" + TRANSFORMATION_SEPARATOR );
+
+    // if parameter has no transformations
+    if ( splited.length < 2 ) {
+      return Collections.emptyList();
+    }
+
+    List<Function<String, String>> transformations = new ArrayList<Function<String, String>>( splited.length - 1 );
+    // ignore first entry which is the parameter name
+    for ( int i = 1; i < splited.length; i++ ) {
+      String transformationName = splited[i];
+      Function<String, String> transformation = KettleElementHelper.transformations.get( transformationName );
+      if ( transformation == null ) {
+        logger.error( "CPK injected variable transformation " + transformationName + " is invalid." );
+      } else {
+        transformations.add( transformation );
+      }
+    }
+
+    return transformations;
+  }
+
+  private static String getName( String parameter ) {
+    int separatorIndex;
+    if ( ( separatorIndex = parameter.indexOf( TRANSFORMATION_SEPARATOR ) ) <= -1 ) {
+      return parameter;
+    }
+    return parameter.substring( 0, separatorIndex );
+  }
+
+  private static String apply( String value, Iterable<Function<String, String>> transformations ) {
+    for ( Function<String, String> function : transformations ) {
+      value = function.call( value );
+    }
+    return value;
+  }
 
 
   /**
