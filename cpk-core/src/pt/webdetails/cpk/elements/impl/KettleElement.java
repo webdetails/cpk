@@ -463,8 +463,6 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
   private Map<String, String> getInjectedParameters() {
     return KettleElementHelper.getInjectedParameters( this.meta );
-
-
   }
 
   // endregion

@@ -13,7 +13,6 @@
 
 package pt.webdetails.cpk.elements.impl;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonFactory;
@@ -25,12 +24,10 @@ import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.ICpkEnvironment;
 
+import javax.ws.rs.core.UriBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,14 +63,13 @@ public final class KettleElementHelper {
 
   /**
    * The character used to separate transformation in parameter names
-   * e.g. cpk.solution.dir|uriEncode
+   * e.g. cpk.solution.dir|uriPathEncode
    */
   private static final char TRANSFORMATION_SEPARATOR = '|';
 
   private static Map<String, Function<String, String>> transformations;
-  private static final String TRANSFORMATION_URL_CHARACTER_ENCODING = "UTF-8";
-  private static final String TRANSFORMATION_URL_ENCODE = "urlEncode";
-  private static final String TRANSFORMATION_URL_DECODE = "urlDecode";
+  private static final String TRANSFORMATION_URI_PATH_ENCODE = "uriPathEncode";
+  private static final String TRANSFORMATION_URI_PATH_DECODE = "uriPathDecode";
 
   static {
     initInjectedParameters();
@@ -95,43 +91,45 @@ public final class KettleElementHelper {
     File solutionSystemDir = pluginDir.getParentFile();
     cacheDirParameterValue( CPK_SOLUTION_SYSTEM_DIR, solutionSystemDir );
 
+    String webAppDir = pluginEnvironment.getWebAppDir();
+    cacheDirParameterValue( CPK_WEBAPP_DIR, webAppDir );
+
     parameterCache.put( CPK_PLUGIN_ID, pluginEnvironment.getPluginName() );
-    parameterCache.put( CPK_WEBAPP_DIR, pluginEnvironment.getWebAppDir() );
   }
 
   private static void cacheDirParameterValue( String parameterName, File parameterDir ) {
     if ( parameterDir != null ) {
-      try {
-        String decodeDirPath = URLDecoder.decode( parameterDir.getAbsolutePath(), TRANSFORMATION_URL_CHARACTER_ENCODING );
-        parameterCache.put( parameterName, decodeDirPath );
-      } catch ( UnsupportedEncodingException e ) {
-        logger.error( "Error with cpk injected directory parameter.", e );
-      }
+      cacheDirParameterValue( parameterName, parameterDir.getAbsolutePath() );
     }
   }
 
+  private static void cacheDirParameterValue( String parameterName, String path ) {
+    String decodeDirPath = UriBuilder.fromPath( path ).build( ).getPath();
+    parameterCache.put( parameterName, decodeDirPath );
+  }
+
+  /**
+   * Initializes transformation functions available to modify kettle parameters.
+   * At the moment this transformations can only be applied to injected parameters.
+   */
   private static void initTransformations() {
     transformations = new HashMap<String, Function<String, String>>();
 
-    transformations.put( TRANSFORMATION_URL_ENCODE, new Function<String, String>() {
-      @Override public String call( String arg ) {
-        try {
-          return URLEncoder.encode( arg, TRANSFORMATION_URL_CHARACTER_ENCODING );
-        } catch ( UnsupportedEncodingException e ) {
-          logger.error( "Error encoding parameter "  + arg + ".", e );
-          return "URL_ENCODE_ERROR";
-        }
+    /**
+     * Encodes a string path according to RFC3986
+     */
+    transformations.put( TRANSFORMATION_URI_PATH_ENCODE, new Function<String, String>() {
+      @Override public String call( String path ) {
+        return UriBuilder.fromPath( path ).build( ).toASCIIString();
       }
     } );
 
-    transformations.put( TRANSFORMATION_URL_DECODE, new Function<String, String>() {
-      @Override public String call( String arg ) {
-        try {
-          return URLDecoder.decode( arg, TRANSFORMATION_URL_CHARACTER_ENCODING );
-        } catch ( UnsupportedEncodingException e ) {
-          logger.error( "Error decoding parameter "  + arg + ".", e );
-          return "URL_DECODE_ERROR";
-        }
+    /**
+     * Decodes a string path according to RFC3986
+     */
+    transformations.put( TRANSFORMATION_URI_PATH_DECODE, new Function<String, String>() {
+      @Override public String call( String path ) {
+        return UriBuilder.fromPath( path ).build( ).getPath();
       }
     } );
   }
@@ -267,15 +265,29 @@ public final class KettleElementHelper {
     return parameters;
   }
 
+  /**
+   * Interface for kettle parameter Transformation types
+   * @param <T> Input type of the function.
+   * @param <TResult> Output type of the function.
+   */
   private interface Function<T, TResult> {
     TResult call( T arg );
   }
 
+  /**
+   * Checks if the value for the given parameter is injected by CPK.
+   * @param paramName The name of the parameter to check for value injection.
+   * @return
+   */
   private static boolean isInjectedParameter( String paramName ) {
     return INJECTED_PARAM_SET.contains( paramName )
       || paramName.startsWith( CPK_SESSION_PARAM_PREFIX );
   }
 
+  /**
+   * @param parameter The composed parameter (parameter name and transformation names). E.G.: "cpk.plugin.dir|uriPathEncode"
+   * @return the transformation functions to be applied to a given parameter.
+   */
   private static Iterable<Function<String, String>> getTransformations( String parameter ) {
     String[] splited = parameter.split( "\\" + TRANSFORMATION_SEPARATOR );
 
@@ -299,6 +311,12 @@ public final class KettleElementHelper {
     return transformations;
   }
 
+  /**
+   *
+   * @param parameter
+   * @return the name of a parameter from the composed parameter (parameter name and transformation names).
+   * E.G.: "cpk.plugin.dir|uriPathEncode" returns "cpk.plugin.dir"
+   */
   private static String getName( String parameter ) {
     int separatorIndex;
     if ( ( separatorIndex = parameter.indexOf( TRANSFORMATION_SEPARATOR ) ) <= -1 ) {
@@ -307,6 +325,13 @@ public final class KettleElementHelper {
     return parameter.substring( 0, separatorIndex );
   }
 
+  /**
+   *
+   * @param value The initial value to apply the transformation functions.
+   * @param transformations The transformation functions to apply.
+   * @return the result of applying the transformation functions to the parameter value.
+   * E.G.: with a function array [f0, f1, f2] the following function composition would be applied f2(f1(f0(value)))
+   */
   private static String apply( String value, Iterable<Function<String, String>> transformations ) {
     for ( Function<String, String> function : transformations ) {
       value = function.call( value );
