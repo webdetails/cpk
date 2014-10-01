@@ -82,8 +82,9 @@ public final class KettleElementHelper {
 
     ICpkEnvironment pluginEnvironment = CpkEngine.getInstance().getEnvironment();
 
-    File pluginDir = pluginEnvironment.getPluginUtils().getPluginDirectory();
-    cacheDirParameterValue( CPK_PLUGIN_DIR, pluginDir );
+    String pluginDirPath = pluginEnvironment.getContentAccessFactory().getPluginSystemReader( null ).fetchFile( null ).getFullPath();
+    File pluginDir = new File( pluginDirPath );
+    cacheDirParameterValue( CPK_PLUGIN_DIR, pluginDirPath );
 
     File pluginSystemDir = getChildDirectory( pluginDir, "system" );
     cacheDirParameterValue( CPK_PLUGIN_SYSTEM_DIR, pluginSystemDir );
@@ -104,7 +105,7 @@ public final class KettleElementHelper {
   }
 
   private static void cacheDirParameterValue( String parameterName, String path ) {
-    String decodeDirPath = UriBuilder.fromPath( path ).build( ).getPath();
+    String decodeDirPath = new File( path ).toURI().getPath();
     parameterCache.put( parameterName, decodeDirPath );
   }
 
@@ -120,7 +121,7 @@ public final class KettleElementHelper {
      */
     transformations.put( TRANSFORMATION_URI_PATH_ENCODE, new Function<String, String>() {
       @Override public String call( String path ) {
-        return UriBuilder.fromPath( path ).build( ).toASCIIString();
+        return new File( path ).toURI().toASCIIString();
       }
     } );
 
@@ -129,7 +130,7 @@ public final class KettleElementHelper {
      */
     transformations.put( TRANSFORMATION_URI_PATH_DECODE, new Function<String, String>() {
       @Override public String call( String path ) {
-        return UriBuilder.fromPath( path ).build( ).getPath();
+        return UriBuilder.fromPath( path ).build(  ).getPath();
       }
     } );
   }
