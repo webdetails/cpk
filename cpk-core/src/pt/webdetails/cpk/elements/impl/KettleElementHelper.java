@@ -74,7 +74,7 @@ public final class KettleElementHelper {
    *
    * @return The transformation functions that can be applied to an injected parameter
    */
-  public static Map<String, Function<String, String>> getTransformations ( ) {
+  public static Map<String, Function<String, String>> getTransformations() {
     if ( transformations == null ) {
       transformations = new HashMap<String, Function<String, String>>();
     }
@@ -89,6 +89,7 @@ public final class KettleElementHelper {
 
   public static ICpkEnvironment getPluginEnvironment() {
     if ( pluginEnvironment == null ) {
+      // use environment from cpk engine singleton as default
       pluginEnvironment = CpkEngine.getInstance().getEnvironment();
     }
 
@@ -96,6 +97,7 @@ public final class KettleElementHelper {
   }
   public static void setPluginEnvironment( ICpkEnvironment environment ) {
     pluginEnvironment = environment;
+    initCachedInjectedParameters( environment );
   }
   private static ICpkEnvironment pluginEnvironment;
 
@@ -103,15 +105,12 @@ public final class KettleElementHelper {
    * Injected parameter cache is shared between kettle elements
    * @return
    */
-  public static Map<String, String> getInjectedParameterCache() {
+  private static Map<String, String> getInjectedParameterCache() {
     if ( injectedParameterCache == null ) {
-      initCachedInjectedParameters();
+      initCachedInjectedParameters( getPluginEnvironment() );
     }
 
     return injectedParameterCache;
-  }
-  public static void setInjectedParameterCache( Map<String, String> newCache ) {
-    injectedParameterCache = newCache;
   }
   private static Map<String, String> injectedParameterCache;
 
@@ -124,10 +123,8 @@ public final class KettleElementHelper {
   // endregion
 
 
-  private static void initCachedInjectedParameters() {
+  private static void initCachedInjectedParameters( ICpkEnvironment pluginEnvironment ) {
     injectedParameterCache = new HashMap<String, String>();
-
-    ICpkEnvironment pluginEnvironment = KettleElementHelper.getPluginEnvironment();
 
     String pluginDirPath = pluginEnvironment.getContentAccessFactory().getPluginSystemReader( null ).fetchFile( null ).getFullPath();
     File pluginDir = new File( pluginDirPath );
