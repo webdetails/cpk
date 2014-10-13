@@ -52,35 +52,82 @@ public final class KettleElementHelper {
   private static final String CPK_SESSION_ROLES = "cpk.session.roles";
   private static final String ROLES_TAG = "roles";
 
-
   private static final Collection<String> INJECTED_PARAM_SET = new ArrayList<String>( Arrays.asList(
     CPK_PLUGIN_ID, CPK_SOLUTION_SYSTEM_DIR, CPK_PLUGIN_DIR, CPK_PLUGIN_SYSTEM_DIR,
     CPK_WEBAPP_DIR, CPK_SESSION_USERNAME, CPK_SESSION_ROLES ) );
 
   private static final String REQUEST_PARAM_PREFIX = "param";
 
-  private static Map<String, String> parameterCache;
 
   /**
    * The character used to separate transformation in parameter names
    * e.g. cpk.solution.dir|uriPathEncode
    */
-  private static final char TRANSFORMATION_SEPARATOR = '|';
+  public static final char TRANSFORMATION_SEPARATOR = '|';
 
+  public static final String TRANSFORMATION_URI_PATH_ENCODE = "uriPathEncode";
+  public static final String TRANSFORMATION_URI_PATH_DECODE = "uriPathDecode";
+
+
+  // region Properties
+  /**
+   *
+   * @return The transformation functions that can be applied to an injected parameter
+   */
+  public static Map<String, Function<String, String>> getTransformations ( ) {
+    if ( transformations == null ) {
+      transformations = new HashMap<String, Function<String, String>>();
+    }
+
+    return transformations;
+  }
+  public static void setTransformations( Map<String, Function<String, String>> value ) {
+    transformations = value;
+  }
   private static Map<String, Function<String, String>> transformations;
-  private static final String TRANSFORMATION_URI_PATH_ENCODE = "uriPathEncode";
-  private static final String TRANSFORMATION_URI_PATH_DECODE = "uriPathDecode";
 
+
+  public static ICpkEnvironment getPluginEnvironment() {
+    if ( pluginEnvironment == null ) {
+      pluginEnvironment = CpkEngine.getInstance().getEnvironment();
+    }
+
+    return pluginEnvironment;
+  }
+  public static void setPluginEnvironment( ICpkEnvironment environment ) {
+    pluginEnvironment = environment;
+  }
+  private static ICpkEnvironment pluginEnvironment;
+
+  /**
+   * Injected parameter cache is shared between kettle elements
+   * @return
+   */
+  public static Map<String, String> getInjectedParameterCache() {
+    if ( injectedParameterCache == null ) {
+      initCachedInjectedParameters();
+    }
+
+    return injectedParameterCache;
+  }
+  public static void setInjectedParameterCache( Map<String, String> newCache ) {
+    injectedParameterCache = newCache;
+  }
+  private static Map<String, String> injectedParameterCache;
+
+  // endregion
+
+  // region Initializers
   static {
-    initInjectedParameters();
     initTransformations();
   }
+  // endregion
 
-  private static void initInjectedParameters() {
-    // KettleElementHelper is a static helper class, so the parameter cache is shared between kettle elements
-    parameterCache = new HashMap<String, String>();
 
-    ICpkEnvironment pluginEnvironment = CpkEngine.getInstance().getEnvironment();
+  private static void initCachedInjectedParameters() {
+    injectedParameterCache = new HashMap<String, String>();
+
+    ICpkEnvironment pluginEnvironment = KettleElementHelper.getPluginEnvironment();
 
     String pluginDirPath = pluginEnvironment.getContentAccessFactory().getPluginSystemReader( null ).fetchFile( null ).getFullPath();
     File pluginDir = new File( pluginDirPath );
@@ -95,7 +142,7 @@ public final class KettleElementHelper {
     String webAppDir = pluginEnvironment.getWebAppDir();
     cacheDirParameterValue( CPK_WEBAPP_DIR, webAppDir );
 
-    parameterCache.put( CPK_PLUGIN_ID, pluginEnvironment.getPluginName() );
+    getInjectedParameterCache().put( CPK_PLUGIN_ID, pluginEnvironment.getPluginName() );
   }
 
   private static void cacheDirParameterValue( String parameterName, File parameterDir ) {
@@ -105,8 +152,11 @@ public final class KettleElementHelper {
   }
 
   private static void cacheDirParameterValue( String parameterName, String path ) {
-    String decodeDirPath = new File( path ).toURI().getPath();
-    parameterCache.put( parameterName, decodeDirPath );
+    String decodeDirPath = path;
+    if ( path != null ) {
+      decodeDirPath = new File( path ).toURI().getPath();
+    }
+    getInjectedParameterCache().put( parameterName, decodeDirPath );
   }
 
   /**
@@ -114,7 +164,7 @@ public final class KettleElementHelper {
    * At the moment this transformations can only be applied to injected parameters.
    */
   private static void initTransformations() {
-    transformations = new HashMap<String, Function<String, String>>();
+    Map<String, Function<String, String>> transformations = getTransformations( );
 
     /**
      * Encodes a string path according to RFC3986
@@ -135,7 +185,7 @@ public final class KettleElementHelper {
     } );
   }
 
-  public static File getChildDirectory( File parent, String childDirectoryName ) {
+  private static File getChildDirectory( File parent, String childDirectoryName ) {
     if ( !parent.isDirectory() ) {
       return null;
     }
@@ -222,11 +272,10 @@ public final class KettleElementHelper {
     return null;
   }
 
-  private static String getCurrentValue( String paramName ) {
+  private static String getInjectedParameterCurrentValue( String paramName ) {
     // session parameter
     if ( paramName.startsWith( CPK_SESSION_PARAM_PREFIX ) ) {
-      // TODO: make cpkEngine dependency explicit
-      IUserSession userSession = CpkEngine.getInstance().getEnvironment().getSessionUtils().getCurrentSession();
+      IUserSession userSession = getPluginEnvironment().getSessionUtils().getCurrentSession();
       if ( userSession != null ) {
         // username
         if ( paramName.equals( CPK_SESSION_USERNAME ) ) {
@@ -245,7 +294,7 @@ public final class KettleElementHelper {
     }
 
     // other known parameters should be in cache, otherwise the value is null
-    return parameterCache.get( paramName );
+    return getInjectedParameterCache().get( paramName );
   }
 
   /**
@@ -257,8 +306,8 @@ public final class KettleElementHelper {
     for ( String parameter : params.listParameters() ) {
       String parameterName = getName( parameter );
       if ( isInjectedParameter( parameterName ) ) {
-        Iterable<Function<String, String>> transformations = getTransformations( parameter );
-        String value = getCurrentValue( parameterName );
+        Iterable<Function<String, String>> transformations = getParameterTransformations( parameter );
+        String value = getInjectedParameterCurrentValue( parameterName );
         value = apply( value, transformations );
         parameters.put( parameter, value );
       }
@@ -289,7 +338,7 @@ public final class KettleElementHelper {
    * @param parameter The composed parameter (parameter name and transformation names). E.G.: "cpk.plugin.dir|uriPathEncode"
    * @return the transformation functions to be applied to a given parameter.
    */
-  private static Iterable<Function<String, String>> getTransformations( String parameter ) {
+  private static Iterable<Function<String, String>> getParameterTransformations( String parameter ) {
     String[] splited = parameter.split( "\\" + TRANSFORMATION_SEPARATOR );
 
     // if parameter has no transformations
@@ -301,7 +350,7 @@ public final class KettleElementHelper {
     // ignore first entry which is the parameter name
     for ( int i = 1; i < splited.length; i++ ) {
       String transformationName = splited[i];
-      Function<String, String> transformation = KettleElementHelper.transformations.get( transformationName );
+      Function<String, String> transformation = getTransformations().get( transformationName );
       if ( transformation == null ) {
         logger.error( "CPK injected variable transformation " + transformationName + " is invalid." );
       } else {

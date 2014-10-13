@@ -41,7 +41,7 @@ public class CpkCoreKettleElementTest {
   @BeforeClass
   public static void setUp() throws IOException, InitializationException, KettleException {
 
-    IRepositoryAccess repAccess = new VfsRepositoryAccess( userDir + "/test-resources/repository",
+    IRepositoryAccess repAccess = new VfsRepositoryAccess( userDir + "/test-resources/cpkSol",
       userDir + "/test-resources/settings" );
     IPluginUtils pluginUtils = new PluginUtilsForTesting();
     ICpkEnvironment environment = new CpkEnvironmentForTesting( pluginUtils, repAccess );
@@ -64,9 +64,9 @@ public class CpkCoreKettleElementTest {
     // define the expected result
     HashMap<String, String> parameters = new HashMap<String, String>();
     parameters.put( "pluginId", "cpkSol" );
-    parameters.put( "solutionSystemDir", userDir + "/test-resources" );
-    parameters.put( "pluginDir", userDir + "/test-resources/cpkSol" );
-    parameters.put( "pluginSystemDir", userDir + "/test-resources/cpkSol/system" );
+    parameters.put( "solutionSystemDir", userDir + "/test-resources/" );
+    parameters.put( "pluginDir", userDir + "/test-resources/cpkSol/" );
+    parameters.put( "pluginSystemDir", userDir + "/test-resources/cpkSol/system/" );
     parameters.put( "webappDir", "" );
     parameters.put( "sessionUsername", "userName" );
     parameters.put( "sessionRoles", "{\"roles\":[\"administrator\",\"authenticated\"]}" );

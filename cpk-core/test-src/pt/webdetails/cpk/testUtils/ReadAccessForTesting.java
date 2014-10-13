@@ -17,8 +17,12 @@ import pt.webdetails.cpf.repository.IRepositoryAccess;
 import pt.webdetails.cpf.repository.api.IBasicFile;
 import pt.webdetails.cpf.repository.api.IBasicFileFilter;
 import pt.webdetails.cpf.repository.api.IReadAccess;
+import pt.webdetails.cpf.repository.impl.FileBasedResourceAccess;
+import pt.webdetails.cpf.repository.util.RepositoryHelper;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -61,7 +65,40 @@ public class ReadAccessForTesting implements IReadAccess {
   }
 
   @Override public IBasicFile fetchFile( String s ) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+    if ( s == null ) {
+      s = repAccess.getRepositoryFile( "", IRepositoryAccess.FileAccess.READ ).getFullPath();
+    }
+
+    final File file = new File ( s );
+
+    return new IBasicFile () {
+
+      public InputStream getContents() throws IOException{
+        return new FileInputStream(file);
+      }
+
+      public String getName() {
+        return file.getName();
+      }
+
+      public String getFullPath() {
+        return file.getAbsolutePath();//TODO: . ..
+      }
+
+      public String getPath() {
+        return file.getPath();
+      }
+
+      public String getExtension() {
+        return RepositoryHelper.getExtension( getName() );
+      }
+
+      public boolean isDirectory() {
+        return file.isDirectory();
+      }
+
+    };
   }
 
 }
