@@ -157,6 +157,9 @@ public class CpkContentGeneratorTest {
 
     boolean successful = true;
     out = new ByteArrayOutputStream();
+    // requires at least a parameter provider otherwise a NullPointException occurs
+    cpkContentGenerator.setParameterProviders( unwrapParams( sampleTrans() ) );
+    cpkContentGenerator.wrapParameters();
     cpkContentGenerator.elementsList( out );
     String str = out.toString();
 
@@ -178,6 +181,9 @@ public class CpkContentGeneratorTest {
   public void testReloadRefreshStatus() throws DocumentException, IOException {
 
     out = new ByteArrayOutputStream();
+    // requires at least a parameter provider otherwise a NullPointException occurs
+    cpkContentGenerator.setParameterProviders( unwrapParams( sampleTrans() ) );
+    cpkContentGenerator.wrapParameters();
     cpkContentGenerator.reload( out );
     String str = out.toString();
     out.close();
