@@ -99,6 +99,7 @@ public class CpkApi {
   public void genericEndpointGet( @PathParam( "param" ) String param, @Context HttpServletRequest request,
                                   @Context HttpServletResponse response, @Context HttpHeaders headers )
     throws Exception {
+    setCorsHeaders( request, response );
     callEndpoint( param, request, response, headers );
   }
 
@@ -107,6 +108,7 @@ public class CpkApi {
   public void genericEndpointPost( @PathParam( "param" ) String param, @Context HttpServletRequest request,
                                    @Context HttpServletResponse response, @Context HttpHeaders headers )
     throws Exception {
+    setCorsHeaders( request, response );
     callEndpoint( param, request, response, headers );
   }
 
@@ -383,6 +385,14 @@ public class CpkApi {
 
     // make sure that everything written in the output stream is sent to the client
     response.getOutputStream().flush();
+  }
+
+  private void setCorsHeaders( HttpServletRequest request, HttpServletResponse response ) {
+    String origin = request.getHeader( "ORIGIN" );
+    if ( origin != null ) {
+      response.setHeader( "Access-Control-Allow-Origin", origin );
+      response.setHeader( "Access-Control-Allow-Credentials", "true" );
+    }
   }
 
   public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
