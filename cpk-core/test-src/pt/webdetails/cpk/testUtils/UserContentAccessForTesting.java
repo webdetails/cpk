@@ -52,6 +52,10 @@ public class UserContentAccessForTesting implements IUserContentAccess {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
+  @Override public boolean createFolder( String s, boolean isHidden ) {
+    return false; //To change body of implemented methods use File | Settings | File Templates.
+  }
+
   @Override public InputStream getFileInputStream( String s ) throws IOException {
     return new ByteArrayInputStream( repAccess.getSettingsResourceAsString( "cpk.xml" ).getBytes() );
   }
