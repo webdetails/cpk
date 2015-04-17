@@ -220,7 +220,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             value="${testbin.dir}/instrumented-classes"
             description="Directory where instrumented project classes are placed for use by code coverage utility"/>
   <property name="jacoco.version"
-            value="0.7.2.201409121644"
+            value="0.7.4.201502262128"
             description="The version of jacoco to use for code coverage"/>
   <property name="cobertura.version"
             value="2.0.3"
@@ -243,7 +243,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             value="${bin.dir}/javadoc"
             description="Directory where generated javadoc will be placed"/>
   <property name="javadoc.packagenames"
-            value="org.mypackagename.*"
+            value="org.pentaho.*"
             description="This property is passed to the packagenames property of the javadoc ant task.  You should customize this for your project."/>
   <property name="javadoc.zip.filename" value="${ivy.artifact.id}-${project.revision}-javadoc.zip"/>
   <property name="javadoc.tar.filename" value="${ivy.artifact.id}-${project.revision}-javadoc.tar.gz"/>
@@ -455,7 +455,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
       Runs a typical build process (cobertura+sonar)
       ====================================================================-->
-  <target name="build-sonar" depends="clean-all,resolve,sonar,dist-source,dist"/>
+  <target name="build-sonar" depends="clean-all,resolve,dist,dist-source,sonar"/>
+
 
 
   <!--=======================================================================
@@ -517,15 +518,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       Set junit.available if junit Test class in the classpath or if
       the junit jar is in the testlib.dir or lib.dir
       ====================================================================-->
-  <target name="junit.exists-check" unless="junit.available">
+  <target name="junit.exists-check" depends="install-antcontrib" unless="junit.available">
     <condition property="junit.available">
       <or>
-        <!-- In the ant classpath? -->
+        <!-- junit 4x -->
         <available classname="org.junit.Test"/>
+        <!-- junit 3x -->
+        <available classname="junit.framework.Test"/>
         <and>
           <!-- In the test-lib dir? -->
           <available file="${testlib.dir}"/>
-          <available classname="org.junit.runner.JUnitCore">
+          <or>
+          <!-- junit 4x -->
+          <available classname="org.junit.Test">
             <classpath>
               <fileset dir="${testlib.dir}">
                 <include name="**/junit*.jar"/>
@@ -535,9 +540,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
               </fileset>
             </classpath>
           </available>
+          <!-- junit 3x -->
+          <available classname="junit.framework.Test">
+            <classpath>
+              <fileset dir="${testlib.dir}">
+                <include name="**/junit*.jar"/>
+              </fileset>
+              <fileset dir="${lib.dir}">
+                <include name="**/junit*.jar"/>
+              </fileset>
+            </classpath>
+          </available>
+          </or>
         </and>
       </or>
     </condition>
+    <if>
+      <istrue value="${junit.available}"/>
+      <then>
+        <echo>junit.available=${junit.available}</echo>
+      </then>
+      <else>
+        <echo>junit.available=false</echo>
+      </else>
+    </if>
   </target>
 
 
@@ -1483,6 +1509,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   <target name="init-tests" depends="clean-tests,junit.exists-check">
     <mkdir dir="${testclasses.dir}"/>
     <mkdir dir="${testsrc.dir}"/>
+    <!-- Sonar will fail if no src or classes dir -->
+    <mkdir dir="${src.dir}"/>
+    <mkdir dir="${classes.dir}"/>
+
   </target>
 
 
@@ -1724,6 +1754,106 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          excludes="**/Thumbs.db"/>
   </target>
 
+  <!--=======================================================================
+      jacoco-test-coverage
+
+      Compiles and runs all the tests for the project
+      ====================================================================-->
+  <target name="jacoco" depends="install-jacoco,compile,compile-tests, init-test-reports"
+          description="Compiles and runs unit tests with Jacoco code coverage." if="junit.available">
+
+
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+      <classpath>
+        <path refid="classpath"/>
+        <path refid="test.classpath"/>
+      </classpath>
+    </taskdef>
+
+    <path id="tests.path" cache="true">
+      <path refid="base.path"/>
+      <pathelement location="testclasses"/>
+    </path>
+
+
+    <path id="jacoco.classpath">
+      <fileset dir="${subfloor.resources.dir}/org.jacoco.ant-${jacoco.version}">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+
+    <!-- Import the JaCoCo Ant Task -->
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+      <classpath>
+        <path refid="jacoco.classpath"/>
+      </classpath>
+    </taskdef>
+
+    <property name="jacoco.report.dir" location="${bin.dir}/reports/jacoco"/>
+    <property name="jacoco.execfile.path" location="${jacoco.report.dir}/jacoco.exec"/>
+
+    <!-- Run unit tests, adding the JaCoCo agent -->
+    <jacoco:coverage destfile="${jacoco.execfile.path}" xmlns:jacoco="antlib:org.jacoco.ant">
+
+      <junit maxmemory="${junit.maxmemory}"
+             dir="${junit.base.dir}"
+             fork="yes"
+             forkmode="${junit.forkmode}"
+             failureProperty="test.failed"
+             haltonfailure="${junit.haltonfailure}"
+             haltonerror="${junit.haltonerror}"
+             printsummary="yes">
+        <sysproperty key="java.awt.headless" value="${headless.unittest}"/>
+
+        <syspropertyset>
+          <propertyref prefix="junit.sysprop."/>
+          <mapper type="glob" from="junit.sysprop.*" to="*"/>
+        </syspropertyset>
+
+        <classpath refid="test.classpath"/>
+        <classpath refid="jacoco.classpath"/>
+
+        <formatter type="xml"/>
+        <test name="${testcase}" todir="${testreports.xml.dir}" if="testcase"/>
+        <batchtest fork="yes" todir="${testreports.xml.dir}" unless="testcase">
+          <fileset dir="${testsrc.dir}" casesensitive="yes">
+            <include name="**/*Test.java"/>
+          </fileset>
+        </batchtest>
+      </junit>
+    </jacoco:coverage>
+
+    <if>
+      <!-- if there is no exec file (no tests or faulty tests), cannot gen report -->
+      <available file="${jacoco.execfile.path}" property="jacoco.exec.file.found"/>
+      <then>
+        <jacoco:report xmlns:jacoco="antlib:org.jacoco.ant">
+          <executiondata>
+            <file file="${jacoco.execfile.path}"/>
+          </executiondata>
+          <structure name="${ivy.artifact.id}">
+            <classfiles>
+              <fileset dir="${classes.dir}"/>
+            </classfiles>
+            <sourcefiles encoding="UTF-8">
+              <fileset dir="${src.dir}"/>
+            </sourcefiles>
+          </structure>
+          <html destdir="${jacoco.report.dir}"/>
+          <csv destfile="${jacoco.report.dir}/report.csv"/>
+          <xml destfile="${jacoco.report.dir}/report.xml"/>
+        </jacoco:report>
+      </then>
+    </if>
+
+    <junitreport todir="${testreports.html.dir}">
+      <fileset dir="${testreports.xml.dir}">
+        <include name="TEST-*.xml"/>
+      </fileset>
+      <report format="frames" todir="${testreports.html.dir}"/>
+    </junitreport>
+
+  </target>
 
   <!--=======================================================================
       install-jacoco
@@ -1742,7 +1872,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       ====================================================================-->
   <target name="jacoco" depends="install-jacoco,compile,compile-tests, init-test-reports"
           description="Compiles and runs unit tests with Jacoco code coverage." if="junit.available">
-
 
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
       <classpath>
@@ -2237,7 +2366,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   Also, SCM_BRANCH is a required parameter.
   ====================================================================-->
-  <target name="sonar" depends="install-sonar, jacoco ">
+  <target name="sonar" depends="install-sonar,jacoco">
 
     <path id="sonar.classpath">
       <fileset dir="${subfloor.resources.dir}/sonar-ant-task-${sonar-ant-task-version}">
