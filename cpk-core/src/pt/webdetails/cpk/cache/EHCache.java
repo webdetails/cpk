@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2014 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2015 Webdetails, a Pentaho company.  All rights reserved.
 * 
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -46,77 +46,120 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
 
   @Override
   public void put( K key, V value ) {
-    final Element storeElement = new Element( key, value );
-    this.cache.put( storeElement );
-
-    // Print cache status size
-    logger.debug( "Cache status: " + this.cache.getMemoryStoreSize() + " in memory, "
-      + this.cache.getDiskStoreSize() + " in disk" );
+    // put element in cache with default cache lifetime
+    this.put( key, value, this.getTimeToLiveSeconds().intValue() );
   }
 
   @Override
   public void put( K key, V value, int timeToLiveSeconds ) {
-    final Element storeElement = new Element( key, value );
-    storeElement.setTimeToLive( timeToLiveSeconds );
-    if ( timeToLiveSeconds == 0 ) {
-      storeElement.setTimeToIdle( 0 );
-    }
-    this.cache.put( storeElement );
+    ClassLoader oldClassLoader = null;
+    try {
+      oldClassLoader = changeClassLoader();
+      final Element element = new Element( key, value );
 
-    // Print cache status size
-    logger.debug( "Cache status: " + this.cache.getMemoryStoreSize() + " in memory, "
-      + this.cache.getDiskStoreSize() + " in disk" );
+      // element will live "timeToLiveSeconds" in cache regardless of use; infinite lifetime if "timeToLiveSeconds" = 0
+      element.setTimeToLive( timeToLiveSeconds );
+      if ( timeToLiveSeconds == 0 ) {
+        element.setTimeToIdle( 0 );
+      }
+
+      this.getCache().put( element );
+    } catch ( Exception e ) {
+      logger.error( "Error while attempting to write in cache", e );
+    } finally {
+      logCacheStatus();
+      restoreClassLoader( oldClassLoader );
+    }
   }
 
   @Override
   public V get( K key ) {
-    ClassLoader contextCL = Thread.currentThread().getContextClassLoader();
+    ClassLoader oldClassLoader = null;
     try {
-      //make sure we have the right class loader in thread to instantiate classes in case DiskStore is used
-      //TODO: ehcache 2.5 has ClassLoaderAwareCache
-      Thread.currentThread().setContextClassLoader( this.getClass().getClassLoader() );
-      final Element element = cache.get( key );
+      oldClassLoader = changeClassLoader();
+      final Element element = this.getCache().get( key );
       if ( element != null ) {
         @SuppressWarnings( "unchecked" )
         final V value = (V) element.getObjectValue();
         if ( value != null ) {
-          if ( logger.isDebugEnabled() ) {
-            // we have a entry in the cache ... great!
-            logger.debug( "Found value in cache. Returning" );
-            // Print cache status size
-            logger.debug( "Cache status: " + cache.getMemoryStoreSize() + " in memory, "
-              + cache.getDiskStoreSize() + " in disk" );
-          }
+          // we have a entry in the cache ... great!
+          logger.debug( "Found value in cache for " + key );
           return value;
         }
       }
       return null;
     } catch ( Exception e ) {
-      logger.error( "Error while attempting to load from cache, bypassing cache (cause: " + e.getClass() + ")", e );
+      logger.error( "Error while attempting to read from cache", e );
       return null;
     } finally {
-      Thread.currentThread().setContextClassLoader( contextCL );
+      logCacheStatus();
+      restoreClassLoader( oldClassLoader );
     }
   }
 
   @Override
   public Iterable<K> getKeys() {
-    return this.cache.getKeys();
+    @SuppressWarnings( "unchecked" )
+    final Iterable<K> keys = this.getCache().getKeys();
+    return keys;
   }
 
   @Override
   public boolean remove( K key ) {
-    return this.getCache().remove( key );
+    ClassLoader oldClassLoader = null;
+    try {
+      oldClassLoader = changeClassLoader();
+      return this.getCache().remove( key );
+    } catch ( Exception e ) {
+      logger.error( "Error while attempting to remove from cache", e );
+      return false;
+    } finally {
+      logCacheStatus();
+      restoreClassLoader( oldClassLoader );
+    }
   }
 
   @Override
   public void clear() {
-    this.cache.removeAll();
-    logger.info( "Cache " + this.cache.getName() + " was cleared." );
+    ClassLoader oldClassLoader = null;
+    try {
+      oldClassLoader = changeClassLoader();
+      this.getCache().removeAll();
+      logger.info( "Cache " + this.getCache().getName() + " was cleared." );
+    } catch ( Exception e ) {
+      logger.error( "Error while attempting to clear cache", e );
+    } finally {
+      logCacheStatus();
+      restoreClassLoader( oldClassLoader );
+    }
   }
 
   @Override
   public Number getTimeToLiveSeconds() {
     return this.getCache().getCacheConfiguration().getTimeToLiveSeconds();
+  }
+
+  /**
+   * Makes sure we have the right class loader in the thread before DiskStore is used.
+   * @return The old class loader.
+   */
+  private ClassLoader changeClassLoader() {
+    //TODO: ehcache 2.5 has ClassLoaderAwareCache
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader( this.getClass().getClassLoader() );
+    return oldClassLoader;
+  }
+
+  /**
+   * Restores the old class loader after DiskStore is used.
+   * @param classLoader The class loader to restore.
+   */
+  private void restoreClassLoader( ClassLoader classLoader ) {
+    Thread.currentThread().setContextClassLoader( classLoader );
+  }
+
+  private void logCacheStatus() {
+    logger.debug( "Cache status: " + this.getCache().getMemoryStoreSize() + " in memory, "
+      + this.getCache().getDiskStoreSize() + " in disk" );
   }
 }
