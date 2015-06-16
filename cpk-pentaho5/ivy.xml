@@ -62,6 +62,8 @@
     <dependency org="spring"                          name="spring-mock"              rev="1.0.2"             conf="test->default"      transitive="false"/>
     <dependency org="org.springframework.security"    name="spring-security-core"     rev="2.0.5.RELEASE"     conf="test->default"      transitive="false"/>
     <dependency org="org.slf4j"                       name="slf4j-log4j12"            rev="1.6.1"             conf="test->default"      transitive="true"/>
+    <dependency org="com.google.collections"          name="google-collections"       rev="1.0"               conf="test->default"      transitive="false"/>
+
 
   </dependencies>
 </ivy-module>
