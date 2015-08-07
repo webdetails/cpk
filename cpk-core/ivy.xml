@@ -57,7 +57,8 @@
     <dependency org="org.apache.clerezza.ext"     name="org.json.simple"        rev='0.3-incubating'    conf="test->default"      transitive="false"/>
     <dependency org="org.mozilla"                 name="rhino"                  rev="1.7R4"             conf="test->default"      transitive="false"/>
     <dependency org="org.slf4j"                   name="slf4j-log4j12"          rev="1.6.1"             conf="test->default"      transitive="true"/>
-    <dependency org="spring"                      name="spring-mock"            rev="1.0.2"             conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework"         name="spring-core"            rev="${dependency.spring.framework.revision}"             conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework"         name="spring-mock"            rev="${dependency.spring.mock.revision}"             conf="test->default"      transitive="false"/>
 
   </dependencies>
 </ivy-module>

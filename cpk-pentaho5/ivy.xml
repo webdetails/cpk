@@ -56,11 +56,11 @@
     <dependency org="junit"                           name="junit"                    rev="4.10"              conf="test->default"      transitive="false"/>
     <dependency org="org.json"                        name="json"                     rev="20090211"          conf="test->default"      transitive="false"/>
     <dependency org="org.apache.clerezza.ext"         name="org.json.simple"          rev='0.3-incubating'    conf="test->default"      transitive="false"/>
-    <dependency org="org.springframework"             name="spring-beans"             rev="2.5.6"             conf="test->default"      transitive="false"/>
-    <dependency org="org.springframework"             name="spring-context"           rev="2.5.6"             conf="test->default"      transitive="false"/>
-    <dependency org="org.springframework"             name="spring-core"              rev="2.5.6"             conf="test->default"      transitive="false"/>
-    <dependency org="spring"                          name="spring-mock"              rev="1.0.2"             conf="test->default"      transitive="false"/>
-    <dependency org="org.springframework.security"    name="spring-security-core"     rev="2.0.5.RELEASE"     conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework"             name="spring-beans"             rev="${dependency.spring.framework.revision}"     conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework"             name="spring-context"           rev="${dependency.spring.framework.revision}"     conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework"             name="spring-core"              rev="${dependency.spring.framework.revision}"     conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework"             name="spring-mock"              rev="${dependency.spring.mock.revision}"          conf="test->default"      transitive="false"/>
+    <dependency org="org.springframework.security"    name="spring-security-core"     rev="${dependency.spring.security.revision}"      conf="test->default"      transitive="false"/>
     <dependency org="org.slf4j"                       name="slf4j-log4j12"            rev="1.6.1"             conf="test->default"      transitive="true"/>
     <dependency org="com.google.collections"          name="google-collections"       rev="1.0"               conf="test->default"      transitive="false"/>
 
