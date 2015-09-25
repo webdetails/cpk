@@ -32,9 +32,9 @@ import org.apache.commons.logging.LogFactory;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.vfs.FileName;
-import org.apache.commons.vfs.FileObject;
-import org.apache.commons.vfs.FileType;
+import org.apache.commons.vfs2.FileName;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileType;
 import org.pentaho.di.core.ResultFile;
 
 public class ZipUtil {
