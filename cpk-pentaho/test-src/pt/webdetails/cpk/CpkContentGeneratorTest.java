@@ -32,6 +32,7 @@ import pt.webdetails.cpf.utils.IPluginUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.ISystemSettings;
@@ -93,6 +94,7 @@ public class CpkContentGeneratorTest {
   }
 
   @Test
+  @Ignore
   public void testCreateContent() throws Exception {
     outResponse = new ByteArrayOutputStream();
 
