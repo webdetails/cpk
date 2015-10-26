@@ -21,7 +21,7 @@
 
     <!-- dependencies -->
     <dependency org="pentaho"     name="cpf-core"                 rev="${dependency.pentaho-cpf-plugin.revision}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
-    <dependency org="pentaho"     name="cpf-pentaho5"             rev="${dependency.pentaho-cpf-plugin.revision}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
+    <dependency org="pentaho"     name="cpf-pentaho"             rev="${dependency.pentaho-cpf-plugin.revision}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
     <dependency org="pentaho"     name="cpk-core"                 rev="${project.revision}"                           conf="default,runtime->default"     transitive="false"    changing="true"/>
     <dependency org="pentaho"     name="pentaho-platform-core"    rev="${dependency.pentaho-platform.revision}"                                           transitive="false"    changing="true"/>
     <dependency org="pentaho"     name="pentaho-platform-api"     rev="${dependency.pentaho-platform.revision}"                                           transitive="false"    changing="true"/>
