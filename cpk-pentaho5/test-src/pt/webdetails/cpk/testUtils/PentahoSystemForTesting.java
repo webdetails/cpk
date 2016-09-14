@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2016 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -18,12 +18,14 @@ import org.pentaho.platform.api.engine.ISystemSettings;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.springframework.security.Authentication;
-import org.springframework.security.GrantedAuthority;
-import org.springframework.security.GrantedAuthorityImpl;
-import org.springframework.security.context.SecurityContextHolder;
-import org.springframework.security.providers.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 public class PentahoSystemForTesting extends PentahoSystem {
@@ -44,9 +46,9 @@ public class PentahoSystemForTesting extends PentahoSystem {
       String roleName = ( settings != null ) ? settings.getSystemSetting( "acl-voter/admin-role", "Admin" ) : "Admin";
 
       roles = new GrantedAuthority[ 1 ];
-      roles[ 0 ] = new GrantedAuthorityImpl( roleName );
+      roles[ 0 ] = new SimpleGrantedAuthority( roleName );
 
-      Authentication auth = new UsernamePasswordAuthenticationToken( name, "", roles ); //$NON-NLS-1$
+      Authentication auth = new UsernamePasswordAuthenticationToken( name, "", Arrays.asList( roles ) ); //$NON-NLS-1$
 
       // set holders
       PentahoSessionHolder.setSession( session );
