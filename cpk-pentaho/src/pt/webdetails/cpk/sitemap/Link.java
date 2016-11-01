@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2016 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -37,6 +37,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpf.utils.IPluginUtils;
+import pt.webdetails.cpf.utils.XmlParserFactoryProducer;
 
 public class Link {
 
@@ -159,7 +160,7 @@ public class Link {
 
   private String getTextFromWcdf( String path, String text ) {
     File xml = new File( path );
-    SAXReader reader = new SAXReader();
+    SAXReader reader = XmlParserFactoryProducer.getSAXReader( null );
     Document doc = null;
     try {
       doc = reader.read( xml );
