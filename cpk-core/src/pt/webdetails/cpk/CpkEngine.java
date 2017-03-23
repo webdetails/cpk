@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2016 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2017 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -25,6 +25,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import pt.webdetails.cpf.utils.XmlParserFactoryProducer;
 import pt.webdetails.cpk.cache.EHCache;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.Element;
@@ -32,7 +33,6 @@ import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.impl.KettleResult;
 import pt.webdetails.cpk.elements.impl.KettleResultKey;
-import pt.webdetails.cpf.utils.XmlParserFactoryProducer;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +52,8 @@ public class CpkEngine {
   private String settingsFilename;
   private TreeMap<String, IElement> elementsMap;
   private IElement defaultElement;
+  private String corsAllowed;
+  private String domainWhitelist;
 
   private ICache<KettleResultKey, KettleResult> kettleResultCache;
 
@@ -132,14 +134,12 @@ public class CpkEngine {
       }
       logger.debug( this.getEnvironment().getPluginName() + " is using cache configuration from file "
         + DEFAULT_CACHE_SETTINGS_FILENAME );
-    }
-    catch ( Exception ioe ) {
+    } catch ( Exception ioe ) {
       // unable to load cache configuration file. Using hardcoded default configuration.
       logger.info( "No Eh cache configuration file found " + DEFAULT_CACHE_SETTINGS_FILENAME + "." );
       cacheConfiguration = this.getDefaultCacheConfiguration();
       logger.info( this.getEnvironment().getPluginName() + " is using default hardcoded cache configuration." );
-    }
-    finally {
+    } finally {
       IOUtils.closeQuietly( configFile );
     }
 
@@ -156,6 +156,9 @@ public class CpkEngine {
 
     // load elements
     this.loadElements();
+
+    // load settings
+    this.loadSettings();
 
     if ( this.getKettleResultCache() != null ) {
       this.getKettleResultCache().clear();
@@ -201,6 +204,22 @@ public class CpkEngine {
     } else {
       return new Status( this.elementsMap, "", this.environment );
     }
+  }
+
+  /**
+   * Are CORS operations allowed?
+   * @return true if the setting exists and CORS is allowed, false otherwise
+   */
+  public String getCorsAllowed() {
+    return corsAllowed;
+  }
+
+  /**
+   * A comma separated list of allowed domains for CORS
+   * @return a comma separated list of doamins if the setting is present, null or an empty string otherwise
+   */
+  public String getDomainWhitelist() {
+    return domainWhitelist;
   }
 
   private void loadElements() {
@@ -328,5 +347,30 @@ public class CpkEngine {
   // CpkEngineHolder is loaded on the first execution of CpkEngine.getInstance(), not before
   private static class CpkEngineHolder {
     public static final CpkEngine INSTANCE = new CpkEngine();
+  }
+
+  /**
+   * Loads a configuration from a settings element of cpl.xml in sparkl
+   */
+  private void loadSettings() {
+    try ( InputStream is = this.environment.getContentAccessFactory().getPluginSystemReader( null ).
+      getFileInputStream( this.settingsFilename ) ) {
+
+      SAXReader reader = XmlParserFactoryProducer.getSAXReader( null );
+      Document doc = reader.read( is );
+
+      final Node flagNode = doc.selectSingleNode( "/cpk/settings/allow-cross-domain-resources" );
+      if ( flagNode != null ) {
+        this.corsAllowed = flagNode.getText();
+      }
+      final Node whitelistNode = doc.selectSingleNode( "/cpk/settings/cross-domain-resources-whitelist" );
+      if ( whitelistNode != null ) {
+        this.corsAllowed = whitelistNode.getText();
+      }
+    } catch ( IOException e ) {
+      logger.error( "Failed to open settings file '" + this.settingsFilename + "'" );
+    } catch ( DocumentException e ) {
+      logger.error( "Failed to parse settings file '" + this.settingsFilename + "'" );
+    }
   }
 }

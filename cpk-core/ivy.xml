@@ -20,7 +20,7 @@
   <dependencies defaultconf="default->default">
 
     <!-- dependencies -->
-    <dependency org="pentaho"             name="cpf-core"           rev="${dependency.pentaho-cpf-plugin.revision}"     conf="runtime,test->default"     transitive="false"    changing="true"/>
+    <dependency org="pentaho"             name="cpf-core"           rev="${dependency.pentaho-cpf-plugin.revision}"     conf="runtime,test,default->default"     transitive="false"    changing="true"/>
     <dependency org="pentaho-kettle"      name="kettle-core"        rev="${dependency.kettle.revision}"                                          transitive="false"    changing="true"/>
     <dependency org="pentaho-kettle"      name="kettle-engine"      rev="${dependency.kettle.revision}"                                          transitive="false"    changing="true"/>
 
