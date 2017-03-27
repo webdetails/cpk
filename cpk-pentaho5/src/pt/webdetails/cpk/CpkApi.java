@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2017 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -59,6 +59,7 @@ import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
 import org.apache.commons.io.IOUtils;
+import pt.webdetails.cpk.utils.CorsUtil;
 import pt.webdetails.cpk.utils.CpkUtils;
 
 
@@ -388,11 +389,7 @@ public class CpkApi {
   }
 
   private void setCorsHeaders( HttpServletRequest request, HttpServletResponse response ) {
-    String origin = request.getHeader( "ORIGIN" );
-    if ( origin != null ) {
-      response.setHeader( "Access-Control-Allow-Origin", origin );
-      response.setHeader( "Access-Control-Allow-Credentials", "true" );
-    }
+    CorsUtil.getInstance().setCorsHeaders( request, response );
   }
 
   public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
