@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2013 Webdetails, a Pentaho company.  All rights reserved.
+* Copyright 2002 - 2017 Webdetails, a Pentaho company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -21,7 +21,14 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
+import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.plugins.Plugin;
+import org.pentaho.di.core.plugins.PluginInterface;
+import org.pentaho.di.core.plugins.PluginRegistry;
+import org.pentaho.di.core.plugins.StepPluginType;
+
+import org.pentaho.di.trans.steps.jsonoutput.JsonOutputMeta;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.repository.IRepositoryAccess;
@@ -36,7 +43,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CpkCoreServiceTest {
@@ -59,6 +68,25 @@ public class CpkCoreServiceTest {
     ICpkEnvironment environment = new CpkEnvironmentForTesting( pluginUtils, repAccess );
 
     KettleEnvironment.init();
+
+
+    Map<Class<?>, String> classMap = new HashMap<>();
+    classMap.put( JsonOutputMeta.class, "org.pentaho.di.trans.steps.jsonoutput.JsonOutputMeta" );
+    List<String> libraries = new ArrayList<>();
+
+    PluginInterface plugin =
+            new Plugin( new String[] { "JsonOutput" }, StepPluginType.class, JsonOutputMeta.class, "Flow",
+                    "JsonOutputMeta", null, null, false, false, classMap, libraries, null, null );
+    PluginRegistry.getInstance().registerPlugin( StepPluginType.class, plugin );
+
+
+    PluginRegistry.addPluginType( StepPluginType.getInstance() );
+    PluginRegistry.init();
+
+    if ( !Props.isInitialized() ) {
+      Props.init( 0 );
+    }
+
     cpkCore = new CpkCoreService( environment );
 
     bloatedMap = buildBloatedMap( null, null );
