@@ -58,7 +58,7 @@
     <!-- FIXME: UPDATE Tests to rely only on vfs2 -->
     <dependency org="commons-vfs"                     name="commons-vfs"              rev="1.0"         conf="test->default"      transitive="false"/>
 
-    <dependency org="commons-httpclient"          name="commons-httpclient"     rev='3.1'               conf="test->default"      transitive="false"/>
+    <dependency org="org.apache.httpcomponents"   name="httpclient"     rev='4.5.3'             conf="test->default"      transitive="false"/>
     <dependency org="jaxen"                       name="jaxen"                  rev="1.1"               conf="test->default"      transitive="false"/>
     <dependency org="org.json"                    name="json"                   rev="20090211"          conf="test->default"      transitive="false"/>
     <dependency org="org.safehaus.jug"            name="jug"                    rev='2.0.0'             conf="test->default"      transitive="false">
