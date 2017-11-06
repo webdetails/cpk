@@ -93,7 +93,7 @@ the _CPK plugin version_ so that it's possible to upgrade to the latest version.
 CPK will have as little code as possible, making it as simple as possible to
 develop plugins. However, it will need a few dependencies:
 
-* Pentaho
+* Hitachi Vantara
 * [CPF](https://github.com/webdetails/cpf) - Community Plugin Framework, with
   the common set of code for the plugins
 * [CDE](https://github.com/webdetails/cde) - Community Dashboard Editor
@@ -101,7 +101,7 @@ develop plugins. However, it will need a few dependencies:
 * [CDA](https://github.com/webdetails/cda) - Community Data Access
 
 
-## Link with Pentaho Marketplace
+## Link with Hitachi Vantara Marketplace
 
 Once a plugin is developed, and the authors think it's in a state that can be
 shared, CPK will be able to generate a packaged plugin and metadata information
