@@ -19,12 +19,12 @@
 
 		<dependency org="pentaho" name="cpk-core"       rev="${project.revision}" conf='default,runtime->default' transitive="false" changing="true"/>
 
-        <dependency org="pentaho" name="cpf-core"       rev="${dependency.pentaho-cpf-plugin.revision}"  conf='default,runtime->default' transitive="false" changing="true" />
-  		<dependency org="pentaho" name="cpf-pentaho"    rev="${dependency.pentaho-cpf-plugin.revision}"  conf='default,runtime->default' transitive="false" changing="true" />
+        <dependency org="pentaho" name="cpf-core"       rev="${pentaho-cpf-plugin.version}"  conf='default,runtime->default' transitive="false" changing="true" />
+  		<dependency org="pentaho" name="cpf-pentaho"    rev="${pentaho-cpf-plugin.version}"  conf='default,runtime->default' transitive="false" changing="true" />
 
-        <dependency org="pentaho" name="pentaho-bi-platform-api"                rev="${dependency.bi-platform.revision}" transitive="false" />
-        <dependency org="pentaho" name="pentaho-bi-platform-engine-core"        rev="${dependency.bi-platform.revision}" transitive="false" />
-        <dependency org="pentaho" name="pentaho-bi-platform-engine-services"    rev="${dependency.bi-platform.revision}" transitive="false" />
+        <dependency org="pentaho" name="pentaho-bi-platform-api"                rev="${platform.version}" transitive="false" />
+        <dependency org="pentaho" name="pentaho-bi-platform-engine-core"        rev="${platform.version}" transitive="false" />
+        <dependency org="pentaho" name="pentaho-bi-platform-engine-services"    rev="${platform.version}" transitive="false" />
 
         <dependency org="javax.servlet" name="servlet-api" rev="2.4" transitive="false" />
 
@@ -37,13 +37,13 @@
 
 
         <!-- Test Dependencies -->
-        <dependency org="pentaho" name="pentaho-bi-platform-util"               rev="${dependency.bi-platform.revision}"  conf="test->default" transitive="false"/>
-        <dependency org="pentaho" name="pentaho-bi-platform-engine-security"    rev="${dependency.bi-platform.revision}"  conf="test->default" transitive="false"/>
-        <dependency org="pentaho" name="pentaho-bi-platform-plugin-services"    rev="${dependency.bi-platform.revision}"  conf="test->default" transitive="false"/>
+        <dependency org="pentaho" name="pentaho-bi-platform-util"               rev="${platform.version}"  conf="test->default" transitive="false"/>
+        <dependency org="pentaho" name="pentaho-bi-platform-engine-security"    rev="${platform.version}"  conf="test->default" transitive="false"/>
+        <dependency org="pentaho" name="pentaho-bi-platform-plugin-services"    rev="${platform.version}"  conf="test->default" transitive="false"/>
 
-        <dependency org="pentaho-kettle"    name="kettle-core"      rev="${dependency.kettle.revision}"     conf="test->default"      transitive="false" />
-        <dependency org="pentaho-kettle"    name="kettle-engine"    rev="${dependency.kettle.revision}"     conf="test->default"      transitive="false" />
-        <dependency org="pentaho-kettle"    name="kettle-db"        rev="${dependency.kettle.revision}"     conf="test->default"      transitive="false" />
+        <dependency org="pentaho-kettle"    name="kettle-core"      rev="${pdi.version}"     conf="test->default"      transitive="false" />
+        <dependency org="pentaho-kettle"    name="kettle-engine"    rev="${pdi.version}"     conf="test->default"      transitive="false" />
+        <dependency org="pentaho-kettle"    name="kettle-db"        rev="${pdi.version}"     conf="test->default"      transitive="false" />
 
         <dependency org="org.springframework"           name="spring-beans"         rev="2.5.6"         conf="test->default"    transitive="false" force="true"/>
         <dependency org="org.springframework"           name="spring-core"          rev="2.5.6"         conf="test->default"    transitive="false" force="true"/>

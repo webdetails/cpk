@@ -30,9 +30,9 @@
 
 		<!--dependency org="pentaho" name="pentaho-hdfs-vfs" rev="TRUNK-SNAPSHOT" conf='default->default'/>
 
-		<dependency org="pentaho-kettle"           name="kettle-engine" rev="${dependency.kettle.revision}" conf="default->default"/>
-		<dependency org="pentaho-kettle"           name="kettle-core"   rev="${dependency.kettle.revision}" conf="default->default"/>
-		<dependency org="pentaho-kettle"           name="kettle-db"     rev="${dependency.kettle.revision}" conf="default->default"/-->
+		<dependency org="pentaho-kettle"           name="kettle-engine" rev="${pdi.version}" conf="default->default"/>
+		<dependency org="pentaho-kettle"           name="kettle-core"   rev="${pdi.version}" conf="default->default"/>
+		<dependency org="pentaho-kettle"           name="kettle-db"     rev="${pdi.version}" conf="default->default"/-->
 
 
 
