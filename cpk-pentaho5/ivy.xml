@@ -20,11 +20,11 @@
   <dependencies defaultconf="default->default">
 
     <!-- dependencies -->
-    <dependency org="pentaho"     name="cpf-core"                 rev="${dependency.pentaho-cpf-plugin.revision}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
-    <dependency org="pentaho"     name="cpf-pentaho"             rev="${dependency.pentaho-cpf-plugin.revision}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
+    <dependency org="pentaho"     name="cpf-core"                 rev="${pentaho-cpf-plugin.version}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
+    <dependency org="pentaho"     name="cpf-pentaho"             rev="${pentaho-cpf-plugin.version}"     conf="default,runtime->default"     transitive="false"    changing="true"/>
     <dependency org="pentaho"     name="cpk-core"                 rev="${project.revision}"                           conf="default,runtime->default"     transitive="false"    changing="true"/>
-    <dependency org="pentaho"     name="pentaho-platform-core"    rev="${dependency.pentaho-platform.revision}"                                           transitive="false"    changing="true"/>
-    <dependency org="pentaho"     name="pentaho-platform-api"     rev="${dependency.pentaho-platform.revision}"                                           transitive="false"    changing="true"/>
+    <dependency org="pentaho"     name="pentaho-platform-core"    rev="${platform.version}"                                           transitive="false"    changing="true"/>
+    <dependency org="pentaho"     name="pentaho-platform-api"     rev="${platform.version}"                                           transitive="false"    changing="true"/>
 
     <!-- third party dependencies -->
     <dependency org="commons-io"                    name="commons-io"             rev="2.4"       transitive="false"/>
@@ -40,9 +40,9 @@
     <dependency org="javax.servlet"                 name="servlet-api"            rev="2.4"       transitive="false"/>
 
     <!-- dependencies for tests -->
-    <dependency org="pentaho-kettle"    name="kettle-core"                    rev="${dependency.kettle.revision}"     conf="test->default"      transitive="false"    changing="true"/>
-    <dependency org="pentaho-kettle"    name="kettle-engine"                  rev="${dependency.kettle.revision}"     conf="test->default"      transitive="false"    changing="true"/>
-    <dependency org="pentaho"           name="pentaho-platform-extensions"    rev="${dependency.pentaho-platform.revision}"   conf="test->default"      transitive="false"    changing="true"/>
+    <dependency org="pentaho-kettle"    name="kettle-core"                    rev="${pdi.version}"     conf="test->default"      transitive="false"    changing="true"/>
+    <dependency org="pentaho-kettle"    name="kettle-engine"                  rev="${pdi.version}"     conf="test->default"      transitive="false"    changing="true"/>
+    <dependency org="pentaho"           name="pentaho-platform-extensions"    rev="${platform.version}"   conf="test->default"      transitive="false"    changing="true"/>
 
     <!-- third-party dependencies for tests -->
     <dependency org="commons-collections"             name="commons-collections"      rev="3.2.2"               conf="test->default"      transitive="false"/>

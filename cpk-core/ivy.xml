@@ -20,9 +20,9 @@
   <dependencies defaultconf="default->default">
 
     <!-- dependencies -->
-    <dependency org="pentaho"             name="cpf-core"           rev="${dependency.pentaho-cpf-plugin.revision}"     conf="runtime,test,default->default"     transitive="false"    changing="true"/>
-    <dependency org="pentaho-kettle"      name="kettle-core"        rev="${dependency.kettle.revision}"                                          transitive="false"    changing="true"/>
-    <dependency org="pentaho-kettle"      name="kettle-engine"      rev="${dependency.kettle.revision}"                                          transitive="false"    changing="true"/>
+    <dependency org="pentaho"             name="cpf-core"           rev="${pentaho-cpf-plugin.version}"     conf="runtime,test,default->default"     transitive="false"    changing="true"/>
+    <dependency org="pentaho-kettle"      name="kettle-core"        rev="${pdi.version}"                                          transitive="false"    changing="true"/>
+    <dependency org="pentaho-kettle"      name="kettle-engine"      rev="${pdi.version}"                                          transitive="false"    changing="true"/>
 
     <!-- third party dependencies -->
     <dependency org="commons-io"                name="commons-io"             rev="2.4"             transitive="false"/>
@@ -51,8 +51,8 @@
 
     <!--  third-party dependencies for tests -->
     <dependency org="com.google.guava" name="guava" rev="17.0" conf="test->default"/>
-    <dependency org="pentaho"             name="metastore"           rev="${dependency.pentaho-metastore.revision}"  conf="test->default" changing="true" />
-    <dependency org="org.pentaho.di.plugins" name="kettle-json-plugin-core" rev="${kettle-json-plugin.version}" transitive="false" conf="test->default"  changing="true" />
+    <dependency org="pentaho"             name="metastore"           rev="${pentaho-metastore.version}"  conf="test->default" changing="true" />
+    <dependency org="org.pentaho.di.plugins" name="kettle-json-plugin-core" rev="${pdi-json-plugin.version}" transitive="false" conf="test->default"  changing="true" />
 
 
     <!-- FIXME: UPDATE Tests to rely only on vfs2 -->
