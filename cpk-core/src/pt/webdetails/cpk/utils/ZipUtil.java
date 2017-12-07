@@ -40,7 +40,7 @@ import org.pentaho.di.core.ResultFile;
 public class ZipUtil {
   private String zipName;
   private FileInputStream fis;
-  private FileName topFilename;
+  protected FileName topFilename;
   ArrayList<String> fileListing = new ArrayList<String>();
 
   protected Log logger = LogFactory.getLog( this.getClass() );
@@ -107,7 +107,8 @@ public class ZipUtil {
         logger.debug( "Files to process:" + files.size() );
         logger.debug( "Files processed: " + i );
         logger.debug( "Files remaining: " + ( files.size() - i ) );
-        logger.debug( file.getName().getPath() );
+        logger.debug( "Processing file: " + file.getName().getPath() );
+        logger.debug( "File path in zip: " + removeTopFilenamePathFromString( file.getName().getPath() ) );
 
         fileListing.add( removeTopFilenamePathFromString( file.getName().getPath() ) );
 
@@ -229,10 +230,12 @@ public class ZipUtil {
     return topFileName;
   }
 
-  private String removeTopFilenamePathFromString( String path ) {
+  protected String removeTopFilenamePathFromString( String path ) {
 
     String filteredPath = null;
-    int index = this.topFilename.getParent().getPath().length();
+    //[SPARKL-166] Add +1 to the index so the filteredPath does not start with /.  Starting with / makes
+    // the zip unreadable in the Windows zip utility.
+    int index = this.topFilename.getParent().getPath().length() + 1;
     filteredPath = path.substring( index );
 
 
