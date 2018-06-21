@@ -12,18 +12,21 @@
 */
 package pt.webdetails.cpk;
 
-import org.pentaho.platform.engine.core.system.PentahoSystem;
-import pt.webdetails.cpf.InterPluginCall;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import pt.webdetails.cpf.PluginEnvironment;
+import pt.webdetails.cpf.PluginSettings;
 import pt.webdetails.cpf.plugin.CorePlugin;
 import pt.webdetails.cpf.plugincall.api.IPluginCall;
 import pt.webdetails.cpf.plugincall.base.CallParameters;
 import pt.webdetails.cpf.utils.PluginIOUtils;
 
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Map;
 
 public class InterPluginBroker {
+  private static Log logger = LogFactory.getLog( InterPluginBroker.class );
 
   private static final String CDE_RENDER_API_BEAN_ID_TAG = "cde-render-api-bean-id";
 
@@ -45,11 +48,18 @@ public class InterPluginBroker {
     }
 
     IPluginCall pluginCall = getPluginCall();
+    if ( pluginCall == null ) {
+      final String pluginId = CorePlugin.CDE.getId();
+      final String beanId = getSettingValue( CDE_RENDER_API_BEAN_ID_TAG, CDE_RENDER_API_BEAN_ID );
+      final String method = getSettingValue( CDE_RENDER_API_RENDER_METHOD_TAG, CDE_RENDER_API_RENDER_METHOD );
 
-    String response = pluginCall != null
-      ? pluginCall.call( parameters.getParameters() )
-      : "No valid InterPluginCall available";
+      logger.error( "No valid InterPluginCall available" +
+        "for the plugin: '" + pluginId + "', beanId: '" + beanId + "' and method: '" + method + "'." );
 
+      return;
+    }
+
+    String response = pluginCall.call( parameters.getParameters() );
     PluginIOUtils.writeOutAndFlush( out, response );
   }
 
@@ -58,36 +68,38 @@ public class InterPluginBroker {
       return cdeRenderApiCall;
     }
 
-    IPluginCall cdePluginCall;
-    final PluginEnvironment environment = PluginEnvironment.env();
     final String pluginID = CorePlugin.CDE.getId();
+    final PluginEnvironment environment = PluginEnvironment.env();
 
     // 1. try configured values
-    String beanId = PentahoSystem.getSystemSetting( CDE_RENDER_API_BEAN_ID_TAG, CDE_RENDER_API_BEAN_ID );
-    String method = PentahoSystem.getSystemSetting( CDE_RENDER_API_RENDER_METHOD_TAG, CDE_RENDER_API_RENDER_METHOD );
+    String beanId = getSettingValue( CDE_RENDER_API_BEAN_ID_TAG, "" );
+    String method = getSettingValue( CDE_RENDER_API_RENDER_METHOD_TAG, "" );
 
-    cdePluginCall = environment.getPluginCall( pluginID, beanId, method );
-    if ( beanExists( cdePluginCall ) ) {
+    IPluginCall cdePluginCall = environment.getPluginCall( pluginID, beanId, method );
+    if ( cdePluginCall.exists() ) {
       return ( cdeRenderApiCall = cdePluginCall );
     }
 
     // 2. fallback to latest cde render bean id
     cdePluginCall = environment.getPluginCall( pluginID, CDE_RENDER_API_BEAN_ID, CDE_RENDER_API_RENDER_METHOD );
-    if ( beanExists( cdePluginCall ) ) {
+    if ( cdePluginCall.exists() ) {
       return ( cdeRenderApiCall = cdePluginCall );
     }
 
     // 3. fallback to legacy cde render bean id
     cdePluginCall = environment.getPluginCall( pluginID, CDE_RENDER_API_LEGACY_BEAN_ID, CDE_RENDER_API_RENDER_METHOD );
-    if ( beanExists( cdePluginCall ) ) {
+    if ( cdePluginCall.exists() ) {
       return ( cdeRenderApiCall = cdePluginCall );
     }
 
     return null;
   }
 
-  private static boolean beanExists( IPluginCall pluginCall ) {
-    return ( (InterPluginCall) pluginCall).beanExists();
+  private static String getSettingValue( String tag, String defaultValue ) {
+    final PluginSettings settings = PluginEnvironment.env().getPluginSettings();
+
+    List<String> values = settings.getTagValue( tag );
+    return values.isEmpty() ? defaultValue : values.get( 0 );
   }
 
 }
