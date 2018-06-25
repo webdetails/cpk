@@ -28,42 +28,36 @@ import java.util.Map;
 public class InterPluginBroker {
   private static Log logger = LogFactory.getLog( InterPluginBroker.class );
 
-  private static final String CDE_RENDER_API_BEAN_ID_TAG = "cde-render-api-bean-id";
+  static final String CDE_RENDER_API_BEAN_ID_TAG = "cde-render-api-bean-id";
 
-  private static final String CDE_RENDER_API_BEAN_ID = "renderApi";
-  private static final String CDE_RENDER_API_LEGACY_BEAN_ID = "renderer";
+  static final String CDE_RENDER_API_BEAN_ID = "renderApi";
+  static final String CDE_RENDER_API_LEGACY_BEAN_ID = "renderer";
 
-  private static final String CDE_RENDER_API_RENDER_METHOD_TAG = "cde-render-api-render-method";
-  private static final String CDE_RENDER_API_RENDER_METHOD = "render";
+  static final String CDE_RENDER_API_RENDER_METHOD_TAG = "cde-render-api-render-method";
+  static final String CDE_RENDER_API_RENDER_METHOD = "render";
 
   private static IPluginCall cdeRenderApiCall;
 
   public static void run( Map<String, Object> params, OutputStream out ) throws Exception {
-    CallParameters parameters = new CallParameters();
+    IPluginCall cdeRenderer = getCdeRenderer();
+    if ( cdeRenderer == null ) {
+      logger.error( "No InterPluginCall found for CDE Renderer." );
 
+      return;
+    }
+
+    CallParameters parameters = new CallParameters();
     for ( String key : params.keySet() ) {
       String value = params.get( key ).toString();
 
       parameters.put( key, value );
     }
 
-    IPluginCall pluginCall = getPluginCall();
-    if ( pluginCall == null ) {
-      final String pluginId = CorePlugin.CDE.getId();
-      final String beanId = getSettingValue( CDE_RENDER_API_BEAN_ID_TAG, CDE_RENDER_API_BEAN_ID );
-      final String method = getSettingValue( CDE_RENDER_API_RENDER_METHOD_TAG, CDE_RENDER_API_RENDER_METHOD );
-
-      logger.error( "No valid InterPluginCall available" +
-        "for the plugin: '" + pluginId + "', beanId: '" + beanId + "' and method: '" + method + "'." );
-
-      return;
-    }
-
-    String response = pluginCall.call( parameters.getParameters() );
+    String response = cdeRenderer.call( parameters.getParameters() );
     PluginIOUtils.writeOutAndFlush( out, response );
   }
 
-  private static IPluginCall getPluginCall() {
+  private static IPluginCall getCdeRenderer() {
     if ( cdeRenderApiCall != null ) {
       return cdeRenderApiCall;
     }
