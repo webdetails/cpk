@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -10,10 +10,7 @@
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
 * the license for the specific language governing your rights and limitations.
 */
-
 package pt.webdetails.cpk;
-
-import java.text.SimpleDateFormat;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -25,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
 
-
 import com.sun.jersey.api.representation.Form;
 import com.sun.jersey.spi.container.ContainerRequest;
 import org.apache.commons.logging.Log;
@@ -36,7 +32,6 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +41,6 @@ import java.util.logging.Logger;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.dom4j.DocumentException;
 
 import pt.webdetails.cpf.plugins.IPluginFilter;
 import pt.webdetails.cpf.plugins.Plugin;
@@ -62,12 +56,10 @@ import org.apache.commons.io.IOUtils;
 import pt.webdetails.cpk.utils.CorsUtil;
 import pt.webdetails.cpk.utils.CpkUtils;
 
-
 @Path( "/{pluginId}/api" )
 public class CpkApi {
 
   private static final Log logger = LogFactory.getLog( CpkApi.class );
-  private static final SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm" );
 
   private static final String DEFAULT_NO_DASHBOARD_MESSAGE = "This plugin does not contain a dashboard";
 
@@ -82,18 +74,14 @@ public class CpkApi {
     init();
   }
 
-
   protected void init() {
     this.cpkEnv = new CpkPentahoEnvironment( new PluginUtils(), reservedWords );
     this.coreService = new CpkCoreService( this.cpkEnv );
   }
 
-
   protected static String getEncoding() {
     return CharsetHelper.getEncoding();
   }
-
-
 
   @GET
   @Path( "/{param}" )
@@ -131,22 +119,10 @@ public class CpkApi {
     }
   }
 
-  /*
-  @GET
-  @Path( "/createContent/{param}" )
-  @Produces( MimeTypes.JSON )
-  public void createContentGet( @PathParam( "param" ) String param, @Context HttpServletRequest request,
-                                @Context HttpServletResponse response,
-                                @Context HttpHeaders headers ) throws Exception {
-    callEndpoint( param, request, response, headers );
-  }
-  */
-
   @GET
   @Path( "/reload" )
   public void reload( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                      @Context HttpHeaders headers )
-    throws DocumentException, IOException {
+                      @Context HttpHeaders headers ) throws IOException {
     coreService.reload( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
   }
 
@@ -154,8 +130,7 @@ public class CpkApi {
   @Path( "/refresh" )
   @Produces( MimeTypes.PLAIN_TEXT )
   public void refreshGet( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                          @Context HttpHeaders headers )
-    throws DocumentException, IOException {
+                          @Context HttpHeaders headers ) throws IOException {
     refresh( request, response, headers );
   }
 
@@ -163,14 +138,14 @@ public class CpkApi {
   @Path( "/refresh" )
   @Produces( MimeTypes.PLAIN_TEXT )
   public void refreshPost( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                           @Context HttpHeaders headers )
-    throws DocumentException, IOException {
+                           @Context HttpHeaders headers ) throws IOException {
     refresh( request, response, headers );
   }
 
   private void refresh( HttpServletRequest request, HttpServletResponse response, HttpHeaders headers )
-    throws IOException, DocumentException {
+    throws IOException {
     coreService.refresh( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
+
     response.getOutputStream().flush();
   }
 
@@ -182,27 +157,19 @@ public class CpkApi {
     PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
     pluginsAnalyzer.refresh();
 
-    String version = null;
-
-    IPluginFilter thisPlugin = new IPluginFilter() {
-      @Override
-      public boolean include( Plugin plugin ) {
-        return plugin.getId().equalsIgnoreCase( cpkEnv.getPluginName() );
-      }
-    };
+    IPluginFilter thisPlugin = plugin -> plugin.getId().equalsIgnoreCase( cpkEnv.getPluginName() );
 
     List<Plugin> plugins = pluginsAnalyzer.getPlugins( thisPlugin );
 
+    String version = plugins.get( 0 ).getVersion();
 
-    version = plugins.get( 0 ).getVersion().toString();
     writeMessage( response.getOutputStream(), version );
   }
 
   @GET
   @Path( "/status" )
   public void status( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                      @Context HttpHeaders headers )
-    throws DocumentException, IOException {
+                      @Context HttpHeaders headers ) throws IOException {
     if ( request.getParameter( "json" ) != null ) {
       coreService.statusJson( response.getOutputStream(), response );
     } else {
@@ -246,16 +213,14 @@ public class CpkApi {
   @GET
   @Path( "/listDataAccessTypes" )
   @Produces( MimeTypes.JSON )
-  public void listDataAccessTypes( @Context HttpServletResponse response )
-    throws Exception {
-    //boolean refreshCache = Boolean.parseBoolean(getRequestParameters().getStringParameter("refreshCache", "false"));
-
-    Set<DataSource> dataSources = new LinkedHashSet<DataSource>();
+  public void listDataAccessTypes( @Context HttpServletResponse response ) throws Exception {
+    Set<DataSource> dataSources = new LinkedHashSet<>();
     StringBuilder dsDeclarations = new StringBuilder( "{" );
     Collection<IElement> endpoints = coreService.getElements();
 
     String pluginId = cpkEnv.getPluginName();
-    //We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
+
+    // We need to make sure pluginId is safe - starts with a char and is only alphaNumeric
     String safePluginId = this.sanitizePluginId( pluginId );
 
     if ( endpoints != null ) {
@@ -286,7 +251,9 @@ public class CpkApi {
     if ( index > 0 ) {
       dsDeclarations.deleteCharAt( index );
     }
+
     dsDeclarations.append( "}" );
+
     IOUtils.write( dsDeclarations.toString(), response.getOutputStream() );
     response.getOutputStream().flush();
   }
@@ -315,12 +282,8 @@ public class CpkApi {
     reloadPlugins();
   }
 
-
-  //TODO: ????
-  public void reloadPlugins() throws Exception {
-    //  IPluginManager pluginManager = PentahoSystem.get(IPluginManager.class, PentahoSessionHolder.getSession());
-    //  pluginManager.loadNewPlugins();
-
+  private void reloadPlugins() throws Exception {
+    // TODO: ????
   }
 
   @GET
@@ -329,10 +292,9 @@ public class CpkApi {
     this.coreService.clearKettleResultsCache();
   }
 
-
   private Map<String, Map<String, Object>> buildBloatedMap( HttpServletRequest request, HttpServletResponse response,
                                                             HttpHeaders headers ) {
-    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> mainMap = new HashMap<>();
 
     mainMap.put( "request", buildRequestMap( request, headers ) );
     mainMap.put( "path" + "", buildPathMap( request, response, headers ) );
@@ -342,46 +304,46 @@ public class CpkApi {
   }
 
   private Map<String, Object> buildRequestMap( HttpServletRequest request, HttpHeaders headers ) {
-    Map<String, Object> requestMap = new HashMap<String, Object>();
-
-    //requestMap.put( PARAM_WEBAPP_DIR, PentahoSystem.getApplicationContext().getApplicationPath( "" ) );
-
+    Map<String, Object> requestMap = new HashMap<>();
     if ( request == null ) {
       return requestMap;
     }
+
     Enumeration e = request.getParameterNames();
     while ( e.hasMoreElements() ) {
       Object o = e.nextElement();
       requestMap.put( o.toString(), request.getParameter( o.toString() ) );
     }
-    Form form =
-      ( (ContainerRequest) headers ).getFormParameters();
-    Iterator<String> it = form.keySet().iterator();
-    while ( it.hasNext() ) {
-      String next = it.next();
-      requestMap.put( next, form.get( next ).get( 0 ) );
+
+    Form form = ( (ContainerRequest) headers ).getFormParameters();
+    for (String next : form.keySet()) {
+      requestMap.put(next, form.get(next).get(0));
     }
+
     return requestMap;
   }
 
   private Map<String, Object> buildPathMap( HttpServletRequest request, HttpServletResponse response,
                                             HttpHeaders headers ) {
-
-    Map<String, Object> pathMap = new HashMap<String, Object>();
+    Map<String, Object> pathMap = new HashMap<>();
     pathMap.put( "httprequest", request );
     pathMap.put( "httpresponse", response );
-    if ( headers != null && headers.getRequestHeaders()
-      .containsKey( "contentType" ) ) {
+
+    if ( headers != null && headers.getRequestHeaders().containsKey( "contentType" ) ) {
       pathMap.put( "contentType", headers.getRequestHeader( "contentType" ) );
     }
+
     return pathMap;
   }
 
   private void callEndpoint( String endpoint, HttpServletRequest request, HttpServletResponse response,
-                             HttpHeaders headers )
-    throws Exception {
+                             HttpHeaders headers ) throws Exception {
     Map<String, Map<String, Object>> bloatedMap = buildBloatedMap( request, response, headers );
-    bloatedMap.get( "path" ).put( "path", "/" + endpoint );
+
+    final String path = endpoint != null && !"null".equals( endpoint ) ? "/" + endpoint : null;
+
+    bloatedMap.get( "path" ).put( "path", path );
+
     coreService.createContent( bloatedMap );
 
     // make sure that everything written in the output stream is sent to the client

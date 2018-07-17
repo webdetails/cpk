@@ -216,7 +216,7 @@ public class CpkEngine {
 
   /**
    * A comma separated list of allowed domains for CORS
-   * @return a comma separated list of doamins if the setting is present, null or an empty string otherwise
+   * @return a comma separated list of domains if the setting is present, null or an empty string otherwise
    */
   public String getDomainWhitelist() {
     return domainWhitelist;

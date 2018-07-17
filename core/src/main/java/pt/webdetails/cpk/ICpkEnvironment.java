@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -10,7 +10,6 @@
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
 * the license for the specific language governing your rights and limitations.
 */
-
 package pt.webdetails.cpk;
 
 import pt.webdetails.cpf.session.ISessionUtils;
@@ -20,22 +19,21 @@ import pt.webdetails.cpk.security.IAccessControl;
 
 import java.util.Set;
 
-
 public interface ICpkEnvironment {
 
-  public IPluginUtils getPluginUtils();
+  IPluginUtils getPluginUtils();
 
-  public IContentAccessFactory getContentAccessFactory();
+  IContentAccessFactory getContentAccessFactory();
 
-  public IAccessControl getAccessControl();
+  IAccessControl getAccessControl();
 
-  public String getPluginName();
+  String getPluginName();
 
-  public Set<String> getReservedWords();
+  Set<String> getReservedWords();
 
-  public ISessionUtils getSessionUtils();
+  ISessionUtils getSessionUtils();
 
-  public String getWebAppDir();
+  String getWebAppDir();
 
-  public void reload();
+  void reload();
 }
