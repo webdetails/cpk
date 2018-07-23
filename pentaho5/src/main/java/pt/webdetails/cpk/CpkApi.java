@@ -316,8 +316,8 @@ public class CpkApi {
     }
 
     Form form = ( (ContainerRequest) headers ).getFormParameters();
-    for (String next : form.keySet()) {
-      requestMap.put(next, form.get(next).get(0));
+    for ( String next : form.keySet() ) {
+      requestMap.put( next, form.get( next ).get( 0 ) );
     }
 
     return requestMap;

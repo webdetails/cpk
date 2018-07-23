@@ -37,8 +37,11 @@ public class CpkCoreService {
 
   private CpkEngine engine;
 
-  public CpkEngine getEngine() { return this.engine; }
-  public CpkCoreService setEngine( CpkEngine engine) {
+  public CpkEngine getEngine() {
+    return this.engine;
+  }
+
+  public CpkCoreService setEngine( CpkEngine engine ) {
     this.engine = engine;
     return this;
   }
@@ -85,8 +88,8 @@ public class CpkCoreService {
       }
 
     } else {
-      final String elementNotFound = "Unable to get element: " + path + ". " +
-        "This is probably a call to a control CPK operation (reload, status)";
+      final String elementNotFound = "Unable to get element: " + path + ". "
+        + "This is probably a call to a control CPK operation (reload, status)";
 
       logger.debug( elementNotFound );
 
@@ -114,7 +117,7 @@ public class CpkCoreService {
   public void clearKettleResultsCache() {
     ICache<KettleResultKey, KettleResult> cache = this.getEngine().getKettleResultCache();
 
-    if( cache != null) {
+    if ( cache != null ) {
       cache.clear();
     }
   }

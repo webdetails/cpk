@@ -86,12 +86,12 @@ public class Status {
     return out.toString();
   }
 
-  @JsonProperty("pluginName")
+  @JsonProperty( "pluginName" )
   public String getPluginName() {
     return cpkEnv.getPluginName();
   }
 
-  @JsonProperty("elements")
+  @JsonProperty( "elements" )
   public TreeMap<String, IElement> getElementsMap() {
     return elementsMap;
   }
@@ -101,12 +101,12 @@ public class Status {
     this.elementsMap = elementsMap;
   }
 
-  @JsonProperty("elementsCount")
+  @JsonProperty( "elementsCount" )
   public int getNrElements() {
     return getElementsMap().size();
   }
 
-  @JsonProperty("defaultElement")
+  @JsonProperty( "defaultElement" )
   public String getDefaultElementName() {
     return defaultElementName;
   }
