@@ -40,15 +40,14 @@
     <servlet-api.version>2.4</servlet-api.version>
     <jersey-core.version>1.16</jersey-core.version>
     <jersey-server.version>1.9.1</jersey-server.version>
-    <powermock.version>1.6.3</powermock.version>
-    <mockito-all.version>1.10.19</mockito-all.version>
-    <junit.version>4.11</junit.version>
+    <mockito-all.version>1.9.5</mockito-all.version>
     <jersey-client.client>1.16</jersey-client.client>
     <guava.version>17.0</guava.version>
     <commons-vfs.version>1.0</commons-vfs.version>
     <jaxen.version>1.1</jaxen.version>
     <json.version>20090211</json.version>
     <jug.version>2.0.0</jug.version>
+    <junit.version>4.11</junit.version>
     <org.json.simple.version>0.3-incubating</org.json.simple.version>
     <rhino.version>1.7R4</rhino.version>
     <slf4j-log4j12.version>1.6.1</slf4j-log4j12.version>
@@ -260,7 +259,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-
       <!-- test -->
       <dependency>
         <groupId>pentaho</groupId>
@@ -285,18 +283,6 @@
             <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.powermock</groupId>
-        <artifactId>powermock-module-junit4</artifactId>
-        <version>${powermock.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.powermock</groupId>
-        <artifactId>powermock-api-mockito</artifactId>
-        <version>${powermock.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>com.sun.jersey</groupId>
