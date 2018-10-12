@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import pt.webdetails.cpf.RestRequestHandler;
 import pt.webdetails.cpf.Router;
+import pt.webdetails.cpf.utils.IPluginUtils;
 import pt.webdetails.cpk.cache.ICache;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.elements.impl.KettleResult;
@@ -25,8 +26,12 @@ import pt.webdetails.cpk.security.IAccessControl;
 import pt.webdetails.cpk.utils.CpkUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 
@@ -52,35 +57,25 @@ public class CpkCoreService {
     this.getEngine().init( environment );
   }
 
-  public void createContent( Map<String, Map<String, Object>> bloatedMap )
-    throws Exception {
+  public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
+    final ICpkEnvironment environment = this.getEngine().getEnvironment();
+    final HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
 
-    IAccessControl accessControl = this.getEngine().getEnvironment().getAccessControl();
-    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+    final String path = getPath( bloatedMap );
+
     logger.debug( "Creating content" );
 
-    // Get the path, remove leading slash
-    String path = (String) bloatedMap.get( "path" ).get( "path" );
-    IElement element = null;
+    final boolean isDefaultElementPath = "".equals( path ) || "/".equals( path );
 
-    if ( path == null || path.equals( "/" ) ) {
-      element = this.getEngine().getDefaultElement();
-      if ( element != null ) {
-        String url = element.getId();
-        if ( path == null ) {
-          // We need to put the http redirection on the right level
-          url = this.getEngine().getEnvironment().getPluginName() + "/" + url;
-        }
+    final IElement element = isDefaultElementPath ? this.getDefaultElement() : getElement( path );
+    if ( element != null ) {
+      if ( isDefaultElementPath ) {
+        final String url = getElementUrl( element, path );
 
         CpkUtils.redirect( response, url );
       }
-    }
 
-    if ( path != null ) {
-      element = this.getEngine().getElement( path.substring( 1 ).toLowerCase() );
-    }
-
-    if ( element != null ) {
+      final IAccessControl accessControl = environment.getAccessControl();
       if ( accessControl.isAllowed( element ) ) {
         element.processRequest( bloatedMap );
       } else {
@@ -89,12 +84,61 @@ public class CpkCoreService {
 
     } else {
       final String elementNotFound = "Unable to get element: " + path + ". "
-        + "This is probably a call to a control CPK operation (reload, status)";
+          + "This is probably a call to a control CPK operation (reload, status)";
 
       logger.debug( elementNotFound );
 
       throw new Exception( "Unable to get element! - " + path );
     }
+  }
+
+  private String getPath( Map<String, Map<String, Object>> bloatedMap ) {
+    String path = (String) bloatedMap.get( "path" ).get( "path" );
+
+    if ( path == null ) {
+      return "";
+    }
+
+    // Get the path, remove leading slash
+    if ( path.startsWith( "/" ) && path.length() > 1 ) {
+      return path.substring( 1 );
+    }
+
+    return path;
+  }
+
+  public String getLocalizationResourceContent( String elementId, String resource ) throws Exception {
+    final String resourcePath = getLocalizationResource( elementId, resource );
+
+    return new String( Files.readAllBytes( Paths.get( resourcePath ) ) );
+  }
+
+  String getLocalizationResource( String elementId, String resource ) throws Exception {
+    if ( !hasElement( elementId ) ) {
+      throw new Exception( "Element \"" + elementId + "\" does not exist." );
+    }
+
+    final String dashboardRelativePath = getElementRelativePath( elementId );
+
+    final Collection<File> resourceList = getPluginUtils().getPluginResources( dashboardRelativePath, true, resource );
+    if ( resourceList.isEmpty() ) {
+      throw new FileNotFoundException();
+    }
+
+    final File localizationResource = (File) resourceList.toArray()[ 0 ];
+
+    return localizationResource.getPath();
+  }
+
+  String getElementRelativePath( String elementId ) throws FileNotFoundException {
+    final IElement element = getElement( elementId );
+    final String location = element.getLocation();
+
+    return getPluginUtils().getPluginRelativeDirectory( location, false );
+  }
+
+  IPluginUtils getPluginUtils() {
+    return getEngine().getEnvironment().getPluginUtils();
   }
 
   // alias to refresh
@@ -148,7 +192,8 @@ public class CpkCoreService {
   }
 
   public boolean hasElement( String elementId ) {
-    Map<String, IElement> elementsMap = this.getEngine().getElementsMap();
+    final Map<String, IElement> elementsMap = this.getEngine().getElementsMap();
+
     return elementsMap.containsKey( elementId.toLowerCase() );
   }
 
@@ -172,6 +217,23 @@ public class CpkCoreService {
 
   public IElement getDefaultElement() {
     return this.getEngine().getDefaultElement();
+  }
+
+  IElement getElement( String path ) {
+    return this.getEngine().getElement( path.toLowerCase() );
+  }
+
+  private String getElementUrl( IElement element, String path ) {
+    final ICpkEnvironment environment = this.getEngine().getEnvironment();
+
+    final String url = element.getId();
+
+    if ( "".equals( path ) ) {
+      // We need to put the http redirection on the right level
+      return  environment.getPluginName() + "/" + url;
+    }
+
+    return url;
   }
 
   private void writeMessage( OutputStream out, String message ) {
