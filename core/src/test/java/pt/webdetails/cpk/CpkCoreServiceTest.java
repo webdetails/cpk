@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -10,14 +10,12 @@
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
 * the license for the specific language governing your rights and limitations.
 */
-
 package pt.webdetails.cpk;
 
-import org.dom4j.DocumentException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
@@ -30,7 +28,6 @@ import org.pentaho.di.core.plugins.StepPluginType;
 
 import org.pentaho.di.trans.steps.jsonoutput.JsonOutputMeta;
 import pt.webdetails.cpf.RestRequestHandler;
-import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.repository.IRepositoryAccess;
 import pt.webdetails.cpf.repository.vfs.VfsRepositoryAccess;
 import pt.webdetails.cpf.utils.IPluginUtils;
@@ -38,48 +35,43 @@ import pt.webdetails.cpk.testUtils.CpkEnvironmentForTesting;
 import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 import pt.webdetails.cpk.testUtils.PluginUtilsForTesting;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
 public class CpkCoreServiceTest {
 
-  private static IPluginUtils pluginUtils;
   private static CpkCoreService cpkCore;
+
   private static Map<String, Map<String, Object>> bloatedMap;
-  private static IRepositoryAccess repAccess;
-  private static OutputStream out;
   private static OutputStream outResponse;
-  private static String userDir = System.getProperty( "user.dir" );
 
   @BeforeClass
-  public static void setUp() throws IOException, InitializationException, KettleException {
-
-    repAccess = new VfsRepositoryAccess( userDir + "/target/test-classes/repository",
-      userDir + "/target/test-classes/settings" );
-
-    pluginUtils = new PluginUtilsForTesting();
-    ICpkEnvironment environment = new CpkEnvironmentForTesting( pluginUtils, repAccess );
+  public static void setUp() throws KettleException {
+    ICpkEnvironment environment = createCpkEnvironment();
 
     KettleEnvironment.init();
 
+    PluginInterface plugin = createPluginInterface();
 
-    Map<Class<?>, String> classMap = new HashMap<>();
-    classMap.put( JsonOutputMeta.class, "org.pentaho.di.trans.steps.jsonoutput.JsonOutputMeta" );
-    List<String> libraries = new ArrayList<>();
-
-    PluginInterface plugin =
-            new Plugin( new String[] { "JsonOutput" }, StepPluginType.class, JsonOutputMeta.class, "Flow",
-                    "JsonOutputMeta", null, null, false, false, classMap, libraries, null, null );
     PluginRegistry.getInstance().registerPlugin( StepPluginType.class, plugin );
-
-
     PluginRegistry.addPluginType( StepPluginType.getInstance() );
     PluginRegistry.init();
 
@@ -87,71 +79,120 @@ public class CpkCoreServiceTest {
       Props.init( 0 );
     }
 
-    cpkCore = new CpkCoreService( environment );
+    cpkCore = spy( new CpkCoreService( environment ) );
 
-    bloatedMap = buildBloatedMap( null, null );
+    bloatedMap = buildBloatedMap();
+  }
 
-
+  @Before
+  public void beforeEach() {
+    outResponse = new ByteArrayOutputStream();
   }
 
   @Test
-  public void testCreateContent() throws Exception { //start a hypersonic to test
-    outResponse = new ByteArrayOutputStream();
+  public void testCreateContentSampleTrans() throws Exception { // start a hypersonic to test
+    final String sampleTransResult = createContent( sampleTrans() );
 
+    JSONObject queryInfo = new JSONObject( sampleTransResult ).getJSONObject( "queryInfo" );
 
-    cpkCore.createContent( sampleTrans() );
-    String sampleTrans_result = outResponse.toString();
+    assertFalse( queryInfo.length() < 1 );
+  }
+
+  @Test
+  public void testCreateContentEvaluateResultRows() throws Exception {
+    final String evaluateResultRowsResult = createContent( evaluateResultRows() );
+
+    JSONObject evaluateResultRowsJson = new JSONObject( evaluateResultRowsResult );
+
+    assertTrue( evaluateResultRowsJson.getBoolean( "result" ) );
+  }
+
+  @Test
+  public void testCreateContentCreateResultRows() throws Exception {
+    final String createResultRowsResult = createContent( createResultRows() );
+
+    JSONObject queryInfo = new JSONObject( createResultRowsResult ).getJSONObject( "queryInfo" );
+
+    assertFalse( queryInfo.length() < 1 );
+  }
+
+  @Test
+  public void testCreateContentGenerateRows() throws Exception {
+    final String generateRowsResult = createContent( generateRows() );
+
+    JSONObject queryInfo = new JSONObject( generateRowsResult ).getJSONObject( "queryInfo" );
+
+    assertFalse( queryInfo.length() < 1 );
+  }
+
+  private String createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
+    cpkCore.createContent( bloatedMap );
+
+    String content = outResponse.toString();
     outResponse.close();
-    outResponse = new ByteArrayOutputStream();
 
-    cpkCore.createContent( evaluateResultRows() );
-    String evaluateResultRows_result = outResponse.toString();
-    outResponse.close();
-    outResponse = new ByteArrayOutputStream();
+    return content;
+  }
 
-    cpkCore.createContent( createResultRows() );
-    String createResultRows_result = outResponse.toString();
-    outResponse.close();
-    outResponse = new ByteArrayOutputStream();
+  @Test( expected = Exception.class )
+  public void testGetLocalizationResourceElementNotFound() throws Exception {
+    final String localizationResource = "messages.properties";
 
-    cpkCore.createContent( generateRows() );
-    String generateRows_result = outResponse.toString();
-    outResponse.close();
+    final String elementId = "missingElement";
+    doReturn( false ).when( cpkCore ).hasElement( eq( elementId ) );
 
+    cpkCore.getLocalizationResource( elementId, localizationResource );
+  }
 
-    boolean sampletrans, evaluateResultRows, createResultRows, generateRows;
-    sampletrans = evaluateResultRows = createResultRows = generateRows = true;
+  @Test( expected = FileNotFoundException.class )
+  public void testGetLocalizationResourceNotFound() throws Exception {
+    final String missingLocalizationResource = "messages_en.properties";
 
-    JSONObject sampletransJson = new JSONObject( sampleTrans_result );
-    JSONObject evaluateResultRowsJson = new JSONObject( evaluateResultRows_result );
-    JSONObject createResultRowsJson = new JSONObject( createResultRows_result );
-    JSONObject generateRowsJson = new JSONObject( generateRows_result );
+    final String elementId = "foo";
+    doReturn( true ).when( cpkCore ).hasElement( eq( elementId ) );
+    doReturn( "" ).when( cpkCore ).getElementRelativePath( eq( elementId ) );
 
-    if ( sampletransJson.getJSONObject( "queryInfo" ).length() < 1 ) {
-      sampletrans = false;
-    }
-    if ( generateRowsJson.getJSONObject( "queryInfo" ).length() < 1 ) {
-      generateRows = false;
-    }
-    if ( createResultRowsJson.getJSONObject( "queryInfo" ).length() < 1 ) {
-      createResultRows = false;
-    }
-    if ( !evaluateResultRowsJson.getBoolean( "result" ) ) {
-      evaluateResultRows = false;
-    }
+    IPluginUtils pluginUtilsMock = mock( IPluginUtils.class );
+    doReturn( Collections.emptySet() ).when( pluginUtilsMock )
+        .getPluginResources( any(), any(), eq( missingLocalizationResource ) );
 
-    Assert.assertTrue( sampletrans );
-    Assert.assertTrue( evaluateResultRows );
-    Assert.assertTrue( createResultRows );
-    Assert.assertTrue( generateRows );
+    doReturn( pluginUtilsMock ).when( cpkCore ).getPluginUtils();
 
+    cpkCore.getLocalizationResource( elementId, missingLocalizationResource );
+  }
+
+  @Test
+  public void testGetLocalizationResource() throws Exception {
+    final String localizationResource = "messages_supported_languages.properties";
+
+    final String relativeLocation = "path/to";
+    final String elementId = "bar";
+
+    doReturn( true ).when( cpkCore ).hasElement( eq( elementId ) );
+    doReturn( relativeLocation ).when( cpkCore ).getElementRelativePath( eq( elementId ) );
+
+    IPluginUtils pluginUtilsMock = mock( IPluginUtils.class );
+
+    File localizationFile = mock( File.class );
+    String expectedPath = relativeLocation + "/" + localizationResource;
+    doReturn( expectedPath ).when( localizationFile ).getPath();
+
+    doReturn( Collections.singleton( localizationFile ) ).when( pluginUtilsMock )
+        .getPluginResources( eq( relativeLocation ), eq( true ), eq( localizationResource ) );
+    doReturn( pluginUtilsMock ).when( cpkCore ).getPluginUtils();
+
+    // ---
+
+    final String actualPath = cpkCore.getLocalizationResource( elementId, localizationResource );
+
+    assertEquals( expectedPath, actualPath );
   }
 
   @Test
   public void testGetElementsList() throws IOException, JSONException {
     boolean successful = true;
 
-    out = new ByteArrayOutputStream();
+    OutputStream out = new ByteArrayOutputStream();
     cpkCore.getElementsList( out, bloatedMap );
     String str = out.toString();
 
@@ -165,31 +206,35 @@ public class CpkCoreServiceTest {
       }
     }
 
-    Assert.assertTrue( successful );
+    assertTrue( successful );
     out.close();
   }
 
   @Test
-  public void testReloadRefreshStatus() throws DocumentException, IOException, JSONException {
-    out = new ByteArrayOutputStream();
+  public void testReloadRefreshStatus() throws IOException {
+    OutputStream out = new ByteArrayOutputStream();
     refreshBloatedMapStream( out );
+
     cpkCore.reload( out, bloatedMap );
+
     String str = out.toString();
     out.close();
-    Assert.assertTrue( str.contains( "cpkSol Status" ) );
-    Assert.assertTrue( !str.contains( "null" ) );
+
+    assertTrue( str.contains( "cpkSol Status" ) );
+    assertFalse( str.contains( "null" ) );
   }
 
   @Test
   public void testGetRequestHandler() {
-    RestRequestHandler r = cpkCore.getRequestHandler();
-    Assert.assertTrue( r != null );
+    RestRequestHandler requestHandler = cpkCore.getRequestHandler();
+
+    assertNotNull( requestHandler );
   }
 
   private Map<String, Map<String, Object>> sampleTrans() {
-    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
-    Map<String, Object> requestMap = new HashMap<String, Object>();
-    Map<String, Object> pathMap = new HashMap<String, Object>();
+    Map<String, Map<String, Object>> mainMap = new HashMap<>();
+    Map<String, Object> requestMap = new HashMap<>();
+    Map<String, Object> pathMap = new HashMap<>();
 
     requestMap.put( "request", "unnecessary value?" );
     requestMap.put( "paramarg1", "value1" );
@@ -202,14 +247,15 @@ public class CpkCoreServiceTest {
 
     mainMap.put( "request", requestMap );
     mainMap.put( "path", pathMap );
+
     return mainMap;
   }
 
   private Map<String, Map<String, Object>> evaluateResultRows() {
-    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> mainMap = new HashMap<>();
 
-    Map<String, Object> requestMap = new HashMap<String, Object>();
-    Map<String, Object> pathMap = new HashMap<String, Object>();
+    Map<String, Object> requestMap = new HashMap<>();
+    Map<String, Object> pathMap = new HashMap<>();
 
     requestMap.put( "request", "unnecessary value?" );
     requestMap.put( "paramarg1", "value1" );
@@ -222,14 +268,15 @@ public class CpkCoreServiceTest {
 
     mainMap.put( "request", requestMap );
     mainMap.put( "path", pathMap );
+
     return mainMap;
   }
 
   private Map<String, Map<String, Object>> createResultRows() {
-    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> mainMap = new HashMap<>();
 
-    Map<String, Object> requestMap = new HashMap<String, Object>();
-    Map<String, Object> pathMap = new HashMap<String, Object>();
+    Map<String, Object> requestMap = new HashMap<>();
+    Map<String, Object> pathMap = new HashMap<>();
 
     requestMap.put( "request", "unnecessary value?" );
     requestMap.put( "paramarg1", "value1" );
@@ -242,14 +289,15 @@ public class CpkCoreServiceTest {
 
     mainMap.put( "request", requestMap );
     mainMap.put( "path", pathMap );
+
     return mainMap;
   }
 
   private Map<String, Map<String, Object>> generateRows() {
-    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> mainMap = new HashMap<>();
 
-    Map<String, Object> requestMap = new HashMap<String, Object>();
-    Map<String, Object> pathMap = new HashMap<String, Object>();
+    Map<String, Object> requestMap = new HashMap<>();
+    Map<String, Object> pathMap = new HashMap<>();
 
     requestMap.put( "request", "unnecessary value?" );
     requestMap.put( "paramarg1", "value1" );
@@ -262,16 +310,16 @@ public class CpkCoreServiceTest {
 
     mainMap.put( "request", requestMap );
     mainMap.put( "path", pathMap );
+
     return mainMap;
   }
 
 
-  private static Map<String, Map<String, Object>> buildBloatedMap( HttpServletRequest request,
-                                                                   HttpServletResponse response ) {
-    Map<String, Map<String, Object>> mainMap = new HashMap<String, Map<String, Object>>();
+  private static Map<String, Map<String, Object>> buildBloatedMap() {
+    Map<String, Map<String, Object>> mainMap = new HashMap<>();
 
-    Map<String, Object> requestMap = new HashMap<String, Object>();
-    Map<String, Object> pathMap = new HashMap<String, Object>();
+    Map<String, Object> requestMap = new HashMap<>();
+    Map<String, Object> pathMap = new HashMap<>();
 
     requestMap.put( "request", "unnecessary value?" );
     requestMap.put( "paramarg1", "value1" );
@@ -287,9 +335,31 @@ public class CpkCoreServiceTest {
   }
 
   private static void refreshBloatedMapStream( OutputStream out ) {
-    Map<String, Object> temp = new HashMap<String, Object>();
+    Map<String, Object> temp = new HashMap<>();
     temp.put( "response", new HttpServletResponseForTesting( out ) );
     bloatedMap.put( "response", temp );
   }
 
+  private static ICpkEnvironment createCpkEnvironment() {
+    final String userDir = System.getProperty( "user.dir" );
+
+    final String repository = userDir + "/target/test-classes/repository";
+    final String settings = userDir + "/target/test-classes/settings";
+
+    IRepositoryAccess repAccess = new VfsRepositoryAccess( repository, settings );
+    IPluginUtils pluginUtils = new PluginUtilsForTesting();
+
+    return new CpkEnvironmentForTesting( pluginUtils, repAccess );
+  }
+
+  private static PluginInterface createPluginInterface() {
+    Map<Class<?>, String> classMap = new HashMap<>();
+    classMap.put( JsonOutputMeta.class, "org.pentaho.di.trans.steps.jsonoutput.JsonOutputMeta" );
+
+    List<String> libraries = new ArrayList<>();
+
+    return new Plugin( new String[] { "JsonOutput" }, StepPluginType.class, JsonOutputMeta.class,
+        "Flow", "JsonOutputMeta", null, null, false,
+        false, classMap, libraries, null, null );
+  }
 }

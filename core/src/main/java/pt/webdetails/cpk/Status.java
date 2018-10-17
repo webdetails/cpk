@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -10,7 +10,6 @@
 * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
 * the license for the specific language governing your rights and limitations.
 */
-
 package pt.webdetails.cpk;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -24,31 +23,22 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class Status {
 
   private TreeMap<String, IElement> elementsMap;
-  //private HashMap<String, IElementType> elementTypesMap;
   private String defaultElementName;
   private ICpkEnvironment cpkEnv;
 
   private Status() {
   }
 
-  public Status( TreeMap<String, IElement> elementsMap, //HashMap<String, IElementType> elementTypesMap,
-                 String defaultElementName, //List reservedWords,
-                 ICpkEnvironment cpkEnv ) {
-    //init( elementsMap, elementTypesMap, defaultElementName, reservedWords, cpkEnv );
-    init( elementsMap, defaultElementName, //reservedWords,
-      cpkEnv );
+  public Status( TreeMap<String, IElement> elementsMap, String defaultElementName, ICpkEnvironment cpkEnv ) {
+    init( elementsMap, defaultElementName, cpkEnv );
   }
 
-  private void init( TreeMap<String, IElement> elementsMap, //HashMap<String, IElementType> elementTypesMap,
-                     String defaultElementName, //List reservedWords,
-                     ICpkEnvironment cpkEnv ) {
+  private void init( TreeMap<String, IElement> elementsMap, String defaultElementName, ICpkEnvironment cpkEnv ) {
     setCpkEnv( cpkEnv );
     setDefaultElementName( defaultElementName );
-    //setElementTypesMap( elementTypesMap );
     setElementsMap( elementsMap );
   }
 
@@ -59,7 +49,8 @@ public class Status {
   @JsonIgnore
   public String getStatusJson() {
     ObjectMapper mapper = new ObjectMapper();
-    String json = null;
+
+    String json;
     try {
       json = mapper.writeValueAsString( this );
     } catch ( IOException ex ) {
@@ -81,13 +72,6 @@ public class Status {
     out.append( "--------------------------------\n" );
     out.append( "\n" );
 
-    // Show the different entities
-    /*
-    out.append( elementTypesMap.size() ).append( " registered entity types\nDefault element: [" )
-      .append( defaultElementName ).append( "]\n" );
-    out.append( "\n" );
-    */
-
     out.append( "End Points\n" );
 
     for ( String key : elementsMap.keySet() ) {
@@ -102,12 +86,12 @@ public class Status {
     return out.toString();
   }
 
-  @JsonProperty("pluginName")
+  @JsonProperty( "pluginName" )
   public String getPluginName() {
     return cpkEnv.getPluginName();
   }
 
-  @JsonProperty("elements")
+  @JsonProperty( "elements" )
   public TreeMap<String, IElement> getElementsMap() {
     return elementsMap;
   }
@@ -117,31 +101,12 @@ public class Status {
     this.elementsMap = elementsMap;
   }
 
-  /*
-  @JsonProperty( "registeredElementTypes" )
-  public HashMap<String, IElementType> getElementTypesMap() {
-    return elementTypesMap;
-  }
-
-  @JsonProperty( "typesCount" )
-  public int getNrRegisteredTypes() {
-    return getElementTypesMap().size();
-  }
-  */
-
-  @JsonProperty("elementsCount")
+  @JsonProperty( "elementsCount" )
   public int getNrElements() {
     return getElementsMap().size();
   }
 
-  /*
-  @JsonIgnore
-  public void setElementTypesMap( HashMap<String, IElementType> elementTypesMap ) {
-    this.elementTypesMap = elementTypesMap;
-  }
-  */
-
-  @JsonProperty("defaultElement")
+  @JsonProperty( "defaultElement" )
   public String getDefaultElementName() {
     return defaultElementName;
   }
@@ -150,17 +115,6 @@ public class Status {
   public void setDefaultElementName( String defaultElementName ) {
     this.defaultElementName = defaultElementName;
   }
-
-  /*
-  @JsonProperty("reservedWords")
-  public List getReservedWords() {
-    return this.reservedWords;
-  }
-
-  @JsonIgnore
-  public void setReservedWords( List reservedWords ) {
-    this.reservedWords = reservedWords;
-  } */
 
   @JsonIgnore
   @Override
