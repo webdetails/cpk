@@ -36,20 +36,30 @@ import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 import pt.webdetails.cpk.testUtils.PluginUtilsForTesting;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class CpkCoreServiceTest {
 
   private static CpkCoreService cpkCore;
+
   private static Map<String, Map<String, Object>> bloatedMap;
   private static OutputStream outResponse;
 
@@ -69,7 +79,7 @@ public class CpkCoreServiceTest {
       Props.init( 0 );
     }
 
-    cpkCore = new CpkCoreService( environment );
+    cpkCore = spy( new CpkCoreService( environment ) );
 
     bloatedMap = buildBloatedMap();
   }
@@ -122,6 +132,60 @@ public class CpkCoreServiceTest {
     outResponse.close();
 
     return content;
+  }
+
+  @Test( expected = Exception.class )
+  public void testGetLocalizationResourceElementNotFound() throws Exception {
+    final String localizationResource = "messages.properties";
+
+    final String elementId = "missingElement";
+    doReturn( false ).when( cpkCore ).hasElement( eq( elementId ) );
+
+    cpkCore.getLocalizationResource( elementId, localizationResource );
+  }
+
+  @Test( expected = FileNotFoundException.class )
+  public void testGetLocalizationResourceNotFound() throws Exception {
+    final String missingLocalizationResource = "messages_en.properties";
+
+    final String elementId = "foo";
+    doReturn( true ).when( cpkCore ).hasElement( eq( elementId ) );
+    doReturn( "" ).when( cpkCore ).getElementRelativePath( eq( elementId ) );
+
+    IPluginUtils pluginUtilsMock = mock( IPluginUtils.class );
+    doReturn( Collections.emptySet() ).when( pluginUtilsMock )
+        .getPluginResources( any(), any(), eq( missingLocalizationResource ) );
+
+    doReturn( pluginUtilsMock ).when( cpkCore ).getPluginUtils();
+
+    cpkCore.getLocalizationResource( elementId, missingLocalizationResource );
+  }
+
+  @Test
+  public void testGetLocalizationResource() throws Exception {
+    final String localizationResource = "messages_supported_languages.properties";
+
+    final String relativeLocation = "path/to";
+    final String elementId = "bar";
+
+    doReturn( true ).when( cpkCore ).hasElement( eq( elementId ) );
+    doReturn( relativeLocation ).when( cpkCore ).getElementRelativePath( eq( elementId ) );
+
+    IPluginUtils pluginUtilsMock = mock( IPluginUtils.class );
+
+    File localizationFile = mock( File.class );
+    String expectedPath = relativeLocation + "/" + localizationResource;
+    doReturn( expectedPath ).when( localizationFile ).getPath();
+
+    doReturn( Collections.singleton( localizationFile ) ).when( pluginUtilsMock )
+        .getPluginResources( eq( relativeLocation ), eq( true ), eq( localizationResource ) );
+    doReturn( pluginUtilsMock ).when( cpkCore ).getPluginUtils();
+
+    // ---
+
+    final String actualPath = cpkCore.getLocalizationResource( elementId, localizationResource );
+
+    assertEquals( expectedPath, actualPath );
   }
 
   @Test
