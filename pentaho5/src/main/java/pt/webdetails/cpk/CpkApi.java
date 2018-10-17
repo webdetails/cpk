@@ -88,7 +88,7 @@ public class CpkApi {
 
   @GET
   @Path( "/{resource: .+properties}" )
-  public Response localizationResourceGet( @PathParam( "pluginId") String pluginId,
+  public Response localizationResourceGet( @PathParam( "pluginId" ) String pluginId,
                                            @PathParam( "resource" ) String resource,
                                            @Context HttpServletRequest request ) {
     try {
@@ -102,7 +102,7 @@ public class CpkApi {
 
   @POST
   @Path( "/{resource: .+properties}" )
-  public Response localizationResourcePost( @PathParam( "pluginId") String pluginId,
+  public Response localizationResourcePost( @PathParam( "pluginId" ) String pluginId,
                                             @PathParam( "resource" ) String resource,
                                             @Context HttpServletRequest request ) {
     try {
