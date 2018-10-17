@@ -163,7 +163,11 @@ public class CpkApi {
     final String path = endpoint != null && !"null".equals( endpoint ) ? "/" + endpoint : null;
     bloatedMap.get( "path" ).put( "path", path );
 
-    coreService.createContent( bloatedMap );
+    try {
+      coreService.createContent( bloatedMap );
+    } catch ( Exception e ) {
+      response.setStatus( HttpServletResponse.SC_NOT_FOUND );
+    }
 
     // make sure that everything written in the output stream is sent to the client
     response.getOutputStream().flush();
