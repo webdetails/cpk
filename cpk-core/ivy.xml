@@ -29,7 +29,7 @@
     <dependency org="commons-lang"              name="commons-lang"           rev="2.6"             transitive="false"/>
     <dependency org="commons-logging"           name="commons-logging"        rev="1.1.1"           transitive="false"/>
     <dependency org="org.apache.commons"        name="commons-vfs2"           rev="2.1-20150824"    transitive="false"/>
-    <dependency org="dom4j"                     name="dom4j"                  rev="1.6.1"           transitive="false"/>
+    <dependency org="org.dom4j"                 name="dom4j"                  rev="2.1.1"           transitive="false"/>
     <dependency org="net.sf.ehcache"            name="ehcache-core"           rev="2.5.1"           transitive="false"/>
     <dependency org="log4j"                     name="log4j"                  rev="1.2.14"          transitive="false"/>
     <dependency org="org.codehaus.jackson"      name="jackson-core-asl"       rev="1.8.2"           transitive="false"/>
@@ -60,7 +60,7 @@
     <dependency org="commons-vfs"                     name="commons-vfs"              rev="1.0"         conf="test->default"      transitive="false"/>
 
     <dependency org="commons-httpclient"          name="commons-httpclient"     rev='3.1'               conf="test->default"      transitive="false"/>
-    <dependency org="jaxen"                       name="jaxen"                  rev="1.1"               conf="test->default"      transitive="false"/>
+    <dependency org="jaxen"                       name="jaxen"                  rev="1.1.6"               conf="test->default"      transitive="false"/>
     <dependency org="org.json"                    name="json"                   rev="20090211"          conf="test->default"      transitive="false"/>
     <dependency org="org.safehaus.jug"            name="jug"                    rev='2.0.0'             conf="test->default"      transitive="false">
       <artifact name="jug" type="jar" ext="jar" conf="" m:classifier="asl"/>
