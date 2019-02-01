@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -21,10 +21,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Locale;
 
 public class HttpServletResponseForTesting implements HttpServletResponse {
   private OutputStream outputStream;
+  private int status;
 
   public HttpServletResponseForTesting( OutputStream outputStream ) {
     this.outputStream = outputStream;
@@ -53,6 +55,22 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
 
   @Override public String encodeRedirectUrl( String s ) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override public int getStatus() {
+    return this.status;
+  }
+
+  @Override public Collection<String> getHeaderNames() {
+    return null;
+  }
+
+  @Override public Collection<String> getHeaders( String name ) {
+    return null;
+  }
+
+  @Override public String getHeader( String name ) {
+    return null;
   }
 
   @Override public void sendError( int i, String s ) throws IOException {
@@ -92,7 +110,7 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
   }
 
   @Override public void setStatus( int i ) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    this.status = i;
   }
 
   @Override public void setStatus( int i, String s ) {

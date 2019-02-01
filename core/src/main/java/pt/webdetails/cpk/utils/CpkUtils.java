@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -18,9 +18,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 public class CpkUtils {
@@ -83,6 +86,10 @@ public class CpkUtils {
     }
   }
 
+  public static Response redirect( String url ) throws URISyntaxException {
+    return Response.temporaryRedirect( new URI( url ) ).build();
+  }
+
 
   public static Map<String, Object> getRequestParameters(
     Map<String, Map<String, Object>> bloatedMap ) {
@@ -111,7 +118,7 @@ public class CpkUtils {
 
   public static void send( HttpServletResponse response, InputStream fileInputStream, String mimeTypes,
                      String fileName, boolean sendAsAttachment, Integer contentLength ) {
-    if ( mimeTypes != null && !mimeTypes.isEmpty()) {
+    if ( mimeTypes != null && !mimeTypes.isEmpty() ) {
       response.setContentType( mimeTypes );
     }
 
@@ -130,6 +137,16 @@ public class CpkUtils {
     } catch ( Exception ex ) {
       logger.error( "Failed to copy file to outputstream: " + ex );
     }
+  }
+
+  public static Response.Status getEquivalentStatusFromHttpServletResponse( HttpServletResponse response ) {
+    if ( response != null ) {
+      Response.Status equivalentStatus = Response.Status.fromStatusCode( response.getStatus() );
+      if ( equivalentStatus != null ) {
+        return equivalentStatus;
+      }
+    }
+    return Response.Status.OK;
   }
 
 }

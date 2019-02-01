@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -21,6 +21,7 @@ import javax.ws.rs.core.Context;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.sun.jersey.api.representation.Form;
@@ -29,7 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -37,8 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -53,7 +52,6 @@ import pt.webdetails.cpk.datasources.DataSource;
 import pt.webdetails.cpk.elements.IDataSourceProvider;
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpk.sitemap.LinkGenerator;
-import org.apache.commons.io.IOUtils;
 import pt.webdetails.cpk.utils.CorsUtil;
 import pt.webdetails.cpk.utils.CpkUtils;
 
@@ -62,13 +60,22 @@ public class CpkApi {
 
   private static final Log logger = LogFactory.getLog( CpkApi.class );
 
-  private static final String DEFAULT_NO_DASHBOARD_MESSAGE = "This plugin does not contain a dashboard";
+  protected static final String API_ROOT = "/api/";
+  private static final String CONTENT_TYPE_KEY = "contentType";
+  private static final String PATH_SEPARATOR = "/";
 
-  private static final String[] reservedWords = { "ping", "default", "reload", "refresh", "version", "status",
+  protected static final String DEFAULT_NO_DASHBOARD_MESSAGE = "This plugin does not contain a dashboard";
+
+  protected static final String[] reservedWords = { "ping", "default", "reload", "refresh", "version", "status",
     "getSitemapJson", "elementsList", "listDataAccessTypes", "reloadPlugins" };
+
+  protected static final String PING_RESPONSE = "Pong: I was called from ";
+  protected static final String CPK_ENDPOINT_KEY = "CPKENDPOINT";
+  protected static final String CPK_ENDPOINT_SEPARATOR = "_";
 
   protected CpkCoreService coreService;
   protected ICpkEnvironment cpkEnv;
+  protected PluginsAnalyzer pluginsAnalyzer = null;
 
 
   public CpkApi() {
@@ -124,10 +131,10 @@ public class CpkApi {
 
   private String getElementIdFromRequest( String pluginId, HttpServletRequest request ) {
     final String referer = request.getHeader( "referer" );
-    final String apiRoot = pluginId + "/api/";
+    final String apiRoot = pluginId + API_ROOT;
 
     int apiRootIndex = referer.lastIndexOf( apiRoot ) + apiRoot.length();
-    int queryStringIndex = referer.indexOf( "?" );
+    int queryStringIndex = referer.indexOf( '?' );
 
     if ( queryStringIndex < 0 ) {
       return referer.substring( apiRootIndex );
@@ -138,20 +145,26 @@ public class CpkApi {
 
   @GET
   @Path( "/{param}" )
-  public void genericEndpointGet( @PathParam( "param" ) String param,
+  public Response genericEndpointGet( @PathParam( "param" ) String param,
                                   @Context HttpServletRequest request,
                                   @Context HttpServletResponse response,
                                   @Context HttpHeaders headers ) throws Exception {
-    callEndpoint( param, request, response, headers );
+    return getResponseFromCallingEndpoint( param, request, response, headers );
   }
 
   @POST
   @Path( "/{param}" )
-  public void genericEndpointPost( @PathParam( "param" ) String param,
+  public Response genericEndpointPost( @PathParam( "param" ) String param,
                                    @Context HttpServletRequest request,
                                    @Context HttpServletResponse response,
                                    @Context HttpHeaders headers ) throws Exception {
-    callEndpoint( param, request, response, headers );
+    return getResponseFromCallingEndpoint( param, request, response, headers );
+  }
+
+  private Response getResponseFromCallingEndpoint( String endpoint, HttpServletRequest request, HttpServletResponse response,
+                                                  HttpHeaders headers ) throws Exception {
+    callEndpoint( endpoint, request, response, headers );
+    return Response.status( CpkUtils.getEquivalentStatusFromHttpServletResponse( response ) ).build();
   }
 
   private void callEndpoint( String endpoint, HttpServletRequest request, HttpServletResponse response,
@@ -160,7 +173,7 @@ public class CpkApi {
 
     final Map<String, Map<String, Object>> bloatedMap = buildBloatedMap( request, response, headers );
 
-    final String path = endpoint != null && !"null".equals( endpoint ) ? "/" + endpoint : null;
+    final String path = endpoint != null && !"null".equals( endpoint ) ? PATH_SEPARATOR + endpoint : null;
     bloatedMap.get( "path" ).put( "path", path );
 
     try {
@@ -176,121 +189,141 @@ public class CpkApi {
   @GET
   @Path( "/ping" )
   public String ping() {
-    return "Pong: I was called from " + getPluginName();
+    return PING_RESPONSE + getPluginName();
   }
 
   @GET
   @Path( "/default" )
-  public void defaultElement( @Context HttpServletResponse response ) throws IOException {
+  public Response defaultElement() throws IOException {
     IElement defaultElement = coreService.getDefaultElement();
     if ( defaultElement != null ) {
-      CpkUtils.redirect( response, defaultElement.getId() );
+      try {
+        String url = defaultElement.getPluginId() + API_ROOT + defaultElement.getId();
+        return CpkUtils.redirect( url );
+      } catch ( URISyntaxException ex ) {
+        logger.error( ex );
+        return Response.serverError().build();
+      }
     } else {
-      response.getOutputStream().write( DEFAULT_NO_DASHBOARD_MESSAGE.getBytes( getEncoding() ) );
-      response.getOutputStream().flush();
+      return Response.ok( DEFAULT_NO_DASHBOARD_MESSAGE.getBytes( getEncoding() ) ).build();
     }
   }
 
   @GET
   @Path( "/reload" )
-  public void reload( @Context HttpServletRequest request,
+  @Produces( MimeTypes.PLAIN_TEXT )
+  public Response reload( @Context HttpServletRequest request,
                       @Context HttpServletResponse response,
-                      @Context HttpHeaders headers ) throws IOException {
-    coreService.reload( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
+                      @Context HttpHeaders headers ) {
+    String result = coreService.reload( buildBloatedMap( request, response, headers ) );
+    return Response.status( CpkUtils.getEquivalentStatusFromHttpServletResponse( response ) )
+      .entity( result )
+      .build();
   }
 
   @GET
   @Path( "/refresh" )
   @Produces( MimeTypes.PLAIN_TEXT )
-  public void refreshGet( @Context HttpServletRequest request,
+  public Response refreshGet( @Context HttpServletRequest request,
                           @Context HttpServletResponse response,
-                          @Context HttpHeaders headers ) throws IOException {
-    refresh( request, response, headers );
+                          @Context HttpHeaders headers ) {
+    return getRefreshResponse( request, response, headers );
   }
 
   @POST
   @Path( "/refresh" )
   @Produces( MimeTypes.PLAIN_TEXT )
-  public void refreshPost( @Context HttpServletRequest request,
+  public Response refreshPost( @Context HttpServletRequest request,
                            @Context HttpServletResponse response,
-                           @Context HttpHeaders headers ) throws IOException {
-    refresh( request, response, headers );
+                           @Context HttpHeaders headers ) {
+    return getRefreshResponse( request, response, headers );
   }
 
-  private void refresh( HttpServletRequest request, HttpServletResponse response,
-                        HttpHeaders headers ) throws IOException {
-    final OutputStream output = response.getOutputStream();
+  private Response getRefreshResponse( HttpServletRequest request, HttpServletResponse response,
+                                       HttpHeaders headers ) {
+    String result = refresh( request, response, headers );
+    return Response.status( CpkUtils.getEquivalentStatusFromHttpServletResponse( response ) )
+      .entity( result )
+      .build();
+  }
+
+  private String refresh( HttpServletRequest request, HttpServletResponse response,
+                        HttpHeaders headers ) {
+
     final Map<String, Map<String, Object>> bloatedMap = buildBloatedMap( request, response, headers );
 
-    coreService.refresh( output, bloatedMap );
-    output.flush();
+    return coreService.refresh( bloatedMap );
+  }
+
+  private PluginsAnalyzer getPluginsAnalyser() {
+    if ( this.pluginsAnalyzer == null ) {
+      this.pluginsAnalyzer = new PluginsAnalyzer();
+    }
+    return this.pluginsAnalyzer;
   }
 
   @GET
   @Path( "/version" )
   @Produces( MimeTypes.PLAIN_TEXT )
-  public void version( @PathParam( "pluginId" ) String pluginId,
-                       @Context HttpServletResponse response ) throws IOException {
-    PluginsAnalyzer pluginsAnalyzer = new PluginsAnalyzer();
-    pluginsAnalyzer.refresh();
+  public Response version( @PathParam( "pluginId" ) String pluginId ) {
+    PluginsAnalyzer localPluginsAnalyzer = getPluginsAnalyser();
+    localPluginsAnalyzer.refresh();
 
     IPluginFilter thisPlugin = plugin -> plugin.getId().equalsIgnoreCase( getPluginName() );
-    List<Plugin> plugins = pluginsAnalyzer.getPlugins( thisPlugin );
+    List<Plugin> plugins = localPluginsAnalyzer.getPlugins( thisPlugin );
     String version = plugins.get( 0 ).getVersion();
 
-    writeMessage( response.getOutputStream(), version );
+    return Response.ok( version ).build();
   }
 
   @GET
   @Path( "/status" )
-  public void status( @Context HttpServletRequest request,
+  @Produces( MimeTypes.PLAIN_TEXT )
+  public Response status( @Context HttpServletRequest request,
                       @Context HttpServletResponse response,
-                      @Context HttpHeaders headers ) throws IOException {
+                      @Context HttpHeaders headers ) {
+    String result;
     if ( request.getParameter( "json" ) != null ) {
-      coreService.statusJson( response.getOutputStream(), response );
+      result = coreService.statusJson( response );
     } else {
-      coreService.status( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
+      result = coreService.status( buildBloatedMap( request, response, headers ) );
     }
+    return Response.status( CpkUtils.getEquivalentStatusFromHttpServletResponse( response ) )
+      .entity( result )
+      .build();
   }
 
   @GET
   @Path( "/getSitemapJson" )
-  public void getSitemapJson( @Context HttpServletResponse response ) throws IOException {
+  @Produces( MediaType.APPLICATION_JSON )
+  public Response getSitemapJson() throws IOException {
     Map<String, IElement> elementsMap = coreService.getEngine().getElementsMap();
 
     JsonNode sitemap = null;
+
     if ( elementsMap != null ) {
       LinkGenerator linkGen = new LinkGenerator( elementsMap, cpkEnv.getPluginUtils() );
       sitemap = linkGen.getLinksJson();
     }
 
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.writeValue( response.getOutputStream(), sitemap );
+    ObjectMapper localMapper = new ObjectMapper();
+
+    return Response.ok( localMapper.writeValueAsString(  sitemap ) ).build();
   }
 
   @GET
   @Path( "/elementsList" )
-  public void elementsList( @Context HttpServletRequest request, @Context HttpServletResponse response,
-                            @Context HttpHeaders headers )
-    throws IOException {
-    coreService.getElementsList( response.getOutputStream(), buildBloatedMap( request, response, headers ) );
+  @Produces( MediaType.TEXT_HTML )
+  public Response elementsList() {
+    String elements = coreService.getElementsList();
+    return Response.ok( elements ).build();
   }
-
-  private void writeMessage( OutputStream out, String message ) {
-    try {
-      out.write( message.getBytes( getEncoding() ) );
-      out.flush();
-    } catch ( IOException ex ) {
-      Logger.getLogger( CpkApi.class.getName() ).log( Level.SEVERE, null, ex );
-    }
-  }
-
-  static final ObjectMapper mapper = new ObjectMapper();
 
   @GET
   @Path( "/listDataAccessTypes" )
-  @Produces( MimeTypes.JSON )
-  public void listDataAccessTypes( @Context HttpServletResponse response ) throws Exception {
+  @Produces( MediaType.APPLICATION_JSON )
+  /**/
+  public Response listDataAccessTypes() throws IOException  {
     Set<DataSource> dataSources = new LinkedHashSet<>();
     StringBuilder dsDeclarations = new StringBuilder( "{" );
     Collection<IElement> endpoints = coreService.getElements();
@@ -301,6 +334,7 @@ public class CpkApi {
     String safePluginId = this.sanitizePluginId( pluginId );
 
     if ( endpoints != null ) {
+      ObjectMapper mapper = new ObjectMapper();
       for ( IElement endpoint : endpoints ) {
 
         // filter endpoints that aren't data sources
@@ -318,7 +352,8 @@ public class CpkApi {
 
         dataSources.add( dataSource );
 
-        dsDeclarations.append( String.format( "\"%s_%s_CPKENDPOINT\": ", safePluginId, endpointName ) );
+        dsDeclarations.append( String.format( "\"%s%s%s%s%s\": ", safePluginId, CPK_ENDPOINT_SEPARATOR,
+          endpointName, CPK_ENDPOINT_SEPARATOR, CPK_ENDPOINT_KEY ) );
         dsDeclarations.append( mapper.writeValueAsString( dataSource ) );
         dsDeclarations.append( "," );
       }
@@ -331,11 +366,10 @@ public class CpkApi {
 
     dsDeclarations.append( "}" );
 
-    IOUtils.write( dsDeclarations.toString(), response.getOutputStream() );
-    response.getOutputStream().flush();
+    return Response.ok( dsDeclarations.toString() ).build();
   }
 
-  private String getPluginName() {
+  protected String getPluginName() {
     return cpkEnv.getPluginName();
   }
 
@@ -353,24 +387,26 @@ public class CpkApi {
 
   @GET
   @Path( "/reloadPlugins" )
-  public void reloadPluginsGet() throws Exception {
-    reloadPlugins();
+  public Response reloadPluginsGet() {
+    return reloadPlugins();
   }
 
   @POST
   @Path( "/reloadPlugins" )
-  public void reloadPluginsPost() throws Exception {
-    reloadPlugins();
+  public Response reloadPluginsPost() {
+    return reloadPlugins();
   }
 
-  private void reloadPlugins() throws Exception {
+  private Response reloadPlugins() {
     // TODO: ????
+    return Response.noContent().build();
   }
 
   @GET
   @Path( "/clearCache" )
-  public void clearKettleResultsCache() {
+  public Response clearKettleResultsCache() {
     this.coreService.clearKettleResultsCache();
+    return Response.noContent().build();
   }
 
   private Map<String, Map<String, Object>> buildBloatedMap( HttpServletRequest request, HttpServletResponse response,
@@ -391,14 +427,20 @@ public class CpkApi {
     }
 
     Enumeration e = request.getParameterNames();
-    while ( e.hasMoreElements() ) {
-      Object o = e.nextElement();
-      requestMap.put( o.toString(), request.getParameter( o.toString() ) );
+    if ( e != null ) {
+      while ( e.hasMoreElements() ) {
+        Object o = e.nextElement();
+        requestMap.put( o.toString(), request.getParameter( o.toString() ) );
+      }
     }
 
-    Form form = ( (ContainerRequest) headers ).getFormParameters();
-    for ( String next : form.keySet() ) {
-      requestMap.put( next, form.get( next ).get( 0 ) );
+    if ( headers instanceof ContainerRequest ) {
+      Form form = ((ContainerRequest) headers).getFormParameters();
+      if ( form != null ) {
+        for ( Map.Entry<String, List<String>> entry : form.entrySet() ) {
+          requestMap.put( entry.getKey(), entry.getValue().get( 0 ) );
+        }
+      }
     }
 
     return requestMap;
@@ -410,8 +452,10 @@ public class CpkApi {
     pathMap.put( "httprequest", request );
     pathMap.put( "httpresponse", response );
 
-    if ( headers != null && headers.getRequestHeaders().containsKey( "contentType" ) ) {
-      pathMap.put( "contentType", headers.getRequestHeader( "contentType" ) );
+    if ( headers != null
+      && headers.getRequestHeaders() != null
+      && headers.getRequestHeaders().containsKey( CONTENT_TYPE_KEY ) ) {
+      pathMap.put( CONTENT_TYPE_KEY, headers.getRequestHeader( CONTENT_TYPE_KEY ) );
     }
 
     return pathMap;

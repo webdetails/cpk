@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -39,6 +39,9 @@ public class CpkCoreService {
 
   private static final Log logger = LogFactory.getLog( CpkCoreService.class );
   private static final String ENCODING = "UTF-8";
+  private static final String HTTP_RESPONSE_KEY = "httpresponse";
+  private static final String PATH_KEY = "path";
+  private static final String TEXT_PLAIN_CONTENT = "text/plain";
 
   private CpkEngine engine;
 
@@ -59,7 +62,7 @@ public class CpkCoreService {
 
   public void createContent( Map<String, Map<String, Object>> bloatedMap ) throws Exception {
     final ICpkEnvironment environment = this.getEngine().getEnvironment();
-    final HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+    final HttpServletResponse response = (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY );
 
     final String path = getPath( bloatedMap );
 
@@ -93,7 +96,7 @@ public class CpkCoreService {
   }
 
   private String getPath( Map<String, Map<String, Object>> bloatedMap ) {
-    String path = (String) bloatedMap.get( "path" ).get( "path" );
+    String path = (String) bloatedMap.get( PATH_KEY ).get( PATH_KEY );
 
     if ( path == null ) {
       return "";
@@ -146,6 +149,10 @@ public class CpkCoreService {
     refresh( out, bloatedMap );
   }
 
+  public String reload( Map<String, Map<String, Object>> bloatedMap ) {
+    return refresh( bloatedMap );
+  }
+
   public void refresh( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
     IAccessControl accessControl = this.getEngine().getEnvironment().getAccessControl();
 
@@ -154,8 +161,21 @@ public class CpkCoreService {
       this.getEngine().reload();
       status( out, bloatedMap );
     } else {
-      accessControl.throwAccessDenied( (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" ) );
+      accessControl.throwAccessDenied( (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY ) );
     }
+  }
+
+  public String refresh( Map<String, Map<String, Object>> bloatedMap ) {
+    IAccessControl accessControl = this.getEngine().getEnvironment().getAccessControl();
+
+    if ( accessControl.isAdmin() ) {
+      this.getEngine().reload();
+      return status( bloatedMap );
+    } else {
+      accessControl.throwAccessDenied( (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY ) );
+    }
+
+    return null;
   }
 
   public void clearKettleResultsCache() {
@@ -167,17 +187,28 @@ public class CpkCoreService {
   }
 
   public void status( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
-    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( "path" ).get( "httpresponse" );
+    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY );
 
     logger.debug( "## status ##" );
     logger.info( "Showing status for CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
+    // Only set the headers if we have access to the response (via parameterProviders).
+    if ( response != null ) {
+      CpkUtils.setResponseHeaders( response, TEXT_PLAIN_CONTENT );
+    }
+
+    String status = this.getEngine().getStatus().getStatus();
+    writeMessage( out, status );
+  }
+
+  public String status( Map<String, Map<String, Object>> bloatedMap ) {
+    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY );
 
     // Only set the headers if we have access to the response (via parameterProviders).
     if ( response != null ) {
-      CpkUtils.setResponseHeaders( response, "text/plain" );
+      CpkUtils.setResponseHeaders( response, TEXT_PLAIN_CONTENT );
     }
 
-    writeMessage( out, this.getEngine().getStatus().getStatus() );
+    return this.getEngine().getStatus().getStatus();
   }
 
   public void statusJson( OutputStream out, HttpServletResponse response ) {
@@ -185,10 +216,20 @@ public class CpkCoreService {
 
     // Only set the headers if we have access to the response (via parameterProviders).
     if ( response != null ) {
-      CpkUtils.setResponseHeaders( response, "text/plain" );
+      CpkUtils.setResponseHeaders( response, TEXT_PLAIN_CONTENT );
     }
 
-    writeMessage( out, this.getEngine().getStatus().getStatusJson() );
+    String json = this.getEngine().getStatus().getStatusJson();
+    writeMessage( out, json );
+  }
+
+  public String statusJson( HttpServletResponse response ) {
+    // Only set the headers if we have access to the response (via parameterProviders).
+    if ( response != null ) {
+      CpkUtils.setResponseHeaders( response, TEXT_PLAIN_CONTENT );
+    }
+
+    return this.getEngine().getStatus().getStatusJson();
   }
 
   public boolean hasElement( String elementId ) {
@@ -205,14 +246,26 @@ public class CpkCoreService {
     logger.debug( "## getElementsList ##" );
 
     ObjectMapper mapper = new ObjectMapper();
+    String json = null;
 
     try {
-      String json = mapper.writeValueAsString( this.getEngine().getElements() );
+      json = mapper.writeValueAsString( this.getEngine().getElements() );
 
       writeMessage( out, json );
     } catch ( IOException ex ) {
       logger.error( "Error getting json elements", ex );
     }
+  }
+
+  public String getElementsList() {
+    ObjectMapper mapper = new ObjectMapper();
+
+    try {
+      return mapper.writeValueAsString( this.getEngine().getElements() );
+    } catch ( IOException ex ) {
+      logger.error( "Error getting json elements", ex );
+    }
+    return null;
   }
 
   public IElement getDefaultElement() {
