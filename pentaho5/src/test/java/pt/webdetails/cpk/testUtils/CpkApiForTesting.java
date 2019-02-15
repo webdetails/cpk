@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -13,20 +13,21 @@
 
 package pt.webdetails.cpk.testUtils;
 
+import org.mockito.Mockito;
+import pt.webdetails.cpf.plugins.PluginsAnalyzer;
 import pt.webdetails.cpk.CpkApi;
 import pt.webdetails.cpk.CpkCoreService;
 
-public class CpkApiForTesting extends CpkApi {
 
-  private static final String[] reserverdWords = { "default", "refresh", "status", "reload", "getElementsList",
-    "getSitemapJson", "version", "getPluginMetadata" };
+public class CpkApiForTesting extends CpkApi {
 
   public CpkApiForTesting() {
   }
 
   @Override
   protected void init() {
-    this.cpkEnv = new CpkPentahoEnvironmentForTesting( new PluginUtilsForTesting(), reserverdWords );
-    this.coreService = new CpkCoreService( cpkEnv );
+    this.cpkEnv = new CpkPentahoEnvironmentForTesting( new PluginUtilsForTesting(), reservedWords );
+    this.coreService = Mockito.mock( CpkCoreService.class );
+    this.pluginsAnalyzer = Mockito.mock( PluginsAnalyzer.class );
   }
 }

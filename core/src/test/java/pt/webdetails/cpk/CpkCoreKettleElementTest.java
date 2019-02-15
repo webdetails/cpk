@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -19,7 +19,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.exception.KettleException;
-import pt.webdetails.cpf.exceptions.InitializationException;
 import pt.webdetails.cpf.repository.IRepositoryAccess;
 import pt.webdetails.cpf.repository.vfs.VfsRepositoryAccess;
 import pt.webdetails.cpf.utils.IPluginUtils;
@@ -28,7 +27,7 @@ import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 import pt.webdetails.cpk.testUtils.PluginUtilsForTesting;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.File;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +40,7 @@ public class CpkCoreKettleElementTest {
   private static ICpkEnvironment environment;
 
   @BeforeClass
-  public static void setUp() throws IOException, InitializationException, KettleException {
+  public static void setUp() throws KettleException {
 
     IRepositoryAccess repAccess = new VfsRepositoryAccess( userDir + "/target/test-classes/cpkSol",
       userDir + "/target/test-classes/settings" );
@@ -67,9 +66,10 @@ public class CpkCoreKettleElementTest {
     // define the expected result
     HashMap<String, String> parameters = new HashMap<String, String>();
     parameters.put( "pluginId", "cpkSol" );
-    parameters.put( "solutionSystemDir", userDir + "/target/test-classes/" );
-    parameters.put( "pluginDir", userDir + "/target/test-classes/cpkSol/" );
-    parameters.put( "pluginSystemDir", userDir + "/target/test-classes/cpkSol/system/" );
+    parameters.put( "solutionSystemDir", getFolderPathOSDependent( userDir + "/target/test-classes/" ) );
+    parameters.put( "pluginDir", getFolderPathOSDependent( userDir + "/target/test-classes/cpkSol/" ) );
+    parameters.put( "pluginSystemDir", getFolderPathOSDependent( userDir
+      + "/target/test-classes/cpkSol/system/" ) );
     parameters.put( "webappDir", "" );
     parameters.put( "sessionUsername", "userName" );
     parameters.put( "sessionRoles", "{\"roles\":[\"administrator\",\"authenticated\"]}" );
@@ -84,6 +84,10 @@ public class CpkCoreKettleElementTest {
         Assert.assertEquals( paramValue, parameters.get( paramName ) );
       }
     }
+  }
+
+  private String getFolderPathOSDependent( String folderPath ) {
+    return new File( folderPath ).toURI().getPath();
   }
 
   private Map<String, Map<String, Object>> testParameters( OutputStream outResponse ) {

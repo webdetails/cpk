@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -59,9 +59,10 @@ import static org.mockito.Mockito.spy;
 public class CpkCoreServiceTest {
 
   private static CpkCoreService cpkCore;
-
   private static Map<String, Map<String, Object>> bloatedMap;
   private static OutputStream outResponse;
+
+  private static final String STATUS_RESULT = "cpkSol Status";
 
   @BeforeClass
   public static void setUp() throws KettleException {
@@ -190,14 +191,26 @@ public class CpkCoreServiceTest {
 
   @Test
   public void testGetElementsList() throws IOException, JSONException {
-    boolean successful = true;
-
     OutputStream out = new ByteArrayOutputStream();
     cpkCore.getElementsList( out, bloatedMap );
     String str = out.toString();
 
     JSONArray elementsListJson = new JSONArray( str );
+    assertTrue( checkIdLength( elementsListJson ) );
+    out.close();
+  }
 
+  @Test
+  public void testGetElementsListStringResult() throws JSONException {
+    String actualResult = cpkCore.getElementsList();
+    JSONArray elementsListJson = new JSONArray( actualResult );
+    assertTrue( checkIdLength( elementsListJson ) );
+  }
+
+  private boolean checkIdLength( JSONArray elementsListJson ) throws JSONException {
+    assertNotNull( elementsListJson );
+
+    boolean successful = true;
     for ( int i = 0; i < elementsListJson.length(); i++ ) {
       JSONObject obj = elementsListJson.getJSONObject( i );
       String id = obj.getString( "id" );
@@ -205,9 +218,7 @@ public class CpkCoreServiceTest {
         successful = false;
       }
     }
-
-    assertTrue( successful );
-    out.close();
+    return successful;
   }
 
   @Test
@@ -220,8 +231,37 @@ public class CpkCoreServiceTest {
     String str = out.toString();
     out.close();
 
-    assertTrue( str.contains( "cpkSol Status" ) );
+    assertTrue( str.contains( STATUS_RESULT ) );
     assertFalse( str.contains( "null" ) );
+  }
+
+  @Test
+  public void testReloadRefreshStatusStringResult() throws IOException {
+    OutputStream out = new ByteArrayOutputStream();
+    refreshBloatedMapStream( out );
+
+    String actualResult = cpkCore.reload( bloatedMap );
+
+    assertTrue( actualResult.contains( STATUS_RESULT ) );
+    assertFalse( actualResult.contains( "null" ) );
+  }
+
+  @Test
+  public void testStatusJson() {
+    String actualResult = null;
+    try {
+      actualResult = cpkCore.statusJson( null );
+      JSONObject jsonObj = new JSONObject( actualResult );
+      assertTrue( jsonObj.has( "pluginName" ) );
+      assertEquals( "cpkSol", jsonObj.get( "pluginName" ) );
+      assertTrue( jsonObj.has( "elements" ) );
+      assertTrue( jsonObj.get( "elements" ) instanceof JSONObject );
+      assertTrue( jsonObj.has( "elementsCount" ) );
+      assertTrue( jsonObj.has( "defaultElement" ) );
+    } catch ( JSONException ex ) {
+      ex.printStackTrace();
+    }
+    assertNotNull( actualResult );
   }
 
   @Test
