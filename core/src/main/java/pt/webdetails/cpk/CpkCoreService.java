@@ -154,15 +154,8 @@ public class CpkCoreService {
   }
 
   public void refresh( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
-    IAccessControl accessControl = this.getEngine().getEnvironment().getAccessControl();
-
-    if ( accessControl.isAdmin() ) {
-      logger.info( "Refreshing CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
-      this.getEngine().reload();
-      status( out, bloatedMap );
-    } else {
-      accessControl.throwAccessDenied( (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY ) );
-    }
+    String resultFromRefresh = refresh( bloatedMap );
+    writeMessage( out, resultFromRefresh );
   }
 
   public String refresh( Map<String, Map<String, Object>> bloatedMap ) {
@@ -187,16 +180,7 @@ public class CpkCoreService {
   }
 
   public void status( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
-    HttpServletResponse response = (HttpServletResponse) bloatedMap.get( PATH_KEY ).get( HTTP_RESPONSE_KEY );
-
-    logger.debug( "## status ##" );
-    logger.info( "Showing status for CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
-    // Only set the headers if we have access to the response (via parameterProviders).
-    if ( response != null ) {
-      CpkUtils.setResponseHeaders( response, TEXT_PLAIN_CONTENT );
-    }
-
-    String status = this.getEngine().getStatus().getStatus();
+    String status = status( bloatedMap );
     writeMessage( out, status );
   }
 
@@ -212,14 +196,7 @@ public class CpkCoreService {
   }
 
   public void statusJson( OutputStream out, HttpServletResponse response ) {
-    logger.info( "Showing status for CPK plugin " + this.getEngine().getEnvironment().getPluginName() );
-
-    // Only set the headers if we have access to the response (via parameterProviders).
-    if ( response != null ) {
-      CpkUtils.setResponseHeaders( response, TEXT_PLAIN_CONTENT );
-    }
-
-    String json = this.getEngine().getStatus().getStatusJson();
+    String json = statusJson( response );
     writeMessage( out, json );
   }
 
@@ -243,17 +220,9 @@ public class CpkCoreService {
   }
 
   public void getElementsList( OutputStream out, Map<String, Map<String, Object>> bloatedMap ) {
-    logger.debug( "## getElementsList ##" );
-
-    ObjectMapper mapper = new ObjectMapper();
-    String json = null;
-
-    try {
-      json = mapper.writeValueAsString( this.getEngine().getElements() );
-
-      writeMessage( out, json );
-    } catch ( IOException ex ) {
-      logger.error( "Error getting json elements", ex );
+    String elements = getElementsList();
+    if ( elements != null ) {
+      writeMessage( out, elements );
     }
   }
 

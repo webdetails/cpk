@@ -196,9 +196,7 @@ public class CpkCoreServiceTest {
     String str = out.toString();
 
     JSONArray elementsListJson = new JSONArray( str );
-    boolean successful = checkIdLength( elementsListJson );
-
-    assertTrue( successful );
+    assertTrue( checkIdLength( elementsListJson ) );
     out.close();
   }
 
@@ -206,19 +204,18 @@ public class CpkCoreServiceTest {
   public void testGetElementsListStringResult() throws JSONException {
     String actualResult = cpkCore.getElementsList();
     JSONArray elementsListJson = new JSONArray( actualResult );
-    boolean successful = checkIdLength( elementsListJson );
-    assertTrue( successful );
+    assertTrue( checkIdLength( elementsListJson ) );
   }
 
   private boolean checkIdLength( JSONArray elementsListJson ) throws JSONException {
+    assertNotNull( elementsListJson );
+
     boolean successful = true;
-    if ( elementsListJson != null ) {
-      for ( int i = 0; i < elementsListJson.length(); i++ ) {
-        JSONObject obj = elementsListJson.getJSONObject( i );
-        String id = obj.getString( "id" );
-        if ( id.length() < 1 ) {
-          successful = false;
-        }
+    for ( int i = 0; i < elementsListJson.length(); i++ ) {
+      JSONObject obj = elementsListJson.getJSONObject( i );
+      String id = obj.getString( "id" );
+      if ( id.length() < 1 ) {
+        successful = false;
       }
     }
     return successful;
