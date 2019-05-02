@@ -48,7 +48,6 @@
     <rhino.version>1.7R4</rhino.version>
     <httpclient.version>4.5.3</httpclient.version>
     <httpcore.version>4.4.6</httpcore.version>
-    <log4j.version>1.2.14</log4j.version>
     <jsonassert.version>1.5.0</jsonassert.version>
   </properties>
 
@@ -376,18 +375,6 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>${httpcore.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>${log4j.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
