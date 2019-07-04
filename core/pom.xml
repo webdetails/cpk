@@ -151,6 +151,7 @@
       <artifactId>spring-mock</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- httpclient/httpcore needed for testing -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
