@@ -46,8 +46,6 @@
     <jug.version>2.0.0</jug.version>
     <org.json.simple.version>0.3-incubating</org.json.simple.version>
     <rhino.version>1.7R4</rhino.version>
-    <httpclient.version>4.5.3</httpclient.version>
-    <httpcore.version>4.4.6</httpcore.version>
     <jsonassert.version>1.5.0</jsonassert.version>
   </properties>
 
@@ -340,30 +338,6 @@
         <groupId>org.mozilla</groupId>
         <artifactId>rhino</artifactId>
         <version>${rhino.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>${httpclient.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpcore</artifactId>
-        <version>${httpcore.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
