@@ -37,7 +37,7 @@
     <jersey-server.version>1.9.1</jersey-server.version>
     <powermock.version>1.6.3</powermock.version>
     <mockito-all.version>1.10.19</mockito-all.version>
-    <junit.version>4.11</junit.version>
+    <junit.version>4.13.1</junit.version>
     <jersey-client.client>1.16</jersey-client.client>
     <guava.version>17.0</guava.version>
     <commons-vfs.version>1.0</commons-vfs.version>
