@@ -28,7 +28,7 @@
     <pdi.version>9.3.0.0-SNAPSHOT</pdi.version>
     <metastore.version>9.3.0.0-SNAPSHOT</metastore.version>
     <pdi-json-plugin.version>9.3.0.0-SNAPSHOT</pdi-json-plugin.version>
-    <commons-io.version>2.4</commons-io.version>
+    <commons-io.version>2.7</commons-io.version>
     <commons-lang.version>2.6</commons-lang.version>
     <ehcache-core.version>2.5.1</ehcache-core.version>
     <jsr311-api.version>1.1.1</jsr311-api.version>
