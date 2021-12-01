@@ -34,12 +34,14 @@ import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_BEAN_ID;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_LEGACY_BEAN_ID;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_RENDER_METHOD;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_BEAN_ID_TAG;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_RENDER_METHOD_TAG;
 
+@PowerMockIgnore( "jdk.internal.reflect.*" )
 @RunWith( PowerMockRunner.class )
 public class InterPluginBrokerTest {
 
