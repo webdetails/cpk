@@ -22,7 +22,6 @@
 
   <properties>
     <pentaho-cpf-plugin.version>9.3.0.0-SNAPSHOT</pentaho-cpf-plugin.version>
-    <pentaho-cpf-plugin.version>9.3.0.0-SNAPSHOT</pentaho-cpf-plugin.version>
     <pentaho-cpk-plugin.version>9.3.0.0-SNAPSHOT</pentaho-cpk-plugin.version>
     <platform.version>9.3.0.0-SNAPSHOT</platform.version>
     <pdi.version>9.3.0.0-SNAPSHOT</pdi.version>
