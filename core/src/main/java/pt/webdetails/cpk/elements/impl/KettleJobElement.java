@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2022 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -72,14 +72,14 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     logger.info( "Starting job '" + this.getName() + "' (" + this.meta.getName() + ")" );
     long start = System.currentTimeMillis();
 
+    // Clone meta so that parameters and any other state are isolated.
+    JobMeta executionMeta = (JobMeta) this.meta.clone();
+
     // add request parameters
-    Collection<String> setParameters = Collections.emptyList();
-    if ( kettleParameters != null ) {
-      setParameters = KettleElementHelper.setKettleParameterValues( this.meta, kettleParameters );
-    }
+    KettleElementHelper.setKettleParameterValues( executionMeta, kettleParameters );
 
     // create a new job
-    Job job = new Job( null, this.meta );
+    Job job = new Job( null, executionMeta );
 
     // start job thread and wait until it finishes
     job.start();
@@ -89,9 +89,6 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     Result jobResult = this.getResult( job );
     KettleResult result = new KettleResult( jobResult );
     result.setKettleType( KettleResult.KettleType.JOB );
-
-    // clear request parameters
-    KettleElementHelper.clearParameters( this.meta, setParameters );
 
     long end = System.currentTimeMillis();
     this.logger.info( "Finished job '" + this.getName()
