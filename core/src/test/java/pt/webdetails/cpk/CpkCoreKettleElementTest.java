@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2022 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -81,7 +81,7 @@ public class CpkCoreKettleElementTest {
       final String paramName = json.getJSONArray( "metadata" ).getJSONObject( column ).getString( "colName" );
       final String paramValue = json.getJSONArray( "resultset" ).getJSONArray( row ).getString( column );
       if ( parameters.containsKey( paramName ) ) {
-        Assert.assertEquals( paramValue, parameters.get( paramName ) );
+        Assert.assertEquals( parameters.get( paramName ), paramValue );
       }
     }
   }

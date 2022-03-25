@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2022 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -207,21 +206,21 @@ public final class KettleElementHelper {
         return true;
       }
     }
+
     return false;
   }
 
-  public static boolean setParameterValue( NamedParams params, String paramName, String paramValue ) {
+  public static void setParameterValue( NamedParams params, String paramName, String paramValue ) {
     if ( !hasParameter( params, paramName ) ) {
       logger.warn( "Param '" + paramName + "' doesn't exist in the Kettle job/transformation" );
-      return false;
+      return;
     }
 
     try {
       params.setParameterValue( paramName, paramValue );
       logger.debug( "Set param '" + paramName + "' = '" + paramValue + "'" );
-      return true;
     } catch ( UnknownParamException e ) {
-      return false;
+      // Should not happen, given the above hasParameter() test.
     }
   }
 
@@ -386,25 +385,16 @@ public final class KettleElementHelper {
     return value;
   }
 
-
   /**
-   *
-   * @param kettleParams The parameters to set the value.
-   * @return The parameters that which value was set.
+   * @param params The target parameters to set.
+   * @param kettleParams The source parameters.
    */
-  public static Collection<String> setKettleParameterValues( NamedParams params, Map<String, String> kettleParams ) {
-    if ( kettleParams == null ) {
-      return Collections.emptySet();
-    }
-
-    LinkedList<String> setValueParamNames = new LinkedList<String>();
-    for ( Map.Entry<String, String> parameter : kettleParams.entrySet() ) {
-      if ( setParameterValue( params, parameter.getKey(), parameter.getValue() ) ) {
-        setValueParamNames.add( parameter.getKey() );
+  public static void setKettleParameterValues( NamedParams params, Map<String, String> kettleParams ) {
+    if ( kettleParams != null ) {
+      for ( Map.Entry<String, String> parameter : kettleParams.entrySet() ) {
+        setParameterValue( params, parameter.getKey(), parameter.getValue() );
       }
     }
-
-    return setValueParamNames;
   }
 
   /**
@@ -428,17 +418,6 @@ public final class KettleElementHelper {
       }
     }
     return parameters;
-  }
-
-  public static void clearParameters( NamedParams params, Collection<String> paramNames ) {
-    if ( paramNames == null ) {
-      return;
-    }
-
-    for ( String paramName : paramNames ) {
-      setParameterValue( params, paramName, null );
-      logger.debug( "Cleared request param '" + paramName + "'" );
-    }
   }
 
   // debug only

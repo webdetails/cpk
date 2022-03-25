@@ -14,7 +14,6 @@
 package pt.webdetails.cpk.elements.impl;
 
 import org.pentaho.di.core.Result;
-import org.pentaho.di.core.ResultFile;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
@@ -80,18 +79,14 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
     final List<RowMetaAndData> rows = new ArrayList<RowMetaAndData>(  );
 
     try {
-      // clean?
-      this.meta.setResultRows( new ArrayList<RowMetaAndData>() );
-      this.meta.setResultFiles( new ArrayList<ResultFile>() );
+      // Clone meta so that parameters and any other state are isolated.
+      TransMeta executionMeta = (TransMeta) this.meta.clone();
 
       // add parameters
-      Collection<String> setParameters = Collections.emptyList();
-      if ( kettleParameters != null ) {
-        setParameters = KettleElementHelper.setKettleParameterValues( this.meta, kettleParameters );
-      }
+      KettleElementHelper.setKettleParameterValues( executionMeta, kettleParameters );
 
       // create a new transformation
-      Trans transformation = new Trans( this.meta );
+      Trans transformation = new Trans( executionMeta );
       transformation.prepareExecution( null ); // get the step threads after this line
 
       // get step to listen to written rows
@@ -118,10 +113,6 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
       transformationResult.setRows( rows );
       result = new KettleResult( transformationResult );
       result.setKettleType( KettleResult.KettleType.TRANSFORMATION );
-
-      // clear request parameters
-      KettleElementHelper.clearParameters( meta, setParameters );
-
     } catch ( KettleException e ) {
       logger.debug( "KETTLE EXCEPTION: " + e, e );
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 - 2017 Webdetails, a Hitachi Vantara company.  All rights reserved.
+ * Copyright 2002 - 2022 Webdetails, a Hitachi Vantara company.  All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -14,7 +14,6 @@
 package pt.webdetails.cpk;
 
 import junit.framework.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.pentaho.di.core.parameters.DuplicateParamException;
@@ -28,8 +27,6 @@ import pt.webdetails.cpf.session.ISessionUtils;
 import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpk.elements.impl.KettleElementHelper;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -175,16 +172,19 @@ public class KettleElementHelperTest {
   }
 
   /**
-   * Tests that setKettleParameterValues returns the collection of parameters that were actually set.
+   * Tests that setKettleParameterValues can handle source parameters which are not defined in the named parameter map.
    */
   @Test
-  public void testSetParameterValuesReturnsOnlySetParams () {
+  public void testSetParameterValuesIgnoresUndefinedSourceParameters () {
     // arrange
-    Map<String, String> setParameters = new HashMap<String, String>();
+    Map<String, String> setParameters = new HashMap<>();
+
     String existingParamName = "paramName";
     String existingParamValue = "paramValue";
+
     String notExistingParamName = "notExistName";
     String notExistingParamValue = "notExistValue";
+
     setParameters.put( existingParamName, existingParamValue );
     setParameters.put( notExistingParamName, notExistingParamValue );
 
@@ -196,52 +196,27 @@ public class KettleElementHelperTest {
     }
 
     // act
-    Collection<String> parameterNamesThatWereSet = KettleElementHelper.setKettleParameterValues( params, setParameters );
-
-    // assert
-    Assert.assertTrue( parameterNamesThatWereSet.contains( existingParamName ) );
-    Assert.assertFalse( parameterNamesThatWereSet.contains( notExistingParamName ) );
-    Assert.assertEquals( 1, parameterNamesThatWereSet.size() );
-  }
-
-  /**
-   * Test that clear parameters set parameter values to null.
-   */
-  @Test
-  public void testClearParameters() {
-    // arrange
-    String name1 = "paramName1";
-    String value1 = "paramValue1";
-    String name2 = "paramName2";
-    String value2 = "paramValue2";
-
-    Collection<String> paramNames = new ArrayList<String>();
-    paramNames.add( name1 );
-    paramNames.add( name2 );
-
-    NamedParams params = new NamedParamsDefault();
-    try {
-      params.addParameterDefinition( name1, null, null );
-      params.setParameterValue( name1, value1 );
-      params.addParameterDefinition( name2, value2, null );
-      params.setParameterValue( name2, value2 );
-    } catch ( Exception e ) {
-      Assert.fail( "Failed arranging test." );
-    }
-
-    // act
-    KettleElementHelper.clearParameters( params, paramNames );
+    KettleElementHelper.setKettleParameterValues( params, setParameters );
 
     // assert
     try {
-      String actualParam1Value = params.getParameterValue( name1 );
-      String actualParam2Value = params.getParameterValue( name1 );
-      Assert.assertNull( actualParam1Value );
-      Assert.assertNull( actualParam2Value );
+      String actualExistingParamValue = params.getParameterValue( existingParamName );
+      Assert.assertEquals( existingParamValue, actualExistingParamValue );
     } catch ( UnknownParamException e ) {
-      Assert.fail( );
+      Assert.fail();
     }
 
+    try {
+      String actualNotExistingParamValue = params.getParameterValue( notExistingParamName );
+
+      // If we're here, it's because the `NamedParamsDefault` implementation does not throw an error, as it should...
+      // Should be null, at least.
+      Assert.assertNull( actualNotExistingParamValue );
+    } catch( UnknownParamException e ) {
+      // Expected.
+    }
+
+    Assert.assertEquals( 1, params.listParameters().length );
   }
 
   @Test

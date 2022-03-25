@@ -76,6 +76,7 @@ public class CpkCoreService {
         final String url = getElementUrl( element, path );
 
         CpkUtils.redirect( response, url );
+        return;
       }
 
       final IAccessControl accessControl = environment.getAccessControl();

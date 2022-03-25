@@ -256,7 +256,7 @@ _version_ : Returns the plugin version (Defined on the plugins "version.xml" fil
 
 _getSitemapJson_ : Returns a [JSON](http://www.json.org/) with the plugins sitemap (Dashboards only!)
 
-_getElementsList_ : Returns a [JSON](http://www.json.org/) with the whole list of elements present on the plugin (dashboards and kettle endpoints)
+_elementsList_ : Returns a [JSON](http://www.json.org/) with the whole list of elements present on the plugin (dashboards and kettle endpoints)
 
 To perform a command:
 
@@ -306,7 +306,7 @@ Here's a list of stretch goals / nice to have
 
 ## Updates
 
-As the CPK framework or any of it's dependencies gets improved, the plugins
+As the CPK framework or any of its dependencies gets improved, the plugins
 themselves can't stay outdated. There will be a version information attached to
 the _CPK plugin version_ so that it's possible to upgrade to the latest version.
 
