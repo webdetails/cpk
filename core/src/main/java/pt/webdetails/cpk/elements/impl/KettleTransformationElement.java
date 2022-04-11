@@ -80,7 +80,7 @@ public class KettleTransformationElement extends KettleElement<TransMeta> implem
 
     try {
       // Clone meta so that parameters and any other state are isolated.
-      TransMeta executionMeta = (TransMeta) this.meta.clone();
+      TransMeta executionMeta = (TransMeta) this.meta.realClone( false );
 
       // add parameters
       KettleElementHelper.setKettleParameterValues( executionMeta, kettleParameters );

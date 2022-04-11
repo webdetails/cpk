@@ -73,7 +73,7 @@ public class KettleJobElement extends KettleElement<JobMeta> implements IDataSou
     long start = System.currentTimeMillis();
 
     // Clone meta so that parameters and any other state are isolated.
-    JobMeta executionMeta = (JobMeta) this.meta.clone();
+    JobMeta executionMeta = (JobMeta) this.meta.realClone( false );
 
     // add request parameters
     KettleElementHelper.setKettleParameterValues( executionMeta, kettleParameters );
