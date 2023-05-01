@@ -5,7 +5,7 @@
 
   <groupId>org.pentaho.ctools</groupId>
   <artifactId>cpk-parent</artifactId>
-  <version>9.6.0.0-SNAPSHOT-15</version>
+  <version>9.6.0.0-SNAPSHOT-16</version>
   <packaging>pom</packaging>
   <name>CPK Parent</name>
   
