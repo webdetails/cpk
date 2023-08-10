@@ -43,7 +43,7 @@
     <json.version>20090211</json.version>
     <jug.version>2.0.0</jug.version>
     <org.json.simple.version>0.3-incubating</org.json.simple.version>
-    <rhino.version>1.7.14</rhino.version>
+    <rhino.version>1.7.13</rhino.version>
     <jsonassert.version>1.5.0</jsonassert.version>
   </properties>
 
