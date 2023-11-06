@@ -105,7 +105,7 @@
       </fileset>
   <fileset dir="runtime-lib">
         <include name="**/*.jar"/>
-        <exclude name="**/batik-js-1.7.jar"/>
+        <exclude name="**/batik-js-1.17.jar"/>
       </fileset>
     </copy>
 
