@@ -38,7 +38,6 @@
     <mockito-all.version>1.10.19</mockito-all.version>
     <junit.version>4.11</junit.version>
     <jersey-client.client>1.16</jersey-client.client>
-    <guava.version>17.0</guava.version>
     <commons-vfs.version>1.0</commons-vfs.version>
     <json.version>20090211</json.version>
     <jug.version>2.0.0</jug.version>
