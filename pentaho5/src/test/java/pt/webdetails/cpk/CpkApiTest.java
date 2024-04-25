@@ -1,5 +1,5 @@
 /*!
- * Copyright 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
+ * Copyright 2019 - 2024 Webdetails, a Hitachi Vantara company.  All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -54,8 +54,8 @@ import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.anyMap;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -187,7 +187,7 @@ public class CpkApiTest {
     plugins.add( pluginMock );
 
     doNothing().when( cpkApi.pluginsAnalyzer ).refresh();
-    when( cpkApi.pluginsAnalyzer.getPlugins( anyObject() ) ).thenReturn( plugins );
+    when( cpkApi.pluginsAnalyzer.getPlugins( any() ) ).thenReturn( plugins );
 
     Response responseResult = cpkApi.version( cpkApi.cpkEnv.getPluginName() );
     assertEquals( Response.Status.OK.getStatusCode(), responseResult.getStatus() );
