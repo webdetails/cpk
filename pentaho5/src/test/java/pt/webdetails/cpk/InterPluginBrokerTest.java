@@ -1,5 +1,5 @@
 /*!
- * Copyright 2018 Webdetails, a Hitachi Vantara company.  All rights reserved.
+ * Copyright 2018 - 2024 Webdetails, a Hitachi Vantara company.  All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -12,12 +12,13 @@
  */
 package pt.webdetails.cpk;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import pt.webdetails.cpf.PluginEnvironment;
 import pt.webdetails.cpf.PluginSettings;
 import pt.webdetails.cpf.plugincall.api.IPluginCall;
@@ -28,30 +29,33 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_BEAN_ID;
+import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_BEAN_ID_TAG;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_LEGACY_BEAN_ID;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_RENDER_METHOD;
-import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_BEAN_ID_TAG;
 import static pt.webdetails.cpk.InterPluginBroker.CDE_RENDER_API_RENDER_METHOD_TAG;
 
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@RunWith( PowerMockRunner.class )
+@RunWith( MockitoJUnitRunner.class )
 public class InterPluginBrokerTest {
+  MockedStatic<PluginEnvironment> mockedStatic;
+  IPluginCall pluginCall;
 
   @Before
   public void setUp() {
-    PowerMockito.mockStatic( PluginEnvironment.class );
+    pluginCall = mock( IPluginCall.class );
+    InterPluginBroker.clearCdeRenderApiCall();
+  }
+
+  @After
+  public void clear() {
   }
 
   @Test
-  @PrepareForTest( { PluginEnvironment.class, InterPluginBroker.class } )
   public void testRunWithConfiguredValues() throws Exception {
     String beanID = "configured-bean-id";
     String beanMethod = "configured-bean-method";
@@ -59,6 +63,7 @@ public class InterPluginBrokerTest {
 
     // mock PluginEnvironment
     PluginEnvironment environmentMock = mock( PluginEnvironment.class );
+    PluginEnvironment.init( environmentMock );
 
     doReturn( mockPluginSettings( beanID, beanMethod ) ).when( environmentMock )
       .getPluginSettings();
@@ -66,68 +71,62 @@ public class InterPluginBrokerTest {
     doReturn( mockPluginCall( true, pluginCallResult ) ).when( environmentMock )
       .getPluginCall( anyString(), eq( beanID ), eq( beanMethod ) );
 
-    when( PluginEnvironment.env() ).thenReturn( environmentMock );
-
     // Test output
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     InterPluginBroker.run( new HashMap<>(), out );
 
-    assertEquals( out.toString(), pluginCallResult );
+    assertEquals( pluginCallResult, out.toString() );
   }
 
   @Test
-  @PrepareForTest( { PluginEnvironment.class, InterPluginBroker.class } )
   public void testRunWithLatestBeanId() throws Exception {
     String pluginCallResult = "Test with the latest bean id.";
 
     // mock PluginEnvironment
     PluginEnvironment environmentMock = mock( PluginEnvironment.class );
+    PluginEnvironment.init( environmentMock );
     doReturn( mockPluginSettings( null, null ) ).when( environmentMock ).getPluginSettings();
 
     doReturn( mockPluginCall( false, null ) ).when( environmentMock )
       .getPluginCall( anyString(), eq( "" ), eq( "" ) );
 
-    doReturn( mockPluginCall( true, pluginCallResult ) ).when( environmentMock )
+    Mockito.lenient().doReturn( mockPluginCall( true, pluginCallResult ) ).when( environmentMock )
       .getPluginCall( anyString(), eq( CDE_RENDER_API_BEAN_ID ), eq( CDE_RENDER_API_RENDER_METHOD ) );
-
-    when( PluginEnvironment.env() ).thenReturn( environmentMock );
 
     // Test output
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     InterPluginBroker.run( new HashMap<>(), out );
 
-    assertEquals( out.toString(), pluginCallResult );
+    assertEquals( pluginCallResult, out.toString() );
   }
 
   @Test
-  @PrepareForTest( { PluginEnvironment.class, InterPluginBroker.class } )
   public void testRunWithLegacyBeanId() throws Exception {
     String pluginCallResult = "Test with legacy bean id.";
 
     // mock PluginEnvironment
     PluginEnvironment environmentMock = mock( PluginEnvironment.class );
+    PluginEnvironment.init( environmentMock );
     doReturn( mockPluginSettings( null, null ) ).when( environmentMock ).getPluginSettings();
 
     doReturn( mockPluginCall( false, null ) ).when( environmentMock )
       .getPluginCall( anyString(), eq( "" ), eq( "" ) );
 
-    doReturn( mockPluginCall( false, null ) ).when( environmentMock )
+    Mockito.lenient().doReturn( mockPluginCall( false, null ) ).when( environmentMock )
       .getPluginCall( anyString(), eq( CDE_RENDER_API_BEAN_ID ), eq( CDE_RENDER_API_RENDER_METHOD ) );
 
-    doReturn( mockPluginCall( true, pluginCallResult ) ).when( environmentMock )
+    Mockito.lenient().doReturn( mockPluginCall( true, pluginCallResult ) ).when( environmentMock )
       .getPluginCall( anyString(), eq( CDE_RENDER_API_LEGACY_BEAN_ID ), eq( CDE_RENDER_API_RENDER_METHOD ) );
-
-    when( PluginEnvironment.env() ).thenReturn( environmentMock );
 
     // Test output
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     InterPluginBroker.run( new HashMap<>(), out );
 
-    assertEquals( out.toString(), pluginCallResult );
+    assertEquals( pluginCallResult, out.toString() );
   }
 
   private IPluginCall mockPluginCall( boolean exists, String data ) throws Exception {
-    IPluginCall pluginCall = mock( IPluginCall.class );
+    //pluginCall = mock( IPluginCall.class );
 
     doReturn( exists ).when( pluginCall ).exists();
     doReturn( data ).when( pluginCall ).call( any() );

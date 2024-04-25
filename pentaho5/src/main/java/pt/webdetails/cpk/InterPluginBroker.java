@@ -96,4 +96,8 @@ public class InterPluginBroker {
     return values.isEmpty() ? defaultValue : values.get( 0 );
   }
 
+  // test method only, do not use outside of unit/integration test code
+  static void clearCdeRenderApiCall() {
+    cdeRenderApiCall = null;
+  }
 }
