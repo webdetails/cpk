@@ -1,5 +1,5 @@
 /*!
-* Copyright 2002 - 2022 Webdetails, a Hitachi Vantara company.  All rights reserved.
+* Copyright 2002 - 2024 Webdetails, a Hitachi Vantara company.  All rights reserved.
 *
 * This software was developed by Webdetails and is provided under the terms
 * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -13,10 +13,10 @@
 
 package pt.webdetails.cpk.elements.impl;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.UnknownParamException;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -250,7 +250,7 @@ public final class KettleElementHelper {
       StringWriter writer = new StringWriter();
       JsonGenerator generator = null;
       try {
-        generator = factory.createJsonGenerator( writer );
+        generator = factory.createGenerator( writer );
         generator.writeStartObject();
         generator.writeFieldName( fieldName );
         generator.writeStartArray();
