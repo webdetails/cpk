@@ -29,14 +29,10 @@
     <pdi-json-plugin.version>11.0.0.0-SNAPSHOT</pdi-json-plugin.version>
     <commons-lang.version>2.6</commons-lang.version>
     <ehcache-core.version>2.5.1</ehcache-core.version>
-    <jsr311-api.version>1.1.1</jsr311-api.version>
     <servlet-api.version>3.0.1</servlet-api.version>
-    <jersey-core.version>1.16</jersey-core.version>
-    <jersey-server.version>1.9.1</jersey-server.version>
     <powermock.version>1.6.3</powermock.version>
     <mockito-core.version>5.10.0</mockito-core.version>
     <junit.version>4.13.2</junit.version>
-    <jersey-client.client>1.16</jersey-client.client>
     <commons-vfs.version>1.0</commons-vfs.version>
     <json.version>20090211</json.version>
     <jug.version>2.0.0</jug.version>
@@ -125,8 +121,8 @@
       </dependency>
       <dependency>
         <groupId>javax.ws.rs</groupId>
-        <artifactId>jsr311-api</artifactId>
-        <version>${jsr311-api.version}</version>
+        <artifactId>javax.ws.rs-api</artifactId>
+        <version>${javax.ws.rs-api.version}</version>
         <exclusions>
           <exclusion>
             <groupId>*</groupId>
@@ -162,9 +158,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-core</artifactId>
-        <version>${jersey-core.version}</version>
+        <groupId>org.glassfish.jersey.core</groupId>
+        <artifactId>jersey-client</artifactId>
+        <version>${jersey.version}</version>
         <exclusions>
           <exclusion>
             <groupId>*</groupId>
@@ -173,9 +169,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.sun.jersey</groupId>
+        <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>
-        <version>${jersey-server.version}</version>
+        <version>${jersey.version}</version>
         <exclusions>
           <exclusion>
             <groupId>*</groupId>
@@ -255,18 +251,6 @@
         <artifactId>powermock-api-mockito</artifactId>
         <version>${powermock.version}</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-client</artifactId>
-        <version>${jersey-client.client}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
