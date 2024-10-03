@@ -1,5 +1,5 @@
 /*!
- * Copyright 2019 Webdetails, a Hitachi Vantara company.  All rights reserved.
+ * Copyright 2019-2024 Webdetails, a Hitachi Vantara company.  All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -19,11 +19,17 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Date;
 
 public class HttpHeadersForTesting implements HttpHeaders {
   @Override
   public List<String> getRequestHeader( String name ) {
     return null;
+  }
+
+  @Override
+  public String getHeaderString(String name) {
+    return "";
   }
 
   @Override
@@ -54,5 +60,15 @@ public class HttpHeadersForTesting implements HttpHeaders {
   @Override
   public Map<String, Cookie> getCookies() {
     return null;
+  }
+
+  @Override
+  public Date getDate() {
+    return new Date();
+  }
+
+  @Override
+  public int getLength() {
+    return 0;
   }
 }
