@@ -24,7 +24,7 @@ import pt.webdetails.cpf.session.IUserSession;
 import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.ICpkEnvironment;
 
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;

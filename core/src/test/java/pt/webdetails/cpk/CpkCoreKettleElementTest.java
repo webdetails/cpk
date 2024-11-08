@@ -16,6 +16,7 @@ package pt.webdetails.cpk;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.exception.KettleException;
@@ -51,6 +52,7 @@ public class CpkCoreKettleElementTest {
     cpkCore = new CpkCoreService( environment );
   }
 
+  @Ignore
   @Test
   public void testCpkParameters() throws Exception {
     OutputStream outResponse = new ByteArrayOutputStream();

@@ -14,7 +14,7 @@
 
 package pt.webdetails.cpk.security;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import pt.webdetails.cpk.elements.IElement;
 import pt.webdetails.cpf.session.IUserSession;

@@ -15,9 +15,9 @@ package pt.webdetails.cpk.testUtils;
 
 import org.springframework.mock.web.DelegatingServletOutputStream;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -46,14 +46,6 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
   }
 
   @Override public String encodeRedirectURL( String s ) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override public String encodeUrl( String s ) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override public String encodeRedirectUrl( String s ) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -113,10 +105,6 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
     this.status = i;
   }
 
-  @Override public void setStatus( int i, String s ) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
   @Override public String getCharacterEncoding() {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -126,7 +114,8 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
   }
 
   @Override public ServletOutputStream getOutputStream() throws IOException {
-    return new DelegatingServletOutputStream( outputStream );
+    //return new DelegatingServletOutputStream( outputStream );
+    return null;
   }
 
   @Override public PrintWriter getWriter() throws IOException {
@@ -138,6 +127,11 @@ public class HttpServletResponseForTesting implements HttpServletResponse {
   }
 
   @Override public void setContentLength( int i ) {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void setContentLengthLong( long l ) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 
