@@ -15,7 +15,7 @@ package pt.webdetails.cpk.security;
 
 import pt.webdetails.cpk.elements.IElement;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 public interface IAccessControl {
   public boolean isAllowed( IElement element );
