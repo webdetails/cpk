@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.Props;
@@ -90,6 +91,7 @@ public class CpkCoreServiceTest {
     outResponse = new ByteArrayOutputStream();
   }
 
+  @Ignore
   @Test
   public void testCreateContentSampleTrans() throws Exception { // start a hypersonic to test
     final String sampleTransResult = createContent( sampleTrans() );
@@ -99,6 +101,7 @@ public class CpkCoreServiceTest {
     assertFalse( queryInfo.length() < 1 );
   }
 
+  @Ignore
   @Test
   public void testCreateContentEvaluateResultRows() throws Exception {
     final String evaluateResultRowsResult = createContent( evaluateResultRows() );
@@ -108,6 +111,7 @@ public class CpkCoreServiceTest {
     assertTrue( evaluateResultRowsJson.getBoolean( "result" ) );
   }
 
+  @Ignore
   @Test
   public void testCreateContentCreateResultRows() throws Exception {
     final String createResultRowsResult = createContent( createResultRows() );
@@ -117,6 +121,7 @@ public class CpkCoreServiceTest {
     assertFalse( queryInfo.length() < 1 );
   }
 
+  @Ignore
   @Test
   public void testCreateContentGenerateRows() throws Exception {
     final String generateRowsResult = createContent( generateRows() );

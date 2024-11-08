@@ -25,7 +25,7 @@ import pt.webdetails.cpk.elements.impl.KettleResultKey;
 import pt.webdetails.cpk.security.IAccessControl;
 import pt.webdetails.cpk.utils.CpkUtils;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;

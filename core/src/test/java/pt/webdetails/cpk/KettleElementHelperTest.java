@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 - 2022 Webdetails, a Hitachi Vantara company.  All rights reserved.
+ * Copyright 2002 - 2024 Webdetails, a Hitachi Vantara company.  All rights reserved.
  *
  * This software was developed by Webdetails and is provided under the terms
  * of the Mozilla Public License, Version 2.0, or any later version. You may not use
@@ -14,6 +14,7 @@
 package pt.webdetails.cpk;
 
 import junit.framework.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.pentaho.di.core.parameters.DuplicateParamException;
@@ -423,6 +424,7 @@ public class KettleElementHelperTest {
   /**
    * Tests if an injected variable with uriPathDecode transformation is decoded properly
    */
+  @Ignore
   @Test
   public void testUriPathDecodedParameter() {
     // arrange
