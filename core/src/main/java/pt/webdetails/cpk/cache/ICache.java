@@ -24,8 +24,6 @@ public interface ICache<K, V> {
    */
   void put( K key, V value );
 
-  void put( K key, V value, int timeToLiveSeconds );
-
   /**
    * Removes value with given key from cache.
    * @param key
@@ -50,11 +48,5 @@ public interface ICache<K, V> {
    * Removes all elements from cache.
    */
   void clear();
-
-  /**
-   *
-   * @return The default time to live (in seconds) for cached values.
-   */
-  Number getTimeToLiveSeconds();
 
 }

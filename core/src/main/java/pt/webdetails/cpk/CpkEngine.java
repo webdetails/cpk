@@ -13,10 +13,10 @@
 
 package pt.webdetails.cpk;
 
-import net.sf.ehcache.config.CacheConfiguration;
-import net.sf.ehcache.config.Configuration;
-import net.sf.ehcache.config.ConfigurationFactory;
-import net.sf.ehcache.store.MemoryStoreEvictionPolicy;
+import org.ehcache.config.CacheConfiguration;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -25,6 +25,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.ehcache.xml.XmlConfiguration;
 import pt.webdetails.cpf.utils.XmlParserFactoryProducer;
 import pt.webdetails.cpk.cache.EHCache;
 import pt.webdetails.cpk.cache.ICache;
@@ -48,6 +49,7 @@ public class CpkEngine {
   private static Log logger = LogFactory.getLog( CpkEngine.class );
   private static final String DEFAULT_SETTINGS_FILENAME = "cpk.xml";
   private static final String DEFAULT_CACHE_SETTINGS_FILENAME = "ehcache.xml";
+  private static final String CACHE_NAME = "cache";
   private ICpkEnvironment environment;
   private String settingsFilename;
   private TreeMap<String, IElement> elementsMap;
@@ -61,21 +63,14 @@ public class CpkEngine {
     return CpkEngine.class.getPackage().getName() + ":" + this.getEnvironment().getPluginName();
   }
 
-
-  private CacheConfiguration getDefaultCacheConfiguration() {
-    CacheConfiguration cacheConfiguration = new CacheConfiguration();
-    cacheConfiguration.setName( this.getDefaultCacheName() );
-    cacheConfiguration.setMaxEntriesLocalHeap( 100 );
-    cacheConfiguration.setMaxEntriesLocalDisk( 10000 );
-    cacheConfiguration.setTimeToIdleSeconds( 0 );
-    cacheConfiguration.setTimeToLiveSeconds( 0 );
-    cacheConfiguration.overflowToDisk( true );
-    cacheConfiguration.diskPersistent( false );
-    cacheConfiguration.setDiskExpiryThreadIntervalSeconds( 360 );
-    cacheConfiguration.diskSpoolBufferSizeMB( 50 );
-    cacheConfiguration.setMemoryStoreEvictionPolicyFromObject( MemoryStoreEvictionPolicy.LFU );
-
-    return cacheConfiguration;
+  private CacheConfiguration<KettleResultKey, KettleResult> getDefaultCacheConfiguration() {
+    return CacheConfigurationBuilder.newCacheConfigurationBuilder(
+                    KettleResultKey.class,
+                    KettleResult.class,
+                    ResourcePoolsBuilder.heap( 100 )
+            )
+            .withExpiry( ExpiryPolicyBuilder.noExpiration() )
+            .build();
   }
 
   public ICache<KettleResultKey, KettleResult> getKettleResultCache() {
@@ -117,33 +112,24 @@ public class CpkEngine {
    * If this fails it uses the default hardcoded configuration to initialize the cache.
    */
   private synchronized void initializeKettleResultCache() {
-    CacheConfiguration cacheConfiguration;
-
+    CacheConfiguration<KettleResultKey, KettleResult> cacheConfiguration;
+    String cacheName;
     InputStream configFile = null;
     try {
-      // get configuration from file
-      configFile = this.getEnvironment().getContentAccessFactory().getPluginSystemReader( "" )
-        .getFileInputStream( DEFAULT_CACHE_SETTINGS_FILENAME );
-      Configuration cacheManagerConfiguration = ConfigurationFactory.parseConfiguration( configFile );
-      Collection<CacheConfiguration> cacheConfigurations = cacheManagerConfiguration.getCacheConfigurations().values();
-      // get one cache configuration, ignore if more are present
-      cacheConfiguration = cacheConfigurations.iterator().next();
-      // if no name was defined for the cache, use default cache name
-      if ( cacheConfiguration.getName() == null || cacheConfiguration.getName().isEmpty() ) {
-        cacheConfiguration.setName( this.getDefaultCacheName() );
-      }
-      logger.debug( this.getEnvironment().getPluginName() + " is using cache configuration from file "
-        + DEFAULT_CACHE_SETTINGS_FILENAME );
+      cacheName = CACHE_NAME;
+      final XmlConfiguration xmlConfiguration = new XmlConfiguration( getClass().getResource( DEFAULT_CACHE_SETTINGS_FILENAME ) );
+      cacheConfiguration = ( CacheConfiguration<KettleResultKey, KettleResult> ) xmlConfiguration.getCacheConfigurations().get( cacheName);
     } catch ( Exception ioe ) {
       // unable to load cache configuration file. Using hardcoded default configuration.
       logger.info( "No Eh cache configuration file found " + DEFAULT_CACHE_SETTINGS_FILENAME + "." );
       cacheConfiguration = this.getDefaultCacheConfiguration();
+      cacheName = this.getDefaultCacheName();
       logger.info( this.getEnvironment().getPluginName() + " is using default hardcoded cache configuration." );
     } finally {
       IOUtils.closeQuietly( configFile );
     }
 
-    this.kettleResultCache = new EHCache<KettleResultKey, KettleResult>( cacheConfiguration );
+    this.kettleResultCache = new EHCache<KettleResultKey, KettleResult>( cacheName, cacheConfiguration );
     this.reload();
   }
 

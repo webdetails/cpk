@@ -14,7 +14,6 @@
 package pt.webdetails.cpk;
 
 import junit.framework.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.pentaho.di.core.parameters.DuplicateParamException;
@@ -424,7 +423,6 @@ public class KettleElementHelperTest {
   /**
    * Tests if an injected variable with uriPathDecode transformation is decoded properly
    */
-  @Ignore
   @Test
   public void testUriPathDecodedParameter() {
     // arrange
