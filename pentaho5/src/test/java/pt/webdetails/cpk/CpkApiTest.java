@@ -19,7 +19,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.mockito.Mockito;
@@ -93,7 +92,6 @@ public class CpkApiTest {
     headers = new HttpHeadersForTesting();
   }
 
-@Ignore
   @Test
   public void testGenericEndpoint() {
     Response responseResult = null;
@@ -340,9 +338,9 @@ public class CpkApiTest {
     if ( outputStream != null ) {
       if ( outputStream instanceof DelegatingServletOutputStream ) {
         DelegatingServletOutputStream delegatingServletOutputStream = (DelegatingServletOutputStream) outputStream;
-//        if ( delegatingServletOutputStream.getTargetStream() != null ) {
-//          return delegatingServletOutputStream.getTargetStream().toString();
-//        }
+        if ( delegatingServletOutputStream.getTargetStream() != null ) {
+          return delegatingServletOutputStream.getTargetStream().toString();
+        }
       }
     }
     return null;
