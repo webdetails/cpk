@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Date;
+import java.util.function.Predicate;
 
 public class HttpHeadersForTesting implements HttpHeaders {
   @Override
@@ -70,5 +71,10 @@ public class HttpHeadersForTesting implements HttpHeaders {
   @Override
   public int getLength() {
     return 0;
+  }
+
+  @Override
+  public boolean containsHeaderString( String s, String s1, Predicate<String> predicate ) {
+    return false;
   }
 }
