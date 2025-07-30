@@ -22,7 +22,7 @@ import pt.webdetails.cpk.CpkEngine;
 import pt.webdetails.cpk.InterPluginBroker;
 import pt.webdetails.cpk.elements.Element;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;

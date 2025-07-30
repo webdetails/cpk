@@ -12,18 +12,24 @@
 
 package pt.webdetails.cpk.testUtils;
 
-import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Cookie;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Date;
 
 public class HttpHeadersForTesting implements HttpHeaders {
   @Override
   public List<String> getRequestHeader( String name ) {
     return null;
+  }
+
+  @Override
+  public String getHeaderString(String name) {
+    return "";
   }
 
   @Override
@@ -54,5 +60,15 @@ public class HttpHeadersForTesting implements HttpHeaders {
   @Override
   public Map<String, Cookie> getCookies() {
     return null;
+  }
+
+  @Override
+  public Date getDate() {
+    return new Date();
+  }
+
+  @Override
+  public int getLength() {
+    return 0;
   }
 }

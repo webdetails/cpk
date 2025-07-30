@@ -13,57 +13,51 @@
 
 package pt.webdetails.cpk.cache;
 
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
-import net.sf.ehcache.config.CacheConfiguration;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.spi.CachingProvider;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ehcache.config.CacheConfiguration;
 
-import java.io.Serializable;
+import static org.ehcache.jsr107.Eh107Configuration.fromEhcacheCacheConfiguration;
 
 public class EHCache<K extends Serializable, V extends Serializable> implements ICache<K, V> {
   private static final Log logger = LogFactory.getLog( EHCache.class );
-  private Cache cache = null;
+  private Cache<K, V> cache;
+  private CacheManager cacheManager;
 
-  public Cache getCache() {
+  public Cache<K, V> getCache() {
     return this.cache;
   }
 
   private synchronized CacheManager getCacheManager( ) {
-    return CacheManager.create();
+    if (cacheManager == null) {
+      CachingProvider cachingProvider = Caching.getCachingProvider();
+      cacheManager = cachingProvider.getCacheManager();
+    }
+    return cacheManager;
   }
 
-  public EHCache( CacheConfiguration cacheConfiguration ) {
-    Cache cache = this.getCacheManager().getCache( cacheConfiguration.getName() );
+  public EHCache( String cacheName, CacheConfiguration<K, V> cacheConfiguration ) {
+    cache = getCacheManager().getCache( cacheName );
     if ( cache == null ) {
-      cache = new Cache( cacheConfiguration );
-      this.getCacheManager().addCache( cache );
+      cache = getCacheManager().createCache( cacheName, fromEhcacheCacheConfiguration( cacheConfiguration ) );
     }
-
-    this.cache = cache;
   }
 
   @Override
   public void put( K key, V value ) {
     // put element in cache with default cache lifetime
-    this.put( key, value, this.getTimeToLiveSeconds().intValue() );
-  }
-
-  @Override
-  public void put( K key, V value, int timeToLiveSeconds ) {
     ClassLoader oldClassLoader = null;
     try {
       oldClassLoader = changeClassLoader();
-      final Element element = new Element( key, value );
-
-      // element will live "timeToLiveSeconds" in cache regardless of use; infinite lifetime if "timeToLiveSeconds" = 0
-      element.setTimeToLive( timeToLiveSeconds );
-      if ( timeToLiveSeconds == 0 ) {
-        element.setTimeToIdle( 0 );
-      }
-
-      this.getCache().put( element );
+      cache.put( key, value );
     } catch ( Exception e ) {
       logger.error( "Error while attempting to write in cache", e );
     } finally {
@@ -77,17 +71,7 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     ClassLoader oldClassLoader = null;
     try {
       oldClassLoader = changeClassLoader();
-      final Element element = this.getCache().get( key );
-      if ( element != null ) {
-        @SuppressWarnings( "unchecked" )
-        final V value = (V) element.getObjectValue();
-        if ( value != null ) {
-          // we have a entry in the cache ... great!
-          logger.debug( "Found value in cache for " + key );
-          return value;
-        }
-      }
-      return null;
+      return (V) cache.get( key );
     } catch ( Exception e ) {
       logger.error( "Error while attempting to read from cache", e );
       return null;
@@ -97,19 +81,20 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     }
   }
 
-  @Override
-  public Iterable<K> getKeys() {
-    @SuppressWarnings( "unchecked" )
-    final Iterable<K> keys = this.getCache().getKeys();
-    return keys;
-  }
+   @Override
+   public Iterable<K> getKeys() {
+     Cache<K, V> ehCache = ( Cache<K, V> ) this.getCache();
+     List<K> keys = new ArrayList<>();
+     ehCache.forEach(entry -> keys.add(entry.getKey()));
+     return keys;
+   }
 
   @Override
   public boolean remove( K key ) {
     ClassLoader oldClassLoader = null;
     try {
       oldClassLoader = changeClassLoader();
-      return this.getCache().remove( key );
+      return cache.remove( key );
     } catch ( Exception e ) {
       logger.error( "Error while attempting to remove from cache", e );
       return false;
@@ -124,19 +109,14 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
     ClassLoader oldClassLoader = null;
     try {
       oldClassLoader = changeClassLoader();
-      this.getCache().removeAll();
-      logger.info( "Cache " + this.getCache().getName() + " was cleared." );
+      cache.clear();
+      logger.info( "Cache was cleared." );
     } catch ( Exception e ) {
       logger.error( "Error while attempting to clear cache", e );
     } finally {
       logCacheStatus();
       restoreClassLoader( oldClassLoader );
     }
-  }
-
-  @Override
-  public Number getTimeToLiveSeconds() {
-    return this.getCache().getCacheConfiguration().getTimeToLiveSeconds();
   }
 
   /**
@@ -159,7 +139,10 @@ public class EHCache<K extends Serializable, V extends Serializable> implements 
   }
 
   private void logCacheStatus() {
-    logger.debug( "Cache status: " + this.getCache().getMemoryStoreSize() + " in memory, "
-      + this.getCache().getDiskStoreSize() + " in disk" );
+    long cacheSize = 0;
+    for ( Object entry : cache ) {
+      cacheSize++;
+    }
+    logger.debug( "Cache status: " + cacheSize + " entries in cache." );
   }
 }

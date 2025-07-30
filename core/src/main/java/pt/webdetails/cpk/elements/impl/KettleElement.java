@@ -27,7 +27,7 @@ import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultFilesKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.ResultOnlyKettleOutput;
 import pt.webdetails.cpk.elements.impl.kettleoutputs.SingleCellKettleOutput;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -189,25 +189,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
   @Override
   public KettleElement setCache( ICache<KettleResultKey, KettleResult> cache ) {
-    int timeToLive;
-    String timeToLiveStr = null;
-    if ( this.meta != null ) {
-      logger.debug( "Setting cache while job/transform meta is not set. Unable to load default values from ktr/kjb." );
-      timeToLiveStr = KettleParameter.CACHE_TIME_TO_LIVE_SECONDS.metaDefaultValue( this.meta );
-    }
-
-    if ( timeToLiveStr != null ) {
-      try {
-        timeToLive = Integer.parseInt( timeToLiveStr );
-      } catch ( NumberFormatException e ) {
-        timeToLive = cache.getTimeToLiveSeconds().intValue();
-      }
-    } else {
-      timeToLive = cache.getTimeToLiveSeconds().intValue();
-    }
-
-    this.setTimeToLive( timeToLive );
-
+    // Removing timetolive at cache entry level as it is not supported by JCache, it supports Expiry Policy during Cache creation
     this.cache = cache;
     return this;
   }
@@ -457,7 +439,7 @@ public abstract class KettleElement<TMeta extends NamedParams>
 
     result = this.processRequest( kettleParameters, outputStepName );
     // put new, or update current, result in cache.
-    this.getCache().put( cacheKey, result, this.getTimeToLive() );
+    this.getCache().put( cacheKey, result );
     return result;
   }
 

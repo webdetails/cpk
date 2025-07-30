@@ -39,10 +39,10 @@ import pt.webdetails.cpk.testUtils.HttpHeadersForTesting;
 import pt.webdetails.cpk.testUtils.HttpServletRequestForTesting;
 import pt.webdetails.cpk.testUtils.HttpServletResponseForTesting;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
