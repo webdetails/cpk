@@ -44,7 +44,7 @@
     <mockito-core.version>5.10.0</mockito-core.version>
     <junit.version>4.13.2</junit.version>
     <commons-vfs.version>1.0</commons-vfs.version>
-    <json.version>20090211</json.version>
+    <json.version>20231013</json.version>
     <jug.version>2.0.0</jug.version>
     <org.json.simple.version>0.3-incubating</org.json.simple.version>
     <jsonassert.version>1.5.0</jsonassert.version>
