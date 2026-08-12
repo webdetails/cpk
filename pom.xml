@@ -38,7 +38,7 @@
     <pdi.version>11.1.0.0-SNAPSHOT</pdi.version>
     <metastore.version>11.1.0.0-SNAPSHOT</metastore.version>
     <pdi-json-plugin.version>11.1.0.0-SNAPSHOT</pdi-json-plugin.version>
-    <commons-lang.version>2.6</commons-lang.version>
+    <commons-lang3.version>3.18.0</commons-lang3.version>
     <servlet-api.version>3.0.1</servlet-api.version>
     <powermock.version>1.6.3</powermock.version>
     <mockito-core.version>5.10.0</mockito-core.version>
@@ -184,9 +184,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>${commons-lang.version}</version>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${commons-lang3.version}</version>
         <exclusions>
           <exclusion>
             <groupId>*</groupId>
