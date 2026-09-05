@@ -16,14 +16,14 @@
 
   <groupId>org.pentaho.ctools</groupId>
   <artifactId>cpk-parent</artifactId>
-  <version>11.1.0.0-SNAPSHOT</version>
+  <version>11.1.0.0-397</version>
   <packaging>pom</packaging>
   <name>CPK Parent</name>
   
   <parent>
     <groupId>org.pentaho</groupId>
     <artifactId>pentaho-ce-jar-parent-pom</artifactId>
-    <version>11.1.0.0-SNAPSHOT</version>
+    <version>11.1.0.0-397</version>
   </parent>
 
   <scm>
@@ -32,12 +32,12 @@
   </scm>
 
   <properties>
-    <pentaho-cpf-plugin.version>11.1.0.0-SNAPSHOT</pentaho-cpf-plugin.version>
-    <pentaho-cpk-plugin.version>11.1.0.0-SNAPSHOT</pentaho-cpk-plugin.version>
-    <platform.version>11.1.0.0-SNAPSHOT</platform.version>
-    <pdi.version>11.1.0.0-SNAPSHOT</pdi.version>
-    <metastore.version>11.1.0.0-SNAPSHOT</metastore.version>
-    <pdi-json-plugin.version>11.1.0.0-SNAPSHOT</pdi-json-plugin.version>
+    <pentaho-cpf-plugin.version>11.1.0.0-397</pentaho-cpf-plugin.version>
+    <pentaho-cpk-plugin.version>11.1.0.0-397</pentaho-cpk-plugin.version>
+    <platform.version>11.1.0.0-397</platform.version>
+    <pdi.version>11.1.0.0-397</pdi.version>
+    <metastore.version>11.1.0.0-397</metastore.version>
+    <pdi-json-plugin.version>11.1.0.0-397</pdi-json-plugin.version>
     <commons-lang3.version>3.18.0</commons-lang3.version>
     <servlet-api.version>3.0.1</servlet-api.version>
     <powermock.version>1.6.3</powermock.version>
